@@ -126,10 +126,21 @@
                             <input type="date" class="form-control" id="sale-date" required>
                         </div>
                         <div class="form-group">
+                            <label class="form-label">Invoice No</label>
+                            <input type="text" class="form-control" id="sale-invoice-no" readonly placeholder="Auto-generated" style="background-color: var(--color-bg); color: var(--color-text-secondary);">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
                             <label class="form-label">Customer</label>
                             <select class="form-control" id="sale-customer">
                                 <option value="">Walk-in Customer</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Book Ref No</label>
+                            <input type="text" class="form-control" id="sale-ref-no" readonly placeholder="Auto-generated" style="background-color: var(--color-bg); color: var(--color-text-secondary);">
                         </div>
                     </div>
 
@@ -138,9 +149,9 @@
                             <label class="form-label">Total Amount (₹) <span class="required">*</span></label>
                             <input type="number" class="form-control" id="sale-total" step="0.01" required placeholder="0.00">
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Book Ref No</label>
-                            <input type="text" class="form-control" id="sale-ref-no" readonly placeholder="Auto-generated">
+                         <div class="form-group">
+                            <label class="form-label">Amount Paid (₹)</label>
+                            <input type="number" class="form-control" id="sale-amount-paid" step="0.01" value="0">
                         </div>
                     </div>
 
@@ -156,14 +167,9 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Amount Paid (₹)</label>
-                            <input type="number" class="form-control" id="sale-amount-paid" step="0.01" value="0">
+                            <label class="form-label">Notes</label>
+                            <input type="text" class="form-control" id="sale-notes" placeholder="Optional notes for this invoice">
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Notes</label>
-                        <input type="text" class="form-control" id="sale-notes" placeholder="Optional notes for this invoice">
                     </div>
                 </form>
             </div>

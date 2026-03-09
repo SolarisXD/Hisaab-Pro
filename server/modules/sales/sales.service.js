@@ -19,14 +19,23 @@ function generateInvoiceNumber(isDecoy) {
     var prefix = config.invoice_prefix || 'INV';
     var pattern = prefix + '-%';
 
-    var stmt = db.prepare("SELECT COUNT(*) as count FROM sales WHERE is_deleted = 0 AND is_decoy = ? AND invoice_no LIKE ?");
-    var result = stmt.get(isDecoy ? 1 : 0, pattern);
+    // Get the maximum serial number from active (non-deleted) sales
+    var stmt = db.prepare("SELECT invoice_no FROM sales WHERE is_deleted = 0 AND is_decoy = ? AND invoice_no LIKE ? ORDER BY id DESC LIMIT 100");
+    var results = stmt.all(isDecoy ? 1 : 0, pattern);
     
-    // Simple serial format: INV-01, INV-02...
-    var seq = (result.count + 1).toString();
-    if (seq.length < 2) seq = '0' + seq;
+    var maxSeq = 0;
+    results.forEach(function(row) {
+        var parts = row.invoice_no.split('-');
+        var seq = parseInt(parts[parts.length - 1]);
+        if (!isNaN(seq) && seq > maxSeq) {
+            maxSeq = seq;
+        }
+    });
 
-    return prefix + '-' + seq;
+    var nextSeq = (maxSeq + 1).toString();
+    if (nextSeq.length < 2) nextSeq = '0' + nextSeq;
+
+    return prefix + '-' + nextSeq;
 }
 
 /**
@@ -272,8 +281,10 @@ function deleteSale(id, isDecoy) {
     if (!sale) return false;
 
     var transaction = db.transaction(function() {
-        // Mark sale as deleted
-        db.prepare('UPDATE sales SET is_deleted = 1, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?').run(id);
+        // Mark sale as deleted and RENAME invoice_no to free it up for reuse
+        var deletedInvoiceNo = sale.invoice_no + '-DEL-' + Date.now();
+        db.prepare('UPDATE sales SET is_deleted = 1, invoice_no = ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+            .run(deletedInvoiceNo, id);
 
         // Rollback balance if it's a customer sale
         if (sale.customer_account_id) {

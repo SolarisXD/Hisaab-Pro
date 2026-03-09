@@ -35,6 +35,16 @@
         }).catch(function() {});
     }
 
+    // Fetch next Invoice No
+    function fetchNextInvoiceNo() {
+        if (editingSaleId) return;
+        api.getNextInvoiceNo().then(function(data) {
+            if (data && data.next_invoice_no) {
+                document.getElementById('sale-invoice-no').value = data.next_invoice_no;
+            }
+        }).catch(function() {});
+    }
+
     // Search and filter
     var searchInput = document.getElementById('search-input');
     var filterStatus = document.getElementById('filter-status');
@@ -113,12 +123,16 @@
         document.getElementById('sale-date').value = sale ? sale.date : getToday();
         document.getElementById('sale-customer').value = sale ? (sale.customer_account_id || '') : '';
         document.getElementById('sale-total').value = sale ? sale.total : '';
-        document.getElementById('sale-ref-no').value = sale ? (sale.ref_no || '') : '';
+        document.getElementById('sale-invoice-no').value = sale ? sale.invoice_no : 'Generating...';
+        document.getElementById('sale-ref-no').value = sale ? (sale.ref_no || '') : 'Generating...';
         document.getElementById('sale-tax-percent').value = sale ? sale.tax_percent : 18;
         document.getElementById('sale-amount-paid').value = sale ? sale.amount_paid : 0;
         document.getElementById('sale-notes').value = sale ? (sale.notes || '') : '';
 
-        if (!sale) fetchNextRefNo();
+        if (!sale) {
+            fetchNextRefNo();
+            fetchNextInvoiceNo();
+        }
 
         document.getElementById('sale-modal').classList.add('active');
         

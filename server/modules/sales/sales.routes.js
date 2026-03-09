@@ -53,6 +53,18 @@ router.get('/next-ref-no', function(req, res) {
 });
 
 /**
+ * GET /next-invoice-no — Get next available invoice number
+ */
+router.get('/next-invoice-no', function(req, res) {
+    try {
+        var nextInvoiceNo = salesService.generateInvoiceNumber(req.session.user.is_decoy);
+        res.json({ next_invoice_no: nextInvoiceNo });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
  * GET /summary — Sales summary
  */
 router.get('/summary', function(req, res) {

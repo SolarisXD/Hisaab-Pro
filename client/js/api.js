@@ -143,6 +143,10 @@ var api = {
 
     getNextRefNo: function() {
         return this.get('/sales/next-ref-no');
+    },
+
+    getNextInvoiceNo: function() {
+        return this.get('/sales/next-invoice-no');
     }
 };
 
