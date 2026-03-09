@@ -1,0 +1,171 @@
+/**
+ * pdf.js — Hisaab Pro PDF Generation
+ * 
+ * Uses jsPDF and html2canvas to generate PDFs of invoices and reports.
+ * Assumes libraries are loaded via <script> tags in the HTML.
+ */
+
+'use strict';
+
+var pdf = {
+    /**
+     * Generate PDF from an HTML element
+     * @param {HTMLElement} element - The element to capture
+     * @param {string} filename - The name of the PDF file
+     */
+    fromElement: function(element, filename) {
+        if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+            showToast('PDF libraries not loaded. Please check assets.', 'error');
+            return Promise.reject(new Error('Libraries missing'));
+        }
+
+        showToast('Generating PDF...', 'info');
+
+        // Capture with html2canvas
+        return html2canvas(element, {
+            scale: 2, // Higher quality
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+        }).then(function(canvas) {
+            var imgData = canvas.toDataURL('image/jpeg', 0.95);
+            var { jsPDF } = window.jspdf;
+            var doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            var imgWidth = 210; // A4 width in mm
+            var pageHeight = 297; // A4 height in mm
+            var imgHeight = (canvas.height * imgWidth) / canvas.width;
+            var heightLeft = imgHeight;
+            var position = 0;
+
+            // Add first page
+            doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            // Add extra pages if needed
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                doc.addPage();
+                doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            doc.save(filename || 'hisaab-pro-export.pdf');
+            showToast('PDF downloaded successfully!', 'success');
+        }).catch(function(err) {
+            showToast('Failed to generate PDF: ' + err.message, 'error');
+            console.error(err);
+        });
+    },
+
+    /**
+     * Generate Invoice PDF
+     * @param {Object} sale - The sale data object
+     */
+    generateInvoice: function(sale) {
+        // Create a hidden print-ready element
+        var printEl = document.createElement('div');
+        printEl.className = 'print-only-container';
+        printEl.style.width = '800px'; // Fixed width for consistent capture
+        printEl.style.padding = '40px';
+        printEl.style.background = 'white';
+        printEl.style.color = 'black';
+        printEl.style.fontFamily = 'Arial, sans-serif';
+
+        // Get shop info
+        api.getConfig().then(function(config) {
+            var html = `
+                <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 30px;">
+                    <h1 style="margin: 0; font-size: 24px;">${escapeHtml(config.shop.name)}</h1>
+                    <p style="margin: 5px 0; font-size: 14px;">${escapeHtml(config.shop.address)}</p>
+                    <p style="margin: 5px 0; font-size: 14px;">Phone: ${escapeHtml(config.shop.phone)} | GSTIN: ${escapeHtml(config.shop.gstin)}</p>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                    <div>
+                        <h3 style="margin: 0 0 10px 0; color: #666; font-size: 12px; text-transform: uppercase;">Invoice To:</h3>
+                        <p style="margin: 0; font-weight: bold; font-size: 16px;">${escapeHtml(sale.customer_name || 'Walk-in Customer')}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <h2 style="margin: 0; font-size: 20px; color: #2563EB;">INVOICE</h2>
+                        <p style="margin: 5px 0;"><strong>No:</strong> ${escapeHtml(sale.invoice_no)}</p>
+                        <p style="margin: 5px 0;"><strong>Date:</strong> ${formatDate(sale.date)}</p>
+                    </div>
+                </div>
+
+                <div style="padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 30px; background: #fafafa;">
+                    <p style="margin: 0; font-size: 14px; color: #666;">Description:</p>
+                    <p style="margin: 5px 0 0 0; font-size: 16px;">${escapeHtml(sale.notes || 'Hisaab Sale Transaction')}</p>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end;">
+                    <div style="width: 250px;">
+                        <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                            <span>Subtotal:</span>
+                            <span>${formatINR(sale.subtotal)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                            <span>GST (${sale.tax_percent}%):</span>
+                            <span>${formatINR(sale.tax_amount)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 2px solid #333; margin-top: 10px; font-weight: bold; font-size: 18px;">
+                            <span>Total:</span>
+                            <span style="color: #2563EB;">${formatINR(sale.total)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 50px; border-top: 1px solid #e5e7eb; padding-top: 20px; font-size: 12px; color: #666; text-align: center;">
+                    <p>Thank you for your business!</p>
+                    <p>Computer generated invoice — signature not required.</p>
+                </div>
+            `;
+
+            printEl.innerHTML = html;
+            document.body.appendChild(printEl);
+
+            // Capture and remove
+            pdf.fromElement(printEl, 'Invoice_' + sale.invoice_no + '.pdf')
+                .finally(function() {
+                    document.body.removeChild(printEl);
+                });
+        });
+    },
+
+    /**
+     * Generate Report PDF with professional header
+     * @param {HTMLElement} contentEl - The report content element
+     * @param {string} title - Report title
+     * @param {string} filename - Filename
+     */
+    generateReportPDF: function(contentEl, title, filename) {
+        // Create a wrapper for the report to add a header
+        var printEl = document.createElement('div');
+        printEl.className = 'print-report-container';
+        printEl.style.width = '800px';
+        printEl.style.padding = '40px';
+        printEl.style.background = 'white';
+
+        api.getConfig().then(function(config) {
+            var headerHtml = `
+                <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
+                    <h1 style="margin: 0; font-size: 22px;">${escapeHtml(config.shop.name)}</h1>
+                    <p style="margin: 3px 0; font-size: 13px;">${escapeHtml(config.shop.address)}</p>
+                    <p style="margin: 3px 0; font-size: 13px;"><strong>Report:</strong> ${escapeHtml(title)} | <strong>Generated on:</strong> ${formatDate(getToday())}</p>
+                </div>
+            `;
+            
+            printEl.innerHTML = headerHtml + contentEl.innerHTML;
+            document.body.appendChild(printEl);
+            
+            pdf.fromElement(printEl, filename)
+                .finally(function() {
+                    document.body.removeChild(printEl);
+                });
+        });
+    }
+};

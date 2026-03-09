@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments — Hisaab Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+    <div class="app-layout">
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon-wrapper-sm">
+                        <i data-lucide="book-open"></i>
+                    </div>
+                    <div><h1>Hisaab Pro</h1><small id="sidebar-shop-name">Business Ledger</small></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Main</div>
+                <a href="/dashboard.html" class="nav-link" data-page="dashboard">
+                    <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+                </a>
+                <a href="sales.html" class="nav-link" data-page="sales">
+                    <span class="nav-icon"><i data-lucide="shopping-cart"></i></span> Sales
+                </a>
+                <a href="purchases.html" class="nav-link" data-page="purchases">
+                    <span class="nav-icon"><i data-lucide="shopping-bag"></i></span> Purchases
+                </a>
+                <a href="/payments.html" class="nav-link active" data-page="payments">
+                    <span class="nav-icon"><i data-lucide="indian-rupee"></i></span> Payments
+                </a>
+                <a href="/accounts.html" class="nav-link" data-page="accounts">
+                    <span class="nav-icon"><i data-lucide="users"></i></span> Accounts
+                </a>
+                <div class="nav-section-title">Analysis</div>
+                <a href="/reports.html" class="nav-link" data-page="reports">
+                    <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span> Reports
+                </a>
+                <div class="nav-section-title">System</div>
+                <a href="/settings.html" class="nav-link" data-page="settings">
+                    <span class="nav-icon"><i data-lucide="settings"></i></span> Settings
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="shop-info">
+                    <div class="shop-name" id="footer-shop-name">Loading...</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+                <button class="btn-logout" onclick="logout()" title="Logout">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
+                    <h2 class="page-title">Payments</h2>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="btn-new-payment">+ Record Payment</button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" data-type="" onclick="filterByType(this, '')">All</button>
+                    <button class="tab" data-type="in" onclick="filterByType(this, 'in')"><i data-lucide="arrow-down-left" style="width: 14px; height: 14px; color: var(--color-success);"></i> Received</button>
+                    <button class="tab" data-type="out" onclick="filterByType(this, 'out')"><i data-lucide="arrow-up-right" style="width: 14px; height: 14px; color: var(--color-danger);"></i> Paid Out</button>
+                </div>
+
+                <!-- Filters -->
+                <div class="panel">
+                    <div class="panel-body">
+                        <div class="toolbar">
+                            <div class="search-box">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="search-input" placeholder="Search by account, reference...">
+                            </div>
+                            <div class="filter-group">
+                                <select class="form-control" id="filter-mode" style="width:150px;min-height:38px;">
+                                    <option value="">All Modes</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="bank_transfer">Bank Transfer</option>
+                                    <option value="upi">UPI / Online</option>
+                                    <option value="cheque">Cheque</option>
+                                </select>
+                                <input type="date" class="form-control" id="filter-date-from" style="width:150px;min-height:38px;">
+                                <input type="date" class="form-control" id="filter-date-to" style="width:150px;min-height:38px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments List -->
+                <div class="panel">
+                    <div class="panel-body" id="payments-list">
+                        <div class="loading-overlay"><div class="spinner lg"></div></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- New Payment Modal -->
+    <div class="modal-overlay" id="payment-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Record Payment</h3>
+                <button class="modal-close" onclick="closePaymentModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="payment-form">
+                    <div class="form-group">
+                        <label class="form-label">Type <span class="required">*</span></label>
+                        <select class="form-control" id="payment-type" required>
+                            <option value="in">Payment Received (from Customer)</option>
+                            <option value="out">Payment Made (to Supplier)</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Date <span class="required">*</span></label>
+                            <input type="date" class="form-control" id="payment-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Account <span class="required">*</span></label>
+                            <select class="form-control" id="payment-account" required>
+                                <option value="">Select account</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Amount (₹) <span class="required">*</span></label>
+                            <input type="number" class="form-control" id="payment-amount" step="0.01" min="0.01" required placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mode <span class="required">*</span></label>
+                            <select class="form-control" id="payment-mode" required>
+                                <option value="cash">Cash</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="upi">UPI / Online</option>
+                                <option value="cheque">Cheque</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reference</label>
+                        <input type="text" class="form-control" id="payment-reference" placeholder="Cheque No., UPI ID, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <input type="text" class="form-control" id="payment-notes" placeholder="Optional notes">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closePaymentModal()">Cancel</button>
+                <button class="btn btn-primary" id="btn-save-payment">Save Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/payments.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports — Hisaab Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+    <div class="app-layout">
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon-wrapper-sm">
+                        <i data-lucide="book-open"></i>
+                    </div>
+                    <div><h1>Hisaab Pro</h1><small id="sidebar-shop-name">Business Ledger</small></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Main</div>
+                <a href="/dashboard.html" class="nav-link" data-page="dashboard">
+                    <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+                </a>
+                <a href="sales.html" class="nav-link" data-page="sales">
+                    <span class="nav-icon"><i data-lucide="shopping-cart"></i></span> Sales
+                </a>
+                <a href="purchases.html" class="nav-link" data-page="purchases">
+                    <span class="nav-icon"><i data-lucide="shopping-bag"></i></span> Purchases
+                </a>
+                <a href="/payments.html" class="nav-link" data-page="payments">
+                    <span class="nav-icon"><i data-lucide="indian-rupee"></i></span> Payments
+                </a>
+                <a href="/accounts.html" class="nav-link" data-page="accounts">
+                    <span class="nav-icon"><i data-lucide="users"></i></span> Accounts
+                </a>
+                <div class="nav-section-title">Analysis</div>
+                <a href="/reports.html" class="nav-link active" data-page="reports">
+                    <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span> Reports
+                </a>
+                <div class="nav-section-title">System</div>
+                <a href="/settings.html" class="nav-link" data-page="settings">
+                    <span class="nav-icon"><i data-lucide="settings"></i></span> Settings
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="shop-info">
+                    <div class="shop-name" id="footer-shop-name">Loading...</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+                <button class="btn-logout" onclick="logout()" title="Logout">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
+                    <h2 class="page-title">Reports</h2>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-outline" id="btn-print" onclick="window.print()"><i data-lucide="printer"></i> Print</button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <!-- Report Selector -->
+                <div class="panel">
+                    <div class="panel-body">
+                        <div class="toolbar">
+                            <div class="filter-group">
+                                <select class="form-control" id="report-type" style="width:250px; min-height:38px;">
+                                    <option value="daily-sales">Daily Sales Report</option>
+                                    <option value="monthly">Monthly Financial Report</option>
+                                    <option value="account-ledger">Account Ledger (Statement)</option>
+                                    <option value="debtor-aging">Debtor Aging Report</option>
+                                    <option value="creditor-schedule">Creditor Payment Schedule</option>
+                                    <option value="balance-sheet">Balance Sheet</option>
+                                </select>
+                                <select class="form-control" id="report-account" style="width:200px; min-height:38px; display:none;">
+                                    <option value="">Select Account...</option>
+                                </select>
+                                <input type="date" class="form-control" id="report-date" style="width:160px; min-height:38px;">
+                                <div id="range-filters" style="display:none; gap:10px; align-items:center;">
+                                    <input type="date" class="form-control" id="report-date-from" style="width:150px; min-height:38px;">
+                                    <span>to</span>
+                                    <input type="date" class="form-control" id="report-date-to" style="width:150px; min-height:38px;">
+                                </div>
+                                <input type="month" class="form-control" id="report-month" style="width:160px; min-height:38px; display:none;">
+                                <button class="btn btn-primary" id="btn-generate">Generate Report</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Content -->
+                <div class="panel" id="report-panel" style="display:none;">
+                    <div class="panel-header" style="justify-content: space-between;">
+                        <h3 id="report-title">Report</h3>
+                        <button class="btn btn-outline btn-sm" id="btn-export-options"><i data-lucide="download"></i> Download / Export</button>
+                    </div>
+                    <div class="panel-body" id="report-content"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="export-modal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Export Options</h3>
+                <button class="modal-close" onclick="closeExportModal()">✕</button>
+            </div>
+            <div class="modal-body" style="text-align: center; padding: 32px 24px;">
+                <p style="margin-bottom: 24px; color: var(--color-text-secondary);">Choose your preferred format for the generated report.</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <button class="btn btn-primary" id="btn-export-pdf" style="flex-direction: column; height: auto; padding: 20px; gap: 12px;">
+                        <i data-lucide="file-text" style="width: 32px; height: 32px;"></i>
+                        <span>Professional PDF</span>
+                    </button>
+                    <button class="btn btn-secondary" id="btn-export-excel" style="flex-direction: column; height: auto; padding: 20px; gap: 12px;">
+                        <i data-lucide="file-spreadsheet" style="width: 32px; height: 32px;"></i>
+                        <span>Excel / CSV</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="js/pdf.js"></script>
+    <script src="js/reports.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+/**
+ * theme.css — Hisaab Pro Design System
+ * 
+ * CSS custom properties — the ONLY file changed per client.
+ * All colors, fonts, spacing, and shadows are defined here.
+ * Compatible with Chromium 108+ (Electron v22 / Windows 7)
+ */
+
+:root {
+    /* ——— Professional Brand Colors (Slate & Indigo) ——— */
+    --color-primary:          #6366F1; /* Indigo 500 */
+    --color-primary-hover:    #4F46E5; /* Indigo 600 */
+    --color-primary-light:    #EEF2FF; /* Indigo 50 */
+    --color-primary-dark:     #3730A3; /* Indigo 800 */
+    
+    --color-accent:           #10B981; /* Emerald 500 */
+    --color-accent-light:     #ECFDF5; /* Emerald 50 */
+    --color-accent-hover:     #059669; /* Emerald 600 */
+    
+    --color-danger:           #EF4444; /* Red 500 */
+    --color-danger-light:     #FEF2F2; /* Red 50 */
+    --color-danger-hover:     #DC2626; /* Red 600 */
+    
+    --color-warning:          #F59E0B; /* Amber 500 */
+    --color-warning-light:    #FFFBEB; /* Amber 50 */
+    --color-warning-hover:    #D97706; /* Amber 600 */
+
+    --color-info:             #0EA5E9; /* Sky 500 */
+    --color-info-light:       #F0F9FF; /* Sky 50 */
+
+    /* ——— Neutral Colors ——— */
+    --color-text:             #0F172A; /* Slate 900 */
+    --color-text-secondary:   #475569; /* Slate 600 */
+    --color-text-muted:       #94A3B8; /* Slate 400 */
+    --color-text-inverse:     #FFFFFF;
+
+    /* ——— Surfaces ——— */
+    --color-bg:               #F8FAFC; /* Slate 50 */
+    --color-surface:          #FFFFFF;
+    --color-surface-hover:    #F1F5F9; /* Slate 100 */
+    --color-border:           #E2E8F0; /* Slate 200 */
+    --color-border-light:     #F1F5F9; /* Slate 100 */
+    --color-divider:          #E2E8F0;
+
+    /* ——— Sidebar ——— */
+    --color-sidebar-bg:       #0F172A; /* Slate 900 */
+    --color-sidebar-text:     #94A3B8; /* Slate 400 */
+    --color-sidebar-active:   #6366F1;
+    --color-sidebar-hover:    #1E293B; /* Slate 800 */
+
+    /* ——— Glassmorphism ——— */
+    --glass-bg:               rgba(255, 255, 255, 0.7);
+    --glass-border:           rgba(255, 255, 255, 0.3);
+    --glass-blur:             12px;
+
+    /* ——— Typography ——— */
+    --font-family:            'Outfit', 'Inter', -apple-system, sans-serif;
+    --font-family-mono:       'JetBrains Mono', 'Cascadia Code', monospace;
+    
+    --font-size-xs:           12px;
+    --font-size-sm:           14px;
+    --font-size-base:         16px;
+    --font-size-lg:           18px;
+    --font-size-xl:           24px;
+    --font-size-2xl:          32px;
+    --font-size-3xl:          40px;
+
+    --font-weight-light:      300;
+    --font-weight-normal:     400;
+    --font-weight-medium:     500;
+    --font-weight-semibold:   600;
+    --font-weight-bold:       700;
+
+    --line-height:            1.5;
+
+    /* ——— Spacing ——— */
+    --space-xs:   4px;
+    --space-sm:   8px;
+    --space-md:   16px;
+    --space-lg:   24px;
+    --space-xl:   32px;
+    --space-2xl:  48px;
+
+    /* ——— Borders & Radius ——— */
+    --radius-sm:  6px;
+    --radius:     10px;
+    --radius-lg:  14px;
+    --radius-xl:  20px;
+    --radius-full: 9999px;
+
+    /* ——— Shadows (Layered) ——— */
+    --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow:     0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl:  0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-indigo: 0 10px 15px -3px rgba(99, 102, 241, 0.2);
+
+    /* ——— Transitions ——— */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition:      250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ——— Layout ——— */
+    --sidebar-width:   260px;
+    --header-height:   72px;
+    --content-max-width: 1400px;
+
+    /* ——— Z-index ——— */
+    --z-dropdown:    100;
+    --z-sticky:      200;
+    --z-modal-bg:    300;
+    --z-modal:       400;
+    --z-toast:       500;
+}

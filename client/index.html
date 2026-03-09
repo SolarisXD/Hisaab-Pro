@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hisaab Pro — Secure Business Ledger System">
+    <title>Login — Hisaab Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <div class="login-page">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="logo-section">
+                    <div class="logo-icon-wrapper">
+                        <i data-lucide="book-open" class="logo-icon"></i>
+                    </div>
+                    <h1 id="app-title">Hisaab Pro</h1>
+                    <p id="shop-name">The Professional Business Ledger</p>
+                </div>
+
+                <div id="login-error" class="login-error"></div>
+
+                <form id="login-form" autocomplete="off">
+                    <div class="form-group">
+                        <label class="form-label" for="username">Username</label>
+                        <input type="text" id="username" name="username" class="form-control" placeholder="Enter username" required autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                    </div>
+
+                    <button type="submit" id="login-btn" class="btn btn-primary btn-block btn-lg" style="margin-top: 8px;">
+                        Sign In
+                    </button>
+                </form>
+
+                <div id="signup-link-container" class="signup-footer" style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--color-border-light); display: none;">
+                    <p style="color: var(--color-text-secondary); margin-bottom: 8px; font-size: 14px;">Ready to professionalize your business?</p>
+                    <a href="/signup.html" class="btn btn-outline btn-block">
+                        Start Your New Journey <i data-lucide="sparkles" style="width: 14px; height: 14px; margin-left: 4px;"></i>
+                    </a>
+                </div>
+
+                <div style="text-align: center; margin-top: 32px; color: var(--color-text-muted); font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+                    <span>All data is encrypted and stored locally</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

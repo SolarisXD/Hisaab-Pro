@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Registration — Hisaab Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <style>
+        .signup-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+        }
+        .signup-card {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            padding: 40px;
+        }
+        .step { display: none; }
+        .step.active { display: block; }
+        .step-header { margin-bottom: 32px; text-align: center; }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-border);
+        }
+        .dot.active {
+            background: var(--color-primary);
+            width: 24px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="signup-card">
+            <div class="step-indicator">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+
+            <form id="signup-form">
+                <!-- Step 1: Business Details -->
+                <div class="step active" id="step-1">
+                    <div class="step-header">
+                        <h2>Business Registration</h2>
+                        <p style="color: var(--color-text-secondary);">Tell us about your shop or business</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Business Name</label>
+                        <input type="text" id="shop-name" class="form-control" placeholder="e.g. Rajasthan Sanitary" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Business Address</label>
+                        <textarea id="shop-address" class="form-control" rows="3" placeholder="Full business address" required></textarea>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="text" id="shop-phone" class="form-control" placeholder="10-digit mobile" required>
+                        </div>
+                        <div class="form-group">
+                            <label>GSTIN (Optional)</label>
+                            <input type="text" id="shop-gstin" class="form-control" placeholder="GST Number">
+                        </div>
+                    </div>
+                    <div style="margin-top: 32px;">
+                        <button type="button" class="btn btn-primary btn-block" onclick="nextStep(2)">
+                            Next: Administrator Account <i data-lucide="arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Admin Account -->
+                <div class="step" id="step-2">
+                    <div class="step-header">
+                        <h2>Owner Account</h2>
+                        <p style="color: var(--color-text-secondary);">Setup the primary administrator account</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="admin-username" class="form-control" placeholder="e.g. admin" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="admin-password" class="form-control" placeholder="Minimum 6 characters" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="confirm-password" class="form-control" placeholder="Repeat password" required>
+                    </div>
+                    <div class="grid-2" style="margin-top: 32px; gap: 12px;">
+                        <button type="button" class="btn btn-outline" onclick="nextStep(1)">Back</button>
+                        <button type="submit" class="btn btn-primary">Complete Setup <i data-lucide="check"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        function nextStep(step) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step-' + step).classList.add('active');
+            
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((d, i) => {
+                d.classList.toggle('active', i === (step - 1));
+            });
+        }
+
+        document.getElementById('signup-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('admin-password').value;
+            const confirm = document.getElementById('confirm-password').value;
+            
+            if (password !== confirm) {
+                showToast('Passwords do not match', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showToast('Password must be at least 6 characters', 'error');
+                return;
+            }
+
+            const data = {
+                shopDetails: {
+                    name: document.getElementById('shop-name').value,
+                    address: document.getElementById('shop-address').value,
+                    phone: document.getElementById('shop-phone').value,
+                    gstin: document.getElementById('shop-gstin').value
+                },
+                ownerUser: {
+                    username: document.getElementById('admin-username').value,
+                    password: password
+                }
+            };
+
+            api.post('/auth/signup', data)
+                .then(res => {
+                    showToast('Setup complete! Redirecting to login...', 'success');
+                    setTimeout(() => window.location.href = '/index.html', 2000);
+                })
+                .catch(err => {
+                    showToast(err.message, 'error');
+                });
+        });
+    </script>
+</body>
+</html>

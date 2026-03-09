@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Database files
+*.db
+*.db-journal
+data/
+
+# Local config overrides
+config.local.json
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Python sync (Phase 5)
+sync/__pycache__/
+sync/*.pyc
+sync/venv/
+
+# Backups (managed separately)
+backups/

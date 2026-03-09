@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Hisaab Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Overlay (mobile) -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon-wrapper-sm">
+                        <i data-lucide="book-open"></i>
+                    </div>
+                    <div><h1>Hisaab Pro</h1><small id="sidebar-shop-name">Business Ledger</small></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Main</div>
+                <a href="/dashboard.html" class="nav-link active" data-page="dashboard">
+                    <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+                </a>
+                <a href="sales.html" class="nav-link" data-page="sales">
+                    <span class="nav-icon"><i data-lucide="shopping-cart"></i></span> Sales
+                </a>
+                <a href="purchases.html" class="nav-link" data-page="purchases">
+                    <span class="nav-icon"><i data-lucide="shopping-bag"></i></span> Purchases
+                </a>
+                <a href="/payments.html" class="nav-link" data-page="payments">
+                    <span class="nav-icon"><i data-lucide="indian-rupee"></i></span> Payments
+                </a>
+                <a href="/accounts.html" class="nav-link" data-page="accounts">
+                    <span class="nav-icon"><i data-lucide="users"></i></span> Accounts
+                </a>
+
+                <div class="nav-section-title">Analysis</div>
+                <a href="/reports.html" class="nav-link" data-page="reports">
+                    <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span> Reports
+                </a>
+
+                <div class="nav-section-title">System</div>
+                <a href="/settings.html" class="nav-link" data-page="settings">
+                    <span class="nav-icon"><i data-lucide="settings"></i></span> Settings
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="shop-info">
+                    <div class="shop-name" id="footer-shop-name">Loading...</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+                <button class="btn-logout" onclick="logout()" title="Logout">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
+                    <h2 class="page-title">Dashboard</h2>
+                </div>
+                <div class="header-actions">
+                    <div class="dropdown">
+                        <div class="user-menu" id="user-menu-toggle">
+                            <div class="user-avatar" id="user-avatar">A</div>
+                            <span id="username-display" style="font-size: 14px; font-weight: 500;">Admin</span>
+                            <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: var(--color-text-muted);"></i>
+                        </div>
+                        <div class="dropdown-menu" id="user-dropdown">
+                            <button class="dropdown-item" onclick="window.location.href='/settings.html'"><i data-lucide="user"></i> Profile</button>
+                            <button class="dropdown-item" onclick="window.location.href='/settings.html'"><i data-lucide="settings"></i> Settings</button>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item" onclick="logout()" style="color: var(--color-danger);"><i data-lucide="log-out"></i> Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <!-- Stats Cards -->
+                <div class="stats-row">
+                    <div class="stat-card primary">
+                        <div class="stat-label">Today's Sales</div>
+                        <div class="stat-value" id="today-sales">₹0</div>
+                        <div class="stat-change" id="today-sales-count">0 invoices</div>
+                    </div>
+                    <div class="stat-card info">
+                        <div class="stat-label">This Month</div>
+                        <div class="stat-value" id="month-sales">₹0</div>
+                        <div class="stat-change" id="month-sales-count">0 invoices</div>
+                    </div>
+                    <div class="stat-card danger">
+                        <div class="stat-label">Outstanding (Debtors)</div>
+                        <div class="stat-value" id="total-debtors">₹0</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-label">Payable (Creditors)</div>
+                        <div class="stat-value" id="total-creditors">₹0</div>
+                    </div>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-card success">
+                        <div class="stat-label">Cash Balance</div>
+                        <div class="stat-value" id="cash-balance">₹0</div>
+                    </div>
+                    <div class="stat-card info">
+                        <div class="stat-label">Bank Balance</div>
+                        <div class="stat-value" id="bank-balance">₹0</div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid-2">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3><i data-lucide="line-chart" style="width:18px; height:18px; vertical-align:text-bottom; margin-right:8px;"></i> Daily Sales Trend (Last 7 Days)</h3>
+                        </div>
+                        <div class="panel-body">
+                            <canvas id="daily-chart" height="250"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3><i data-lucide="bar-chart" style="width:18px; height:18px; vertical-align:text-bottom; margin-right:8px;"></i> Monthly Comparison</h3>
+                        </div>
+                        <div class="panel-body">
+                            <canvas id="monthly-chart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3><i data-lucide="history" style="width:18px; height:18px; vertical-align:text-bottom; margin-right:8px;"></i> Recent Transactions</h3>
+                        <a href="/sales.html" class="btn btn-outline btn-sm">View All <i data-lucide="arrow-right" style="width:14px; height:14px;"></i></a>
+                    </div>
+                    <div class="panel-body" id="recent-transactions">
+                        <div class="loading-overlay">
+                            <div class="spinner lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

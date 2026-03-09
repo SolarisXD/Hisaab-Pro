@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales — Hisaab Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+    <div class="app-layout">
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <!-- Sidebar (same as dashboard) -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon-wrapper-sm">
+                        <i data-lucide="book-open"></i>
+                    </div>
+                    <div><h1>Hisaab Pro</h1><small id="sidebar-shop-name">Business Ledger</small></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Main</div>
+                <a href="/dashboard.html" class="nav-link" data-page="dashboard">
+                    <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+                </a>
+                <a href="sales.html" class="nav-link active" data-page="sales">
+                    <span class="nav-icon"><i data-lucide="shopping-cart"></i></span> Sales
+                </a>
+                <a href="purchases.html" class="nav-link" data-page="purchases">
+                    <span class="nav-icon"><i data-lucide="shopping-bag"></i></span> Purchases
+                </a>
+                <a href="/payments.html" class="nav-link" data-page="payments">
+                    <span class="nav-icon"><i data-lucide="indian-rupee"></i></span> Payments
+                </a>
+                <a href="/accounts.html" class="nav-link" data-page="accounts">
+                    <span class="nav-icon"><i data-lucide="users"></i></span> Accounts
+                </a>
+                <div class="nav-section-title">Analysis</div>
+                <a href="/reports.html" class="nav-link" data-page="reports">
+                    <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span> Reports
+                </a>
+                <div class="nav-section-title">System</div>
+                <a href="/settings.html" class="nav-link" data-page="settings">
+                    <span class="nav-icon"><i data-lucide="settings"></i></span> Settings
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="shop-info">
+                    <div class="shop-name" id="footer-shop-name">Loading...</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+                <button class="btn-logout" onclick="logout()" title="Logout">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
+                    <h2 class="page-title">Sales</h2>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="btn-new-sale">+ New Sale</button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <!-- Filters -->
+                <div class="panel">
+                    <div class="panel-body">
+                        <div class="toolbar">
+                            <div class="search-box">
+                                <span class="search-icon"><i data-lucide="search"></i></span>
+                                <input type="text" id="search-input" placeholder="Search invoices, customers...">
+                            </div>
+                            <div class="filter-group">
+                                <select class="form-control" id="filter-status" style="width:130px; min-height:38px;">
+                                    <option value="">All Status</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="partial">Partial</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+                                <input type="date" class="form-control" id="filter-date-from" style="width:150px; min-height:38px;" placeholder="From">
+                                <input type="date" class="form-control" id="filter-date-to" style="width:150px; min-height:38px;" placeholder="To">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales List -->
+                <div class="panel">
+                    <div class="panel-body" id="sales-list">
+                        <div class="loading-overlay"><div class="spinner lg"></div></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- New Sale Modal -->
+    <div class="modal-overlay" id="sale-modal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h3 id="sale-modal-title">New Sale</h3>
+                <button class="modal-close" onclick="closeSaleModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="sale-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Date <span class="required">*</span></label>
+                            <input type="date" class="form-control" id="sale-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Customer</label>
+                            <select class="form-control" id="sale-customer">
+                                <option value="">Walk-in Customer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Total Amount (₹) <span class="required">*</span></label>
+                            <input type="number" class="form-control" id="sale-total" step="0.01" required placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Book Ref No <span class="required">*</span></label>
+                            <input type="text" class="form-control" id="sale-ref-no" required placeholder="e.g. 01-01">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                         <div class="form-group">
+                            <label class="form-label">GST %</label>
+                            <select class="form-control" id="sale-tax-percent">
+                                <option value="0">Exempt (0%)</option>
+                                <option value="5">GST 5%</option>
+                                <option value="12">GST 12%</option>
+                                <option value="18" selected>GST 18%</option>
+                                <option value="28">GST 28%</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Amount Paid (₹)</label>
+                            <input type="number" class="form-control" id="sale-amount-paid" step="0.01" value="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <input type="text" class="form-control" id="sale-notes" placeholder="Optional notes for this invoice">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeSaleModal()">Cancel</button>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-outline" id="btn-download-sale" style="display:none;"><i data-lucide="download"></i> Print / Download (Alt+p)</button>
+                    <button class="btn btn-danger" id="btn-delete-sale" style="display:none;"><i data-lucide="trash-2"></i> Delete (Del/F8)</button>
+                    <button class="btn btn-primary" id="btn-save-sale">Save Sale (F2)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/shortcuts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="js/pdf.js"></script>
+    <script src="js/sales.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

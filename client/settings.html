@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings — Hisaab Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <div class="app-layout">
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon-wrapper-sm">
+                        <i data-lucide="book-open"></i>
+                    </div>
+                    <div><h1>Hisaab Pro</h1><small id="sidebar-shop-name">Business Ledger</small></div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Main</div>
+                <a href="/dashboard.html" class="nav-link" data-page="dashboard">
+                    <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+                </a>
+                <a href="sales.html" class="nav-link" data-page="sales">
+                    <span class="nav-icon"><i data-lucide="shopping-cart"></i></span> Sales
+                </a>
+                <a href="purchases.html" class="nav-link" data-page="purchases">
+                    <span class="nav-icon"><i data-lucide="shopping-bag"></i></span> Purchases
+                </a>
+                <a href="/payments.html" class="nav-link" data-page="payments">
+                    <span class="nav-icon"><i data-lucide="indian-rupee"></i></span> Payments
+                </a>
+                <a href="/accounts.html" class="nav-link" data-page="accounts">
+                    <span class="nav-icon"><i data-lucide="users"></i></span> Accounts
+                </a>
+                <div class="nav-section-title">Analysis</div>
+                <a href="/reports.html" class="nav-link" data-page="reports">
+                    <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span> Reports
+                </a>
+                <div class="nav-section-title">System</div>
+                <a href="/settings.html" class="nav-link active" data-page="settings">
+                    <span class="nav-icon"><i data-lucide="settings"></i></span> Settings
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="shop-info">
+                    <div class="shop-name" id="footer-shop-name">Loading...</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+                <button class="btn-logout" onclick="logout()" title="Logout">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button id="sidebar-toggle" class="sidebar-toggle"><i data-lucide="menu"></i></button>
+                    <h2 class="page-title">Settings</h2>
+                </div>
+            </header>
+
+            <div class="page-content" style="display: flex; flex-direction: column; gap: 24px;">
+                
+                <!-- Section 1: Business Profile -->
+                <div class="panel">
+                    <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="store"></i> Shop Information</h3>
+                        <button class="btn btn-primary btn-sm" id="btn-save-shop">Save Changes</button>
+                    </div>
+                    <div class="panel-body">
+                        <form id="shop-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Shop Name</label>
+                                    <input type="text" class="form-control" id="shop-name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">GSTIN</label>
+                                    <input type="text" class="form-control" id="shop-gstin">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Address</label>
+                                    <input type="text" class="form-control" id="shop-address">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone</label>
+                                    <input type="text" class="form-control" id="shop-phone">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Default GST %</label>
+                                    <input type="number" class="form-control" id="shop-tax-rate">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Invoice Prefix</label>
+                                    <input type="text" class="form-control" id="shop-prefix">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Section 2: Financial Year & Ref Numbers -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="calendar"></i> Financial Year</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div id="fy-active-badge" style="margin-bottom: 16px;"></div>
+                            <div id="fy-list" style="margin-bottom: 16px;"></div>
+                            <button class="btn btn-outline btn-sm" onclick="openFYModal()">+ New Financial Year</button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="book"></i> Book Reference Settings</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Current Book No</label>
+                                    <input type="text" class="form-control" id="setting-book-no" placeholder="01">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Current Page No</label>
+                                    <input type="text" class="form-control" id="setting-page-no" placeholder="01">
+                                </div>
+                            </div>
+                            <button class="btn btn-outline btn-sm" id="btn-save-book-settings">Update Book Reference</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Security & Backups -->
+                <div class="panel">
+                    <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="shield-check"></i> Security & Backups</h3>
+                        <button id="btn-manual-backup" class="btn btn-secondary btn-sm">Create Manual Backup</button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="backup-info" style="margin-bottom: 24px;"></div>
+                        
+                        <h4 style="margin-bottom: 12px; font-size: 14px;">Change Authentication Password</h4>
+                        <form id="password-form" style="max-width: 500px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <input type="password" class="form-control" id="pass-old" placeholder="Current Password" required>
+                            </div>
+                            <input type="password" class="form-control" id="pass-new" placeholder="New Password" required>
+                            <input type="password" class="form-control" id="pass-confirm" placeholder="Confirm New" required>
+                            <button class="btn btn-primary" style="grid-column: span 2;">Update Password</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Section 4: System Info -->
+                <div class="panel">
+                    <div class="panel-body">
+                         <div style="display:flex; justify-content: space-between; align-items: center; color: var(--color-text-secondary); font-size: 13px;">
+                            <div>Hisaab Pro Version 1.1.0 (Refined)</div>
+                            <div>Database: SQLCipher Layer 2</div>
+                         </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- FY Modal -->
+    <div class="modal-overlay" id="fy-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>New Financial Year</h3>
+                <button class="modal-close" onclick="closeFYModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="fy-form">
+                    <div class="form-group">
+                        <label class="form-label">FY Name</label>
+                        <input type="text" class="form-control" id="fy-name" placeholder="e.g. 2026-27" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="fy-start" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="fy-end" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeFYModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btn-save-fy">Create FY</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/shortcuts.js"></script>
+    <script src="js/settings.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

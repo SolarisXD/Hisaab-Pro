@@ -1,0 +1,38 @@
+{
+  "name": "hisaab-pro",
+  "version": "1.0.0",
+  "description": "Secure, offline-first business ledger system for small retail shops",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "seed": "node server/db/seed.js",
+    "demo": "node server/db/seed.js --demo && node server/index.js"
+  },
+  "engines": {
+    "node": ">=14 <20"
+  },
+  "keywords": [
+    "offline-first",
+    "sqlite",
+    "encryption",
+    "pwa",
+    "nodejs",
+    "vanilla-js",
+    "hisaab-pro",
+    "small-business",
+    "india"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3-multiple-ciphers": "^9.4.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

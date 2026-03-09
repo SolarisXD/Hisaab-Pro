@@ -1,0 +1,128 @@
+/**
+ * print.css — Hisaab Pro Print Styles
+ * 
+ * Applied when printing or generating PDFs.
+ * Hides navigation, optimizes for A4 paper.
+ */
+
+@media print {
+    /* Hide non-printable elements */
+    .sidebar,
+    .top-header,
+    .sidebar-overlay,
+    .toast-container,
+    .modal-overlay,
+    .btn,
+    .toolbar,
+    .no-print {
+        display: none !important;
+    }
+
+    /* Reset layout */
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 12pt;
+        line-height: 1.4;
+    }
+
+    .app-layout {
+        display: block;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+    }
+
+    .page-content {
+        padding: 0 !important;
+    }
+
+    /* Remove shadows and borders */
+    .panel,
+    .stat-card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+
+    /* Page setup */
+    @page {
+        margin: 15mm;
+        size: A4;
+    }
+
+    /* Invoice header */
+    .print-header {
+        text-align: center;
+        border-bottom: 2px solid #333;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    .print-header h1 {
+        font-size: 18pt;
+        margin-bottom: 4px;
+    }
+
+    .print-header .shop-details {
+        font-size: 10pt;
+        color: #555;
+    }
+
+    /* Invoice body */
+    .print-invoice-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        font-size: 10pt;
+    }
+
+    /* Tables in print */
+    .table {
+        font-size: 10pt;
+    }
+
+    .table th {
+        background: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Amount styles */
+    .amount {
+        font-weight: bold;
+    }
+
+    /* Page breaks */
+    .page-break {
+        page-break-before: always;
+    }
+
+    .no-break {
+        page-break-inside: avoid;
+    }
+
+    /* Footer */
+    .print-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 8pt;
+        color: #999;
+        border-top: 1px solid #ddd;
+        padding-top: 5px;
+    }
+}
+
+/* ——— Print-specific classes (used in PDF generation) ——— */
+.print-only {
+    display: none;
+}
+
+@media print {
+    .print-only {
+        display: block !important;
+    }
+}
