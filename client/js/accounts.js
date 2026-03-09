@@ -118,19 +118,28 @@
             return;
         }
 
-        var promise = editingAccountId
-            ? api.put('/accounts/' + editingAccountId, data)
-            : api.post('/accounts', data);
+        showConfirm({
+            title: editingAccountId ? 'Update Account' : 'Create Account',
+            message: 'Are you sure you want to ' + (editingAccountId ? 'save changes to' : 'create') + ' this account?',
+            confirmText: editingAccountId ? 'Save Changes' : 'Create Account',
+            intent: 'primary'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
 
-        promise
-            .then(function() {
-                showToast(editingAccountId ? 'Account updated!' : 'Account created!', 'success');
-                closeAccountModal();
-                loadAccounts();
-            })
-            .catch(function(err) {
-                showToast('Error: ' + err.message, 'error');
-            });
+            var promise = editingAccountId
+                ? api.put('/accounts/' + editingAccountId, data)
+                : api.post('/accounts', data);
+
+            promise
+                .then(function() {
+                    showToast(editingAccountId ? 'Account updated!' : 'Account created!', 'success');
+                    closeAccountModal();
+                    loadAccounts();
+                })
+                .catch(function(err) {
+                    showToast('Error: ' + err.message, 'error');
+                });
+        });
     }
 
     window.editAccount = function(id) {
@@ -144,15 +153,22 @@
     };
 
     window.deleteAccount = function(id) {
-        if (!confirm('Deactivate this account?')) return;
-        api.delete('/accounts/' + id)
-            .then(function() {
-                showToast('Account deactivated', 'success');
-                loadAccounts();
-            })
-            .catch(function(err) {
-                showToast('Error: ' + err.message, 'error');
-            });
+        showConfirm({
+            title: 'Deactivate Account',
+            message: 'Are you sure you want to deactivate this account?',
+            confirmText: 'Deactivate',
+            intent: 'danger'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+            api.delete('/accounts/' + id)
+                .then(function() {
+                    showToast('Account deactivated', 'success');
+                    loadAccounts();
+                })
+                .catch(function(err) {
+                    showToast('Error: ' + err.message, 'error');
+                });
+        });
     };
 
     window.viewTransactions = function(id, name) {

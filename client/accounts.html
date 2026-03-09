@@ -58,13 +58,16 @@
                 <button class="btn-logout" onclick="logout()" title="Logout">
                     <i data-lucide="log-out"></i>
                 </button>
+                <button class="btn-logout" onclick="exitApp()" title="Exit Application" style="background: rgba(239, 68, 68, 0.1); color: var(--color-danger); border-color: rgba(239, 68, 68, 0.2);">
+                    <i data-lucide="power"></i>
+                </button>
             </div>
         </aside>
 
         <main class="main-content">
             <header class="top-header">
                 <div style="display:flex;align-items:center;gap:12px;">
-                    <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
+                    <button id="sidebar-toggle" class="sidebar-toggle"><i data-lucide="menu"></i></button>
                     <h2 class="page-title">Accounts</h2>
                 </div>
                 <div class="header-actions">
@@ -76,8 +79,8 @@
                 <!-- Tabs -->
                 <div class="tabs">
                     <button class="tab active" onclick="filterAccounts(this, '')">All</button>
-                    <button class="tab" onclick="filterAccounts(this, 'customer')">👤 Customers</button>
-                    <button class="tab" onclick="filterAccounts(this, 'supplier')">🏭 Suppliers</button>
+                    <button class="tab" onclick="filterAccounts(this, 'customer')"><i data-lucide="users" style="width:14px; height:14px;"></i> Customers</button>
+                    <button class="tab" onclick="filterAccounts(this, 'supplier')"><i data-lucide="factory" style="width:14px; height:14px;"></i> Suppliers</button>
                     <button class="tab" onclick="filterAccounts(this, 'cash')"><i data-lucide="banknote" style="width:14px; height:14px;"></i> Cash</button>
                     <button class="tab" onclick="filterAccounts(this, 'bank')"><i data-lucide="landmark" style="width:14px; height:14px;"></i> Bank</button>
                 </div>
@@ -86,7 +89,7 @@
                 <div class="panel">
                     <div class="panel-body">
                         <div class="search-box" style="max-width:100%;">
-                            <span class="search-icon">🔍</span>
+                            <span class="search-icon"><i data-lucide="search"></i></span>
                             <input type="text" id="search-input" placeholder="Search accounts by name or phone...">
                         </div>
                     </div>

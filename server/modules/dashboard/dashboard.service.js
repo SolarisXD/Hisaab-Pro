@@ -13,7 +13,10 @@ var accountsService = require('../accounts/accounts.service');
  * Get complete dashboard data
  */
 function getDashboardData(isDecoy) {
-    var today = new Date().toISOString().split('T')[0];
+    var now = new Date();
+    var offset = now.getTimezoneOffset() * 60000;
+    var localISOTime = (new Date(now.getTime() - offset)).toISOString().split('T')[0];
+    var today = localISOTime;
 
     // Get first day of current month
     var now = new Date();
@@ -50,8 +53,8 @@ function getDashboardData(isDecoy) {
     var recentTransactions = db.prepare(
         'SELECT t.*, a.name as account_name FROM transactions t' +
         ' LEFT JOIN accounts a ON t.account_id = a.id' +
-        ' WHERE t.is_decoy = ?' +
-        ' ORDER BY t.created_at DESC LIMIT 10'
+        ' WHERE t.is_deleted = 0 AND t.is_decoy = ?' +
+        ' ORDER BY t.id DESC LIMIT 10'
     ).all(isDecoy ? 1 : 0);
 
     // Daily sales trend (last 7 days)

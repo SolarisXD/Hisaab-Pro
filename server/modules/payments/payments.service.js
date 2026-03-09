@@ -144,17 +144,85 @@ function updatePayment(id, data, isDecoy) {
     var existing = getPaymentById(id, isDecoy);
     if (!existing) throw new Error('Payment not found');
 
-    db.prepare(
-        'UPDATE payments SET date = ?, amount = ?, mode = ?, reference = ?, notes = ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?'
-    ).run(
-        data.date || existing.date,
-        data.amount || existing.amount,
-        data.mode || existing.mode,
-        data.reference !== undefined ? data.reference : existing.reference,
-        data.notes !== undefined ? data.notes : existing.notes,
-        id
-    );
+    var transaction = db.transaction(function() {
+        // Determine the new amount, type, and account_id from data or existing
+        var newAmount = data.amount || existing.amount;
+        var newType = data.type || existing.type;
+        var newAccountId = data.account_id || existing.account_id;
+        var newDate = data.date || existing.date;
+        var newMode = data.mode || existing.mode;
+        var newReference = data.reference !== undefined ? data.reference : existing.reference;
+        var newNotes = data.notes !== undefined ? data.notes : existing.notes;
 
+        // --- Rollback old balance and sales ---
+        var oldAmount = existing.amount;
+        var oldType = existing.type;
+        var oldAccountId = existing.account_id;
+
+        // Revert account balance for the old payment
+        // If oldType was 'in', balance was decreased by oldAmount, so add it back.
+        // If oldType was 'out', balance was decreased by oldAmount, so add it back.
+        // The balance change for payments is always negative (reducing liability/debt).
+        // So to revert, we add the old amount back to the account.
+        db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+            .run(oldAmount, oldAccountId); // Add back the old amount
+
+        // Revert sale's amount_paid if linked and was 'in'
+        if (existing.sale_id && oldType === 'in') {
+            db.prepare(
+                'UPDATE sales SET amount_paid = amount_paid - ?, status = CASE WHEN amount_paid - ? >= total THEN \'paid\' WHEN amount_paid - ? > 0 THEN \'partial\' ELSE \'pending\' END, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?'
+            ).run(oldAmount, oldAmount, oldAmount, existing.sale_id);
+        }
+
+        // Mark old transaction as deleted
+        db.prepare('UPDATE transactions SET is_deleted = 1 WHERE linked_payment_id = ? AND is_decoy = ?').run(id, isDecoy ? 1 : 0);
+
+        // --- Update payment record ---
+        db.prepare(
+            'UPDATE payments SET date = ?, account_id = ?, amount = ?, type = ?, mode = ?, reference = ?, notes = ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ? AND is_decoy = ?'
+        ).run(
+            newDate,
+            newAccountId,
+            newAmount,
+            newType,
+            newMode,
+            newReference,
+            newNotes,
+            id,
+            isDecoy ? 1 : 0
+        );
+
+        // --- Apply new balance and sales ---
+        // Update account balance for the new payment
+        // 'in' = payment received → reduce customer debt (decrease balance)
+        // 'out' = payment made → reduce supplier liability (decrease balance)
+        var newBalanceChange = newType === 'in' ? -newAmount : -newAmount;
+        db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+            .run(newBalanceChange, newAccountId);
+
+        // Update sale's amount_paid if linked and is 'in'
+        if (existing.sale_id && newType === 'in') { // Assuming sale_id doesn't change, or if it does, it's handled by other logic
+            db.prepare(
+                'UPDATE sales SET amount_paid = amount_paid + ?, status = CASE WHEN amount_paid + ? >= total THEN \'paid\' ELSE \'partial\' END, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?'
+            ).run(newAmount, newAmount, existing.sale_id);
+        }
+
+        // Create new transaction
+        db.prepare(
+            'INSERT INTO transactions (date, account_id, type, amount, description, linked_payment_id, is_decoy, is_deleted)' +
+            ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
+        ).run(
+            newDate,
+            newAccountId,
+            newType === 'in' ? 'credit' : 'debit',
+            newAmount,
+            (newType === 'in' ? 'Payment In' : 'Payment Out') + ' (Updated)',
+            id,
+            isDecoy ? 1 : 0
+        );
+    });
+
+    transaction(); // Execute the transaction
     logger.info('Payments', 'Payment updated: ID ' + id + (isDecoy ? ' [DECOY]' : ''));
     return getPaymentById(id, isDecoy);
 }
@@ -163,7 +231,31 @@ function updatePayment(id, data, isDecoy) {
  * Soft delete a payment
  */
 function deletePayment(id, isDecoy) {
-    db.prepare('UPDATE payments SET is_deleted = 1, updated_at = datetime(\'now\', \'localtime\') WHERE id = ? AND is_decoy = ?').run(id, isDecoy ? 1 : 0);
+    var payment = getPaymentById(id, isDecoy);
+    if (!payment) return false;
+
+    var transaction = db.transaction(function() {
+        // Mark payment as deleted
+        db.prepare('UPDATE payments SET is_deleted = 1, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?').run(id);
+
+        // Roll back account balance (it was decreased by amount, so increase it back)
+        db.prepare('UPDATE accounts SET current_balance = current_balance - ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+            .run(payment.type === 'in' ? -payment.amount : -payment.amount, payment.account_id);
+
+        // Mark transaction as deleted
+        db.prepare('UPDATE transactions SET is_deleted = 1 WHERE linked_payment_id = ?').run(id);
+
+        // If linked to sale, roll back amount_paid
+        if (payment.sale_id && payment.type === 'in') {
+            db.prepare(
+                'UPDATE sales SET amount_paid = amount_paid - ?, status = CASE WHEN amount_paid - ? >= total THEN \'paid\' WHEN amount_paid - ? > 0 THEN \'partial\' ELSE \'pending\' END, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?'
+            ).run(payment.amount, payment.amount, payment.amount, payment.sale_id);
+        }
+
+        return true;
+    });
+
+    transaction();
     logger.info('Payments', 'Payment deleted: ID ' + id + (isDecoy ? ' [DECOY]' : ''));
     return true;
 }

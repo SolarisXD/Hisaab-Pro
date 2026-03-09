@@ -258,33 +258,113 @@ function initSidebar() {
 }
 
 /**
- * Check if user is logged in (by trying to fetch /auth/me)
+ * Show a custom confirmation modal
+ * @param {Object} options { title, message, confirmText, cancelText, intent }
+ * @returns {Promise<boolean>}
  */
-function checkAuth() {
-    return api.get('/auth/me')
-        .then(function(user) {
-            return user;
-        })
-        .catch(function() {
-            var path = window.location.pathname;
-            if (path !== '/' && !path.endsWith('/index.html')) {
-                window.location.href = '/index.html';
+function showConfirm(options) {
+    options = options || {};
+    var title = options.title || 'Confirm Action';
+    var message = options.message || 'Are you sure you want to proceed?';
+    var confirmText = options.confirmText || 'Confirm';
+    var cancelText = options.cancelText || 'Cancel';
+    var intent = options.intent || 'primary'; // primary, danger, success
+
+    return new Promise(function(resolve) {
+        var overlay = document.createElement('div');
+        overlay.className = 'modal-overlay active';
+        overlay.style.zIndex = '3000'; // Above everything
+
+        var modalHtml = 
+            '<div class="modal" style="max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);">' +
+                '<div class="modal-header">' +
+                    '<h3>' + escapeHtml(title) + '</h3>' +
+                    '<button class="modal-close">✕</button>' +
+                '</div>' +
+                '<div class="modal-body" style="padding: 24px; text-align: center;">' +
+                    '<p style="font-size: 16px; color: var(--color-text-secondary); line-height: 1.5;">' + escapeHtml(message) + '</p>' +
+                '</div>' +
+                '<div class="modal-footer" style="padding: 16px 24px; background: var(--color-bg);">' +
+                    '<button class="btn btn-outline btn-cancel" style="min-width: 100px;">' + escapeHtml(cancelText) + '</button>' +
+                    '<button class="btn btn-' + intent + ' btn-confirm" style="min-width: 120px;">' + escapeHtml(confirmText) + '</button>' +
+                '</div>' +
+            '</div>';
+
+        overlay.innerHTML = modalHtml;
+        document.body.appendChild(overlay);
+
+        var btnConfirm = overlay.querySelector('.btn-confirm');
+        var btnCancel = overlay.querySelector('.btn-cancel');
+        var btnClose = overlay.querySelector('.modal-close');
+
+        function cleanup(result) {
+            overlay.remove();
+            window.removeEventListener('keydown', handleKey);
+            resolve(result);
+        }
+
+        function handleKey(e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                cleanup(false);
             }
-            return null;
-        });
+            if (e.key === 'Enter' || e.key === 'F2') {
+                e.preventDefault();
+                cleanup(true);
+            }
+        }
+
+        btnConfirm.onclick = function() { cleanup(true); };
+        btnCancel.onclick = function() { cleanup(false); };
+        btnClose.onclick = function() { cleanup(false); };
+        overlay.onclick = function(e) { if (e.target === overlay) cleanup(false); };
+
+        window.addEventListener('keydown', handleKey);
+        
+        // Auto-focus confirm button for better UX
+        setTimeout(function() { btnConfirm.focus(); }, 100);
+
+        if (window.lucide) lucide.createIcons();
+    });
 }
 
 /**
  * Logout
  */
 function logout() {
-    api.post('/auth/logout')
-        .then(function() {
-            window.location.href = '/index.html';
-        })
-        .catch(function() {
-            window.location.href = '/index.html';
+    showConfirm({
+        title: 'Logout Confirmation',
+        message: 'Are you sure you want to log out of Hisaab Pro?',
+        confirmText: 'Logout',
+        intent: 'danger'
+    }).then(function(confirmed) {
+        if (!confirmed) return;
+        api.post('/auth/logout')
+            .then(function() {
+                window.location.href = '/index.html';
+            })
+            .catch(function() {
+                window.location.href = '/index.html';
+            });
+    });
+}
+
+/**
+ * Exit Application Confirmation
+ */
+function exitApp() {
+    showConfirm({
+        title: 'Exit Application',
+        message: 'Are you sure you want to close Hisaab Pro?',
+        confirmText: 'Exit Now',
+        intent: 'danger'
+    }).then(function(confirmed) {
+        if (!confirmed) return;
+        api.post('/auth/logout').finally(function() {
+            // In a web app, we redirect to a blank or goodbye page
+            window.location.href = 'about:blank';
         });
+    });
 }
 
 /**

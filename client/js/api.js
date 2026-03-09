@@ -139,5 +139,18 @@ var api = {
 
     deletePurchase: function(id) {
         return this.delete('/purchases/' + id);
+    },
+
+    getNextRefNo: function() {
+        return this.get('/sales/next-ref-no');
     }
 };
+
+/**
+ * Global helper to check authentication
+ */
+function checkAuth() {
+    return api.get('/auth/me').catch(function() {
+        return null;
+    });
+}

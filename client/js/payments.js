@@ -141,26 +141,42 @@
             return;
         }
 
-        api.post('/payments', data)
-            .then(function() {
-                showToast('Payment recorded successfully!', 'success');
-                closePaymentModal();
-                loadPayments();
-            })
-            .catch(function(err) {
-                showToast('Error: ' + err.message, 'error');
-            });
+        showConfirm({
+            title: 'Record Payment',
+            message: 'Are you sure you want to record this ' + (data.type === 'in' ? 'received' : 'paid out') + ' payment of ' + formatINR(data.amount) + '?',
+            confirmText: 'Record Payment',
+            intent: 'primary'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+
+            api.post('/payments', data)
+                .then(function() {
+                    showToast('Payment recorded successfully!', 'success');
+                    closePaymentModal();
+                    loadPayments();
+                })
+                .catch(function(err) {
+                    showToast('Error: ' + err.message, 'error');
+                });
+        });
     }
 
     window.deletePayment = function(id) {
-        if (!confirm('Delete this payment?')) return;
-        api.delete('/payments/' + id)
-            .then(function() {
-                showToast('Payment deleted', 'success');
-                loadPayments();
-            })
-            .catch(function(err) {
-                showToast('Error: ' + err.message, 'error');
-            });
+        showConfirm({
+            title: 'Delete Payment',
+            message: 'Are you sure you want to delete this payment record?',
+            confirmText: 'Delete',
+            intent: 'danger'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+            api.delete('/payments/' + id)
+                .then(function() {
+                    showToast('Payment deleted', 'success');
+                    loadPayments();
+                })
+                .catch(function(err) {
+                    showToast('Error: ' + err.message, 'error');
+                });
+        });
     };
 })();

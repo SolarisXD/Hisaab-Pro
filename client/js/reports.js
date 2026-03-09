@@ -142,27 +142,27 @@
 
         switch (type) {
             case 'daily-sales':
-                titleEl.textContent = '📅 Daily Sales Report — ' + formatDate(data.date);
+                titleEl.innerHTML = '<i data-lucide="calendar"></i> Daily Sales Report — ' + formatDate(data.date);
                 contentEl.innerHTML = renderDailySales(data);
                 break;
             case 'monthly':
-                titleEl.textContent = '📊 Monthly Report — ' + data.month;
+                titleEl.innerHTML = '<i data-lucide="bar-chart-3"></i> Monthly Report — ' + data.month;
                 contentEl.innerHTML = renderMonthlyReport(data);
                 break;
             case 'debtor-aging':
-                titleEl.textContent = '⏳ Debtor Aging Report — ' + formatDate(data.date);
+                titleEl.innerHTML = '<i data-lucide="clock"></i> Debtor Aging Report — ' + formatDate(data.date);
                 contentEl.innerHTML = renderDebtorAging(data);
                 break;
             case 'creditor-schedule':
-                titleEl.textContent = '📋 Creditor Payment Schedule — ' + formatDate(data.date);
+                titleEl.innerHTML = '<i data-lucide="clipboard-list"></i> Creditor Payment Schedule — ' + formatDate(data.date);
                 contentEl.innerHTML = renderCreditorSchedule(data);
                 break;
             case 'account-ledger':
-                titleEl.textContent = '📖 Account Ledger: ' + data.account.name;
+                titleEl.innerHTML = '<i data-lucide="book-open"></i> Account Ledger: ' + data.account.name;
                 contentEl.innerHTML = renderAccountLedger(data);
                 break;
             case 'balance-sheet':
-                titleEl.textContent = '📑 Balance Sheet — ' + formatDate(data.date);
+                titleEl.innerHTML = '<i data-lucide="file-text"></i> Balance Sheet — ' + formatDate(data.date);
                 contentEl.innerHTML = renderBalanceSheet(data);
                 break;
         }
@@ -186,7 +186,7 @@
                 { label: 'Status', key: 'status', render: function(row) { return getStatusBadge(row.status); } }
             ]);
         } else {
-            html += '<div class="empty-state"><div class="empty-icon">📋</div><p>No sales on this date</p></div>';
+            html += '<div class="empty-state"><div class="empty-icon"><i data-lucide="clipboard-list"></i></div><p>No sales on this date</p></div>';
         }
         return html;
     }

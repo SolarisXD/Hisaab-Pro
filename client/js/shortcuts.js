@@ -84,7 +84,7 @@ var shortcuts = {
     triggerAction: function(action) {
         if (action === 'save') {
             // Find primary button in active modal or page
-            var saveBtn = document.querySelector('.modal.open .btn-primary, .modal-overlay[style*="display: block"] .btn-primary, .modal-overlay.active .btn-primary, #btn-save-sale, #btn-save-account, #btn-save-payment');
+            var saveBtn = document.querySelector('.modal-overlay.active .btn-confirm, .modal.open .btn-primary, .modal-overlay[style*="display: block"] .btn-primary, .modal-overlay.active .btn-primary, #btn-save-sale, #btn-save-account, #btn-save-payment');
             if (saveBtn && !saveBtn.disabled) {
                 saveBtn.click();
             } else {

@@ -64,6 +64,9 @@
                 <button class="btn-logout" onclick="logout()" title="Logout">
                     <i data-lucide="log-out"></i>
                 </button>
+                <button class="btn-logout" onclick="exitApp()" title="Exit Application" style="background: rgba(239, 68, 68, 0.1); color: var(--color-danger); border-color: rgba(239, 68, 68, 0.2);">
+                    <i data-lucide="power"></i>
+                </button>
             </div>
         </aside>
 
@@ -71,10 +74,13 @@
         <main class="main-content">
             <header class="top-header">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
+                    <button id="sidebar-toggle" class="sidebar-toggle"><i data-lucide="menu"></i></button>
                     <h2 class="page-title">Dashboard</h2>
                 </div>
                 <div class="header-actions">
+                    <button class="btn btn-outline btn-sm" onclick="location.reload()" title="Refresh Dashboard">
+                        <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Refresh
+                    </button>
                     <div class="dropdown">
                         <div class="user-menu" id="user-menu-toggle">
                             <div class="user-avatar" id="user-avatar">A</div>

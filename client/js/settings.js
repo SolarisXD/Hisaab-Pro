@@ -63,11 +63,20 @@
             return;
         }
 
-        api.updateShopConfig(data).then(function() {
-            showToast('Shop information updated!', 'success');
-            loadSettings();
-        }).catch(function(err) {
-            showToast('Error: ' + err.message, 'error');
+        showConfirm({
+            title: 'Update Shop Information',
+            message: 'Are you sure you want to update your shop details? This will be reflected in all documents and reports.',
+            confirmText: 'Update Details',
+            intent: 'primary'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+
+            api.updateShopConfig(data).then(function() {
+                showToast('Shop information updated!', 'success');
+                loadSettings();
+            }).catch(function(err) {
+                showToast('Error: ' + err.message, 'error');
+            });
         });
     }
 
@@ -75,13 +84,22 @@
         var bookNo = document.getElementById('setting-book-no').value;
         var pageNo = document.getElementById('setting-page-no').value;
 
-        Promise.all([
-            api.setSystemSetting('current_book_no', bookNo),
-            api.setSystemSetting('current_page_no', pageNo)
-        ]).then(function() {
-            showToast('Book reference settings updated!', 'success');
-        }).catch(function(err) {
-            showToast('Error: ' + err.message, 'error');
+        showConfirm({
+            title: 'Update Book Settings',
+            message: 'Are you sure you want to update the current Book No and Page No? This affects next auto-generated references.',
+            confirmText: 'Update Settings',
+            intent: 'primary'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+
+            Promise.all([
+                api.setSystemSetting('current_book_no', bookNo),
+                api.setSystemSetting('current_page_no', pageNo)
+            ]).then(function() {
+                showToast('Book reference settings updated!', 'success');
+            }).catch(function(err) {
+                showToast('Error: ' + err.message, 'error');
+            });
         });
     }
 
@@ -116,12 +134,19 @@
     }
 
     window.activateFY = function(id) {
-        if (!confirm('Switch to this financial year? This change is global.')) return;
-        api.activateFinancialYear(id).then(function() {
-            showToast('Financial Year activated!', 'success');
-            loadFinancialYears();
-        }).catch(function(err) {
-            showToast('Error: ' + err.message, 'error');
+        showConfirm({
+            title: 'Switch Financial Year',
+            message: 'Switch to this financial year? This change is global and will affect all data visibility.',
+            confirmText: 'Switch FY',
+            intent: 'warning'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+            api.activateFinancialYear(id).then(function() {
+                showToast('Financial Year activated!', 'success');
+                loadFinancialYears();
+            }).catch(function(err) {
+                showToast('Error: ' + err.message, 'error');
+            });
         });
     };
 
@@ -137,12 +162,21 @@
             return;
         }
 
-        api.createFinancialYear(data).then(function() {
-            showToast('Financial Year created!', 'success');
-            closeFYModal();
-            loadFinancialYears();
-        }).catch(function(err) {
-            showToast('Error: ' + err.message, 'error');
+        showConfirm({
+            title: 'Create Financial Year',
+            message: 'Are you sure you want to create a new financial year?',
+            confirmText: 'Create FY',
+            intent: 'primary'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+
+            api.createFinancialYear(data).then(function() {
+                showToast('Financial Year created!', 'success');
+                closeFYModal();
+                loadFinancialYears();
+            }).catch(function(err) {
+                showToast('Error: ' + err.message, 'error');
+            });
         });
     }
 
@@ -162,20 +196,28 @@
                 '</div>';
         });
     }
-
     function runManualBackup() {
-        var btn = document.getElementById('btn-manual-backup');
-        btn.disabled = true;
-        btn.textContent = '⏳ Backing up...';
-        
-        api.runManualBackup().then(function() {
-            showToast('Backup created successfully!', 'success');
-            loadSecurityStatus();
-        }).catch(function(err) {
-            showToast('Backup failed: ' + err.message, 'error');
-        }).finally(function() {
-            btn.disabled = false;
-            btn.textContent = 'Create Manual Backup';
+        showConfirm({
+            title: 'Manual Backup',
+            message: 'Do you want to create a manual backup of the system database now?',
+            confirmText: 'Create Backup',
+            intent: 'success'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+            
+            var btn = document.getElementById('btn-manual-backup');
+            btn.disabled = true;
+            btn.textContent = '⏳ Backing up...';
+            
+            api.runManualBackup().then(function() {
+                showToast('Backup created successfully!', 'success');
+                loadSecurityStatus();
+            }).catch(function(err) {
+                showToast('Backup failed: ' + err.message, 'error');
+            }).finally(function() {
+                btn.disabled = false;
+                btn.textContent = 'Create Manual Backup';
+            });
         });
     }
 
@@ -188,14 +230,23 @@
         if (newP !== conf) return showToast('New passwords match', 'warning');
         if (newP.length < 6) return showToast('Minimum 6 characters', 'warning');
 
-        api.post('/auth/change-password', { old_password: old, new_password: newP })
-            .then(function() {
-                showToast('Password updated!', 'success');
-                document.getElementById('password-form').reset();
-            })
-            .catch(function(err) {
-                showToast('Error: ' + err.message, 'error');
-            });
+        showConfirm({
+            title: 'Change Password',
+            message: 'Are you sure you want to change your administration password?',
+            confirmText: 'Change Password',
+            intent: 'warning'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+
+            api.post('/auth/change-password', { old_password: old, new_password: newP })
+                .then(function() {
+                    showToast('Password updated!', 'success');
+                    document.getElementById('password-form').reset();
+                })
+                .catch(function(err) {
+                    showToast('Error: ' + err.message, 'error');
+                });
+        });
     }
 
     window.openFYModal = function() {

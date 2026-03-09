@@ -199,7 +199,7 @@ function getAccountLedger(accountId, dateFrom, dateTo, isDecoy) {
         FROM transactions t
         LEFT JOIN sales s ON t.linked_sale_id = s.id
         LEFT JOIN payments p ON t.linked_payment_id = p.id
-        WHERE t.account_id = ? AND t.is_decoy = ?
+        WHERE t.account_id = ? AND t.is_decoy = ? AND t.is_deleted = 0
     `;
     const params = [accountId, isDecoy ? 1 : 0];
 
@@ -223,7 +223,7 @@ function getAccountLedger(accountId, dateFrom, dateTo, isDecoy) {
     if (dateFrom) {
         const prevSum = db.prepare(`
             SELECT SUM(CASE WHEN type = 'debit' THEN amount ELSE -amount END) as sum
-            FROM transactions WHERE account_id = ? AND is_decoy = ? AND date < ?
+            FROM transactions WHERE account_id = ? AND is_decoy = ? AND is_deleted = 0 AND date < ?
         `).get(accountId, isDecoy ? 1 : 0, dateFrom);
         balance += (prevSum.sum || 0);
     }

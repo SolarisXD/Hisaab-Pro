@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     amount              REAL    NOT NULL,
     description         TEXT,
     is_decoy            INTEGER NOT NULL DEFAULT 0,
+    is_deleted          INTEGER NOT NULL DEFAULT 0,
     linked_sale_id      INTEGER,
     linked_purchase_id  INTEGER,
     linked_payment_id   INTEGER,

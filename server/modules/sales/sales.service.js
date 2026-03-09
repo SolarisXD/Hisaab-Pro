@@ -13,23 +13,49 @@ var config = require('../../config');
 var logger = require('../../shared/logger');
 
 /**
- * Generate next invoice number: PREFIX-YYYYMMDD-SEQ
+ * Generate next invoice number: INV-XX
  */
 function generateInvoiceNumber(isDecoy) {
-    var today = new Date();
-    var dateStr = today.getFullYear().toString() +
-        ('0' + (today.getMonth() + 1)).slice(-2) +
-        ('0' + today.getDate()).slice(-2);
+    var prefix = config.invoice_prefix || 'INV';
+    var pattern = prefix + '-%';
 
-    var prefix = config.invoice_prefix;
-    var pattern = prefix + '-' + dateStr + '-%';
-
-    var stmt = db.prepare("SELECT COUNT(*) as count FROM sales WHERE is_decoy = ? AND invoice_no LIKE ?");
+    var stmt = db.prepare("SELECT COUNT(*) as count FROM sales WHERE is_deleted = 0 AND is_decoy = ? AND invoice_no LIKE ?");
     var result = stmt.get(isDecoy ? 1 : 0, pattern);
+    
+    // Simple serial format: INV-01, INV-02...
     var seq = (result.count + 1).toString();
-    while (seq.length < 3) { seq = '0' + seq; }
+    if (seq.length < 2) seq = '0' + seq;
 
-    return prefix + '-' + dateStr + '-' + seq;
+    return prefix + '-' + seq;
+}
+
+/**
+ * Get the next available reference number (Book-Page)
+ */
+function getNextRefNo(isDecoy) {
+    // Find the latest non-deleted ref_no
+    var latest = db.prepare(
+        "SELECT ref_no FROM sales WHERE is_deleted = 0 AND is_decoy = ? AND ref_no LIKE '%-%' ORDER BY id DESC LIMIT 1"
+    ).get(isDecoy ? 1 : 0);
+
+    if (!latest || !latest.ref_no) {
+        return "1-01";
+    }
+
+    var parts = latest.ref_no.split('-');
+    var book = parseInt(parts[0]);
+    var page = parseInt(parts[1]);
+
+    page++;
+    if (page > 100) {
+        book++;
+        page = 1;
+    }
+
+    var pageStr = page.toString();
+    if (pageStr.length < 2) pageStr = '0' + pageStr;
+
+    return book + '-' + pageStr;
 }
 
 /**
@@ -114,9 +140,13 @@ function createSale(data, isDecoy) {
 
 
     var transaction = db.transaction(function() {
+        var now = new Date();
+        var offset = now.getTimezoneOffset() * 60000;
+        var localISOTime = (new Date(now.getTime() - offset)).toISOString().split('T')[0];
+
         var result = insertSale.run(
             invoiceNo,
-            data.date || new Date().toISOString().split('T')[0],
+            data.date || localISOTime,
             data.customer_account_id || null,
             subtotal,
             taxPercent,
@@ -132,20 +162,22 @@ function createSale(data, isDecoy) {
 
         var saleId = result.lastInsertRowid;
 
-        // Update customer account balance (increase debt)
+        // Recording the transaction is MANDATORY for all account sales
         if (data.customer_account_id) {
             var outstandingAmount = total - (data.amount_paid || 0);
+            
+            // 1. Update account balance (increase debt)
             if (outstandingAmount > 0) {
                 db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
                     .run(outstandingAmount, data.customer_account_id);
             }
 
-            // Record transaction
+            // 2. Insert the ledger transaction
             db.prepare(
-                'INSERT INTO transactions (date, account_id, type, amount, description, linked_sale_id, is_decoy)' +
-                ' VALUES (?, ?, ?, ?, ?, ?, ?)'
+                'INSERT INTO transactions (date, account_id, type, amount, description, linked_sale_id, is_decoy, is_deleted)' +
+                ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
             ).run(
-                data.date || new Date().toISOString().split('T')[0],
+                data.date || localISOTime,
                 data.customer_account_id,
                 'debit',
                 total,
@@ -178,6 +210,18 @@ function updateSale(id, data, isDecoy) {
     var amountPaid = data.amount_paid !== undefined ? data.amount_paid : existing.amount_paid;
 
     var transaction = db.transaction(function() {
+        // 1. Rollback old balance and transaction
+        if (existing.customer_account_id) {
+            var oldOutstanding = existing.total - (existing.amount_paid || 0);
+            if (oldOutstanding > 0) {
+                db.prepare('UPDATE accounts SET current_balance = current_balance - ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                    .run(oldOutstanding, existing.customer_account_id);
+            }
+            // Mark old transaction as deleted
+            db.prepare('UPDATE transactions SET is_deleted = 1 WHERE linked_sale_id = ?').run(id);
+        }
+
+        // 2. Update sale
         db.prepare(
             'UPDATE sales SET date = ?, customer_account_id = ?, subtotal = ?, tax_percent = ?, tax_amount = ?, discount = ?, total = ?, amount_paid = ?, status = ?, notes = ?, ref_no = ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?'
         ).run(
@@ -189,6 +233,30 @@ function updateSale(id, data, isDecoy) {
             data.ref_no !== undefined ? data.ref_no : existing.ref_no,
             id
         );
+
+        // 3. Apply new balance and transaction
+        var newCustomerId = data.customer_account_id !== undefined ? data.customer_account_id : existing.customer_account_id;
+        if (newCustomerId) {
+            var newOutstanding = total - amountPaid;
+            if (newOutstanding > 0) {
+                db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                    .run(newOutstanding, newCustomerId);
+            }
+            
+            // Create a new fresh transaction
+            db.prepare(
+                'INSERT INTO transactions (date, account_id, type, amount, description, linked_sale_id, is_decoy, is_deleted)' +
+                ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
+            ).run(
+                data.date || existing.date,
+                newCustomerId,
+                'debit',
+                total,
+                'Sale ' + (data.invoice_no || existing.invoice_no),
+                id,
+                isDecoy ? 1 : 0
+            );
+        }
     });
 
     transaction();
@@ -200,8 +268,29 @@ function updateSale(id, data, isDecoy) {
  * Soft delete a sale
  */
 function deleteSale(id, isDecoy) {
-    var stmt = db.prepare('UPDATE sales SET is_deleted = 1, updated_at = datetime(\'now\', \'localtime\') WHERE id = ? AND is_decoy = ?');
-    stmt.run(id, isDecoy ? 1 : 0);
+    var sale = getSaleById(id, isDecoy);
+    if (!sale) return false;
+
+    var transaction = db.transaction(function() {
+        // Mark sale as deleted
+        db.prepare('UPDATE sales SET is_deleted = 1, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?').run(id);
+
+        // Rollback balance if it's a customer sale
+        if (sale.customer_account_id) {
+            var outstanding = sale.total - (sale.amount_paid || 0);
+            if (outstanding > 0) {
+                db.prepare('UPDATE accounts SET current_balance = current_balance - ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                    .run(outstanding, sale.customer_account_id);
+            }
+        }
+
+        // Mark associated transactions as deleted
+        db.prepare('UPDATE transactions SET is_deleted = 1 WHERE linked_sale_id = ?').run(id);
+
+        return true;
+    });
+
+    transaction();
     logger.info('Sales', 'Sale deleted: ID ' + id + (isDecoy ? ' [DECOY]' : ''));
     return true;
 }
@@ -220,6 +309,7 @@ function getSalesSummary(dateFrom, dateTo, isDecoy) {
 
 module.exports = {
     generateInvoiceNumber: generateInvoiceNumber,
+    getNextRefNo: getNextRefNo,
     listSales: listSales,
     getSaleById: getSaleById,
     createSale: createSale,

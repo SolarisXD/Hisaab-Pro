@@ -144,19 +144,28 @@
             notes: document.getElementById('purchase-notes').value
         };
 
-        var promise = editingPurchaseId
-            ? api.put('/purchases/' + editingPurchaseId, data)
-            : api.createPurchase(data);
+        showConfirm({
+            title: editingPurchaseId ? 'Update Purchase' : 'Record Purchase',
+            message: 'Are you sure you want to ' + (editingPurchaseId ? 'save changes to' : 'record') + ' this purchase bill?',
+            confirmText: editingPurchaseId ? 'Save Changes' : 'Record Purchase',
+            intent: 'primary'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
 
-        promise
-            .then(function(purchase) {
-                showToast(editingPurchaseId ? 'Purchase updated!' : 'Purchase recorded!', 'success');
-                closePurchaseModal();
-                loadPurchases();
-            })
-            .catch(function(err) {
-                showToast('Error: ' + err.message, 'error');
-            });
+            var promise = editingPurchaseId
+                ? api.put('/purchases/' + editingPurchaseId, data)
+                : api.createPurchase(data);
+
+            promise
+                .then(function(purchase) {
+                    showToast(editingPurchaseId ? 'Purchase updated!' : 'Purchase recorded!', 'success');
+                    closePurchaseModal();
+                    loadPurchases();
+                })
+                .catch(function(err) {
+                    showToast('Error: ' + err.message, 'error');
+                });
+        });
     }
 
     window.viewPurchase = function(id) {
@@ -180,14 +189,21 @@
     };
 
     window.deletePurchase = function(id) {
-        if (!confirm('Are you sure you want to delete this purchase?')) return;
-        api.deletePurchase(id)
-            .then(function() {
-                showToast('Purchase deleted', 'success');
-                loadPurchases();
-            })
-            .catch(function(err) {
-                showToast('Error: ' + err.message, 'error');
-            });
+        showConfirm({
+            title: 'Delete Purchase',
+            message: 'Are you sure you want to delete this purchase bill? This action cannot be undone.',
+            confirmText: 'Delete',
+            intent: 'danger'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+            api.deletePurchase(id)
+                .then(function() {
+                    showToast('Purchase deleted', 'success');
+                    loadPurchases();
+                })
+                .catch(function(err) {
+                    showToast('Error: ' + err.message, 'error');
+                });
+        });
     };
 })();

@@ -117,7 +117,27 @@ function createPurchase(data, isDecoy) {
  * Delete purchase (soft)
  */
 function deletePurchase(id, isDecoy) {
-    db.prepare('UPDATE purchases SET is_deleted = 1, updated_at = datetime(\'now\', \'localtime\') WHERE id = ? AND is_decoy = ?').run(id, isDecoy ? 1 : 0);
+    var purchase = getPurchaseById(id, isDecoy);
+    if (!purchase) return false;
+
+    var transaction = db.transaction(function() {
+        // Mark purchase as deleted
+        db.prepare('UPDATE purchases SET is_deleted = 1, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?').run(id);
+
+        // Roll back supplier balance
+        if (purchase.supplier_account_id) {
+            var outstanding = purchase.total - (purchase.amount_paid || 0);
+            db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                .run(outstanding, purchase.supplier_account_id);
+        }
+
+        // Mark associated transactions as deleted
+        db.prepare('UPDATE transactions SET is_deleted = 1 WHERE linked_purchase_id = ?').run(id);
+
+        return true;
+    });
+
+    transaction();
     logger.info('Purchases', 'Purchase deleted: ID ' + id + (isDecoy ? ' [DECOY]' : ''));
     return true;
 }

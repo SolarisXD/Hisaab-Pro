@@ -18,6 +18,7 @@ router.use(requireAuth);
  */
 router.get('/', function(req, res) {
     try {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         var data = dashboardService.getDashboardData(req.session.user.is_decoy);
         res.json(data);
     } catch (err) {

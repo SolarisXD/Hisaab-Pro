@@ -20,6 +20,9 @@
 
         // Load dashboard data
         loadDashboard();
+
+        // Auto-refresh every 30 seconds to keep data live
+        setInterval(loadDashboard, 30000);
     });
 
 
@@ -37,7 +40,7 @@
     }
 
     function loadDashboard() {
-        api.get('/dashboard')
+        api.get('/dashboard', { _: Date.now() })
             .then(function(data) {
                 // Stats cards
                 document.getElementById('today-sales').textContent = formatINR(data.today_sales.total);
@@ -93,16 +96,20 @@
         container.innerHTML = html;
     }
 
+    var dailyChartInstance = null;
+    var monthlyChartInstance = null;
+
     function renderSimpleCharts(charts) {
         // Fallback text-based display if Chart.js not loaded
         var dailyEl = document.getElementById('daily-chart');
         var monthlyEl = document.getElementById('monthly-chart');
 
-        if (charts.daily_trend && charts.daily_trend.length > 0) {
+        if (dailyEl && charts.daily_trend && charts.daily_trend.length > 0) {
             var dailyHtml = '<div style="padding: 16px;">';
+            var maxVal = Math.max.apply(null, charts.daily_trend.map(function(x) { return x.total; })) || 1;
+            
             for (var i = 0; i < charts.daily_trend.length; i++) {
                 var d = charts.daily_trend[i];
-                var maxVal = Math.max.apply(null, charts.daily_trend.map(function(x) { return x.total; })) || 1;
                 var width = Math.max(5, (d.total / maxVal) * 100);
                 dailyHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">';
                 dailyHtml += '<span style="width: 80px; font-size: 12px; color: var(--color-text-secondary);">' + formatDate(d.date) + '</span>';
@@ -114,15 +121,14 @@
             }
             dailyHtml += '</div>';
             dailyEl.parentNode.innerHTML = dailyHtml;
-        } else {
-            dailyEl.parentNode.innerHTML = '<div class="empty-state"><p>No sales data yet</p></div>';
         }
 
-        if (charts.monthly_comparison && charts.monthly_comparison.length > 0) {
+        if (monthlyEl && charts.monthly_comparison && charts.monthly_comparison.length > 0) {
             var monthlyHtml = '<div style="padding: 16px;">';
+            var maxMonthVal = Math.max.apply(null, charts.monthly_comparison.map(function(x) { return x.total; })) || 1;
+
             for (var m = 0; m < charts.monthly_comparison.length; m++) {
                 var mm = charts.monthly_comparison[m];
-                var maxMonthVal = Math.max.apply(null, charts.monthly_comparison.map(function(x) { return x.total; })) || 1;
                 var mWidth = Math.max(5, (mm.total / maxMonthVal) * 100);
                 monthlyHtml += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">';
                 monthlyHtml += '<span style="width: 80px; font-size: 12px; color: var(--color-text-secondary);">' + mm.month + '</span>';
@@ -134,14 +140,17 @@
             }
             monthlyHtml += '</div>';
             monthlyEl.parentNode.innerHTML = monthlyHtml;
-        } else {
-            monthlyEl.parentNode.innerHTML = '<div class="empty-state"><p>No monthly data yet</p></div>';
         }
     }
 
     function renderDailyChart(data) {
-        var ctx = document.getElementById('daily-chart').getContext('2d');
-        new Chart(ctx, {
+        var canvas = document.getElementById('daily-chart');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        
+        if (dailyChartInstance) dailyChartInstance.destroy();
+        
+        dailyChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: data.map(function(d) { return formatDate(d.date); }),
@@ -165,8 +174,13 @@
     }
 
     function renderMonthlyChart(data) {
-        var ctx = document.getElementById('monthly-chart').getContext('2d');
-        new Chart(ctx, {
+        var canvas = document.getElementById('monthly-chart');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        
+        if (monthlyChartInstance) monthlyChartInstance.destroy();
+        
+        monthlyChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: data.map(function(d) { return d.month; }),

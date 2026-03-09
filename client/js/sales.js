@@ -27,14 +27,11 @@
 
     // Auto-calculating Ref No (Book-Page)
     function fetchNextRefNo() {
-        if (editingSaleId) return; // Don't overwrite on edit
-        Promise.all([
-            api.getSystemSetting('current_book_no'),
-            api.getSystemSetting('current_page_no')
-        ]).then(function(results) {
-            var book = results[0].value || '01';
-            var page = results[1].value || '01';
-            document.getElementById('sale-ref-no').value = book + '-' + page;
+        if (editingSaleId) return;
+        api.getNextRefNo().then(function(data) {
+            if (data && data.next_ref_no) {
+                document.getElementById('sale-ref-no').value = data.next_ref_no;
+            }
         }).catch(function() {});
     }
 
@@ -79,6 +76,9 @@
         container.innerHTML = renderTable(sales, [
             { label: 'Invoice No', key: 'invoice_no', render: function(row) {
                 return '<span style="font-weight:600; color: var(--color-primary);">' + escapeHtml(row.invoice_no) + '</span>';
+            }},
+            { label: 'Ref No', key: 'ref_no', render: function(row) {
+                return '<span class="text-muted">' + escapeHtml(row.ref_no || '—') + '</span>';
             }},
             { label: 'Date', key: 'date', render: function(row) { return formatDate(row.date); } },
             { label: 'Customer', key: 'customer_name', render: function(row) { return escapeHtml(row.customer_name || 'Walk-in'); } },
@@ -160,30 +160,28 @@
             notes: document.getElementById('sale-notes').value
         };
 
-        var promise = editingSaleId
-            ? api.put('/sales/' + editingSaleId, data)
-            : api.post('/sales', data);
+        showConfirm({
+            title: editingSaleId ? 'Update Sale' : 'Create Sale',
+            message: 'Are you sure you want to ' + (editingSaleId ? 'save changes to' : 'create') + ' this sale?',
+            confirmText: editingSaleId ? 'Save Changes' : 'Create Sale',
+            intent: 'primary'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
 
-        promise
-            .then(function(sale) {
-                showToast(editingSaleId ? 'Sale updated!' : 'Sale created: ' + sale.invoice_no, 'success');
-                
-                // If new sale, maybe increment page number for next one
-                if (!editingSaleId) {
-                    var currentRef = data.ref_no.split('-');
-                    if (currentRef.length === 2) {
-                        var page = parseInt(currentRef[1]) + 1;
-                        var pageStr = page.toString().padStart(2, '0');
-                        api.setSystemSetting('current_page_no', pageStr);
-                    }
-                }
+            var promise = editingSaleId
+                ? api.put('/sales/' + editingSaleId, data)
+                : api.post('/sales', data);
 
-                closeSaleModal();
-                loadSales();
-            })
-            .catch(function(err) {
-                showToast('Error: ' + err.message, 'error');
-            });
+            promise
+                .then(function(sale) {
+                    showToast(editingSaleId ? 'Sale updated!' : 'Sale created: ' + sale.invoice_no, 'success');
+                    closeSaleModal();
+                    loadSales();
+                })
+                .catch(function(err) {
+                    showToast('Error: ' + err.message, 'error');
+                });
+        });
     }
 
     // Global functions for onclick handlers
@@ -218,14 +216,21 @@
     };
 
     window.deleteSale = function(id) {
-        if (!confirm('Are you sure you want to delete this sale?')) return;
-        api.delete('/sales/' + id)
-            .then(function() {
-                showToast('Sale deleted', 'success');
-                loadSales();
-            })
-            .catch(function(err) {
-                showToast('Error: ' + err.message, 'error');
-            });
+        showConfirm({
+            title: 'Delete Sale',
+            message: 'Are you sure you want to delete this sale? This action cannot be undone.',
+            confirmText: 'Delete',
+            intent: 'danger'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+            api.delete('/sales/' + id)
+                .then(function() {
+                    showToast('Sale deleted', 'success');
+                    loadSales();
+                })
+                .catch(function(err) {
+                    showToast('Error: ' + err.message, 'error');
+                });
+        });
     };
 })();

@@ -41,6 +41,18 @@ router.get('/', function(req, res) {
 });
 
 /**
+ * GET /next-ref-no — Get next available reference number
+ */
+router.get('/next-ref-no', function(req, res) {
+    try {
+        var nextRefNo = salesService.getNextRefNo(req.session.user.is_decoy);
+        res.json({ next_ref_no: nextRefNo });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
  * GET /summary — Sales summary
  */
 router.get('/summary', function(req, res) {

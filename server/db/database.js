@@ -62,6 +62,25 @@ function initializeSchema() {
     // Execute each statement separately (better-sqlite3 exec runs multiple)
     db.exec(schema);
 
+    // One-time migrations for existing databases
+    try {
+        db.exec("ALTER TABLE transactions ADD COLUMN is_deleted INTEGER NOT NULL DEFAULT 0");
+        console.log('[DB] Migration: Added is_deleted to transactions');
+        
+        // Retroactive fix: Mark transactions as deleted if their parent is deleted
+        db.exec("UPDATE transactions SET is_deleted = 1 WHERE linked_sale_id IN (SELECT id FROM sales WHERE is_deleted = 1)");
+        db.exec("UPDATE transactions SET is_deleted = 1 WHERE linked_payment_id IN (SELECT id FROM payments WHERE is_deleted = 1)");
+        db.exec("UPDATE transactions SET is_deleted = 1 WHERE linked_purchase_id IN (SELECT id FROM purchases WHERE is_deleted = 1)");
+        console.log('[DB] Migration: Synced transaction deletions');
+    } catch (e) {
+        // Migration already done or column exists, but let's try to sync anyway if column is there
+        try {
+            db.exec("UPDATE transactions SET is_deleted = 1 WHERE linked_sale_id IN (SELECT id FROM sales WHERE is_deleted = 1) AND is_deleted = 0");
+            db.exec("UPDATE transactions SET is_deleted = 1 WHERE linked_payment_id IN (SELECT id FROM payments WHERE is_deleted = 1) AND is_deleted = 0");
+            db.exec("UPDATE transactions SET is_deleted = 1 WHERE linked_purchase_id IN (SELECT id FROM purchases WHERE is_deleted = 1) AND is_deleted = 0");
+        } catch (inner) {}
+    }
+
     console.log('[DB] Schema initialized successfully');
 }
 

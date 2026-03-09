@@ -124,6 +124,12 @@
     cursor: not-allowed;
 }
 
+.form-control[readonly] {
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: default;
+}
+
 .form-control.error {
     border-color: var(--color-danger);
     background: var(--color-danger-light);
