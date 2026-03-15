@@ -85,8 +85,8 @@ function createPayment(data, isDecoy) {
 
     var transaction = db.transaction(function() {
         var result = db.prepare(
-            'INSERT INTO payments (date, account_id, amount, type, mode, reference, sale_id, notes, is_decoy)' +
-            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO payments (date, account_id, amount, type, mode, reference, ref_no, sale_id, notes, is_decoy)' +
+            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         ).run(
             data.date || new Date().toISOString().split('T')[0],
             data.account_id,
@@ -94,6 +94,7 @@ function createPayment(data, isDecoy) {
             data.type,
             data.mode || 'cash',
             data.reference || null,
+            data.ref_no || null,
             data.sale_id || null,
             data.notes || null,
             isDecoy ? 1 : 0
@@ -179,7 +180,7 @@ function updatePayment(id, data, isDecoy) {
 
         // --- Update payment record ---
         db.prepare(
-            'UPDATE payments SET date = ?, account_id = ?, amount = ?, type = ?, mode = ?, reference = ?, notes = ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ? AND is_decoy = ?'
+            'UPDATE payments SET date = ?, account_id = ?, amount = ?, type = ?, mode = ?, reference = ?, ref_no = ?, notes = ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ? AND is_decoy = ?'
         ).run(
             newDate,
             newAccountId,
@@ -187,6 +188,7 @@ function updatePayment(id, data, isDecoy) {
             newType,
             newMode,
             newReference,
+            data.ref_no !== undefined ? data.ref_no : existing.ref_no,
             newNotes,
             id,
             isDecoy ? 1 : 0

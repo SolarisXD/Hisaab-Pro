@@ -34,6 +34,7 @@
                     var link = document.getElementById('signup-link-container');
                     if (link) link.style.display = 'none'; // Only one-time setup
                     loadShopConfig();
+                    loadFinancialYears();
                 }
             })
             .catch(function() {
@@ -53,6 +54,53 @@
             .catch(function() {});
     }
 
+    function loadFinancialYears() {
+        api.get('/settings/public-financial-years')
+            .then(function(years) {
+                var select = document.getElementById('fy-select');
+                var group = document.getElementById('fy-group');
+                if (!select || !group) return;
+
+                select.innerHTML = '';
+                
+                // Add Legacy Option
+                var legacyOpt = document.createElement('option');
+                legacyOpt.value = 'hisaab.db';
+                legacyOpt.textContent = 'Current/Legacy Data';
+                select.appendChild(legacyOpt);
+
+                var hasActive = false;
+                if (years && years.length > 0) {
+                    years.forEach(function(fy) {
+                        var opt = document.createElement('option');
+                        opt.value = fy.db_filename;
+                        if (fy.is_active === 1) {
+                            opt.selected = true;
+                            hasActive = true;
+                        }
+                        opt.textContent = fy.name + ' (' + formatDate(fy.start_date) + ' to ' + formatDate(fy.end_date) + ')';
+                        select.appendChild(opt);
+                    });
+                }
+                
+                if (!hasActive) {
+                    legacyOpt.selected = true;
+                }
+                
+                group.style.display = 'block';
+            })
+            .catch(function(err) {
+                console.error('Failed to load financial years on login:', err);
+            });
+    }
+
+    // Basic date formatter for the dropdown
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        var d = new Date(dateString);
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
     // Handle login form
     var form = document.getElementById('login-form');
     var errorEl = document.getElementById('login-error');
@@ -63,6 +111,7 @@
 
         var username = document.getElementById('username').value.trim();
         var password = document.getElementById('password').value;
+        var fyFilename = document.getElementById('fy-select') ? document.getElementById('fy-select').value : 'hisaab.db';
 
         if (!username || !password) {
             showError('Please enter username and password');
@@ -76,6 +125,7 @@
         api.post('/auth/login', { username: username, password: password })
             .then(function(data) {
                 if (data.success) {
+                    localStorage.setItem('hisaab_active_fy', fyFilename);
                     window.location.href = '/dashboard.html';
                 } else {
                     showError(data.error || 'Login failed');

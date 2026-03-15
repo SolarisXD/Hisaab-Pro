@@ -18,7 +18,60 @@ var accountsService = require('./accounts.service');
 var { requireAuth } = require('../auth/auth.middleware');
 var { logActivity } = require('../auth/auth.service');
 
+var accountTypesService = require('./account-types.service');
+
 router.use(requireAuth);
+
+/**
+ * GET /types — List all account types
+ */
+router.get('/types', function(req, res) {
+    try {
+        var types = accountTypesService.listAccountTypes(req.query.include_inactive === 'true');
+        res.json(types);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * POST /types — Create account type
+ */
+router.post('/types', function(req, res) {
+    try {
+        var type = accountTypesService.createAccountType(req.body);
+        logActivity(req.session.user.id, 'create_account_type', 'account_type', type.id, null, req.ip);
+        res.status(201).json(type);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * PUT /types/:id — Update account type
+ */
+router.put('/types/:id', function(req, res) {
+    try {
+        var type = accountTypesService.updateAccountType(parseInt(req.params.id), req.body);
+        logActivity(req.session.user.id, 'edit_account_type', 'account_type', type.id, null, req.ip);
+        res.json(type);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * DELETE /types/:id — Delete account type
+ */
+router.delete('/types/:id', function(req, res) {
+    try {
+        accountTypesService.deleteAccountType(parseInt(req.params.id));
+        logActivity(req.session.user.id, 'delete_account_type', 'account_type', parseInt(req.params.id), null, req.ip);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
 
 /**
  * GET / — List accounts

@@ -12,10 +12,45 @@
         loadCommonUI();
         loadPayments();
         loadAccounts();
+
+        // Handle view parameters
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('view') === 'add') {
+            openPaymentModal();
+        }
+        updateSidebarActiveState();
     });
+
+    function updateSidebarActiveState() {
+        var params = new URLSearchParams(window.location.search);
+        var view = params.get('view') || 'list';
+        
+        var paymentsNav = document.querySelector('.nav-link[data-page="payments"]');
+        if (!paymentsNav) return;
+        
+        var subMenu = paymentsNav.nextElementSibling;
+        if (subMenu && subMenu.classList.contains('nav-sub-menu')) {
+            var subLinks = subMenu.querySelectorAll('.nav-sub-link');
+            for (var i = 0; i < subLinks.length; i++) {
+                var href = subLinks[i].getAttribute('href');
+                if (href.includes('view=' + view)) {
+                    subLinks[i].classList.add('active');
+                } else {
+                    subLinks[i].classList.remove('active');
+                }
+            }
+        }
+    }
 
     document.getElementById('btn-new-payment').addEventListener('click', openPaymentModal);
     document.getElementById('btn-save-payment').addEventListener('click', savePayment);
+
+    var btnPrintList = document.getElementById('btn-print-list');
+    if (btnPrintList) btnPrintList.addEventListener('click', function() {
+        printPaymentsList();
+    });
+
+    var currentPaymentsData = [];
 
     var searchInput = document.getElementById('search-input');
     var filterMode = document.getElementById('filter-mode');
@@ -54,6 +89,7 @@
             limit: 50
         })
         .then(function(payments) {
+            currentPaymentsData = payments;
             renderPayments(payments);
         })
         .catch(function(err) {
@@ -79,6 +115,7 @@
                 var cls = row.type === 'in' ? 'positive' : 'negative';
                 return '<span class="amount ' + cls + '">' + formatINR(row.amount) + '</span>';
             }},
+            { label: 'Ref No', key: 'ref_no', render: function(row) { return escapeHtml(row.ref_no || '—'); } },
             { label: 'Reference', key: 'reference', render: function(row) { return escapeHtml(row.reference || '—'); } },
             { label: '', key: 'actions', render: function(row) {
                 return '<button class="btn btn-ghost btn-sm" onclick="deletePayment(' + row.id + ')" style="color:var(--color-danger);" title="Delete"><i data-lucide="trash-2" style="width:14px; height:14px;"></i></button>';
@@ -179,4 +216,24 @@
                 });
         });
     };
+
+    function printPaymentsList() {
+        if (!currentPaymentsData || currentPaymentsData.length === 0) {
+            showToast('No payments data to print', 'warning');
+            return;
+        }
+
+        var columns = [
+            { label: 'Date', key: 'date', render: (row) => formatDate(row.date) },
+            { label: 'Account', key: 'account_name' },
+            { label: 'Type', key: 'type', render: (row) => row.type === 'in' ? 'Received' : 'Paid Out' },
+            { label: 'Mode', key: 'mode', render: (row) => getPaymentModeLabel(row.mode) },
+            { label: 'Amount', key: 'amount', align: 'text-right', render: (row) => formatINR(row.amount) },
+            { label: 'Ref No', key: 'ref_no' },
+            { label: 'Reference', key: 'reference' }
+        ];
+
+        var filename = pdf.getSafeFilename('Payments', 'Report');
+        pdf.generateTablePDF(currentPaymentsData, columns, 'Payments Report', filename);
+    }
 })();

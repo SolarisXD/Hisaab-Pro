@@ -12,7 +12,35 @@
         loadCommonUI();
         loadPurchases();
         loadSuppliers();
+
+        // Handle view parameters
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('view') === 'add') {
+            openPurchaseModal();
+        }
+        updateSidebarActiveState();
     });
+
+    function updateSidebarActiveState() {
+        var params = new URLSearchParams(window.location.search);
+        var view = params.get('view') || 'list';
+        
+        var purchasesNav = document.querySelector('.nav-link[data-page="purchases"]');
+        if (!purchasesNav) return;
+        
+        var subMenu = purchasesNav.nextElementSibling;
+        if (subMenu && subMenu.classList.contains('nav-sub-menu')) {
+            var subLinks = subMenu.querySelectorAll('.nav-sub-link');
+            for (var i = 0; i < subLinks.length; i++) {
+                var href = subLinks[i].getAttribute('href');
+                if (href.includes('view=' + view)) {
+                    subLinks[i].classList.add('active');
+                } else {
+                    subLinks[i].classList.remove('active');
+                }
+            }
+        }
+    }
 
     // New Purchase button
     document.getElementById('btn-new-purchase').addEventListener('click', function() {
@@ -24,6 +52,14 @@
     if (btnSave) btnSave.addEventListener('click', function() {
         savePurchase();
     });
+
+    // Print List button
+    var btnPrintList = document.getElementById('btn-print-list');
+    if (btnPrintList) btnPrintList.addEventListener('click', function() {
+        printPurchasesList();
+    });
+
+    var currentPurchasesData = [];
 
     // Search and filter
     var searchInput = document.getElementById('search-input');
@@ -51,6 +87,7 @@
 
         api.getPurchases(params)
             .then(function(purchases) {
+                currentPurchasesData = purchases;
                 renderPurchasesList(purchases);
             })
             .catch(function(err) {
@@ -101,7 +138,6 @@
         document.getElementById('purchase-date').value = purchase ? purchase.date : getToday();
         document.getElementById('purchase-supplier').value = purchase ? (purchase.supplier_account_id || '') : '';
         document.getElementById('purchase-total').value = purchase ? purchase.total : '';
-        document.getElementById('purchase-ref-no').value = purchase ? (purchase.ref_no || '') : '';
         document.getElementById('purchase-amount-paid').value = purchase ? purchase.amount_paid : 0;
         document.getElementById('purchase-notes').value = purchase ? (purchase.notes || '') : '';
 
@@ -139,7 +175,6 @@
             date: document.getElementById('purchase-date').value,
             supplier_account_id: document.getElementById('purchase-supplier').value || null,
             total: total,
-            ref_no: document.getElementById('purchase-ref-no').value,
             amount_paid: parseFloat(document.getElementById('purchase-amount-paid').value) || 0,
             notes: document.getElementById('purchase-notes').value
         };
@@ -206,4 +241,23 @@
                 });
         });
     };
+
+    function printPurchasesList() {
+        if (!currentPurchasesData || currentPurchasesData.length === 0) {
+            showToast('No purchases data to print', 'warning');
+            return;
+        }
+
+        var columns = [
+            { label: 'Bill No', key: 'invoice_no' },
+            { label: 'Date', key: 'date', render: (row) => formatDate(row.date) },
+            { label: 'Supplier', key: 'supplier_name', render: (row) => row.supplier_name || 'Generic' },
+            { label: 'Total', key: 'total', align: 'text-right', render: (row) => formatINR(row.total) },
+            { label: 'Paid', key: 'amount_paid', align: 'text-right', render: (row) => formatINR(row.amount_paid) },
+            { label: 'Status', key: 'status', render: (row) => row.status.toUpperCase() }
+        ];
+
+        var filename = pdf.getSafeFilename('Purchases', 'Report');
+        pdf.generateTablePDF(currentPurchasesData, columns, 'Purchases Report', filename);
+    }
 })();

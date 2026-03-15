@@ -86,13 +86,39 @@
                     </div>
                     <div style="margin-top: 32px;">
                         <button type="button" class="btn btn-primary btn-block" onclick="nextStep(2)">
-                            Next: Administrator Account <i data-lucide="arrow-right"></i>
+                            Next: Financial Year <i data-lucide="arrow-right"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Step 2: Admin Account -->
+                <!-- Step 2: Financial Year -->
                 <div class="step" id="step-2">
+                    <div class="step-header">
+                        <h2>First Financial Year</h2>
+                        <p style="color: var(--color-text-secondary);">Set up your current accounting period</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Financial Year Name</label>
+                        <input type="text" id="fy-name" class="form-control" placeholder="e.g. FY 2026-27" required>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" id="fy-start" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="date" id="fy-end" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-top: 32px; gap: 12px;">
+                        <button type="button" class="btn btn-outline" onclick="nextStep(1)">Back</button>
+                        <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next: Administrator <i data-lucide="arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Admin Account -->
+                <div class="step" id="step-3">
                     <div class="step-header">
                         <h2>Owner Account</h2>
                         <p style="color: var(--color-text-secondary);">Setup the primary administrator account</p>
@@ -110,7 +136,7 @@
                         <input type="password" id="confirm-password" class="form-control" placeholder="Repeat password" required>
                     </div>
                     <div class="grid-2" style="margin-top: 32px; gap: 12px;">
-                        <button type="button" class="btn btn-outline" onclick="nextStep(1)">Back</button>
+                        <button type="button" class="btn btn-outline" onclick="nextStep(2)">Back</button>
                         <button type="submit" class="btn btn-primary">Complete Setup <i data-lucide="check"></i></button>
                     </div>
                 </div>
@@ -155,6 +181,11 @@
                     address: document.getElementById('shop-address').value,
                     phone: document.getElementById('shop-phone').value,
                     gstin: document.getElementById('shop-gstin').value
+                },
+                financialYear: {
+                    name: document.getElementById('fy-name').value,
+                    start_date: document.getElementById('fy-start').value,
+                    end_date: document.getElementById('fy-end').value
                 },
                 ownerUser: {
                     username: document.getElementById('admin-username').value,

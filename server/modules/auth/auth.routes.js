@@ -135,12 +135,12 @@ router.post('/signup', async (req, res) => {
             return res.status(400).json({ error: 'System already setup' });
         }
 
-        const { shopDetails, ownerUser } = req.body;
-        if (!shopDetails || !ownerUser) {
+        const { shopDetails, ownerUser, financialYear } = req.body;
+        if (!shopDetails || !ownerUser || !financialYear || !financialYear.name) {
             return res.status(400).json({ error: 'Missing details' });
         }
 
-        const result = await authService.signup(shopDetails, ownerUser);
+        const result = await authService.signup(shopDetails, ownerUser, financialYear);
         res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });

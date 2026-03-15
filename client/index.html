@@ -15,31 +15,46 @@
 </head>
 <body>
     <div class="login-page">
+        <!-- Animated Background Mesh -->
+        <div class="bg-blobs">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="blob blob-3"></div>
+        </div>
+
         <div class="login-container">
             <div class="login-card">
                 <div class="logo-section">
-                    <div class="logo-icon-wrapper">
-                        <i data-lucide="book-open" class="logo-icon"></i>
+                    <div class="logo-icon-wrapper-premium">
+                        <i data-lucide="book-open"></i>
                     </div>
-                    <h1 id="app-title">Hisaab Pro</h1>
-                    <p id="shop-name">The Professional Business Ledger</p>
+                    <h1>Hisaab Pro</h1>
+                    <p>The Professional Business Ledger</p>
                 </div>
 
                 <div id="login-error" class="login-error"></div>
 
                 <form id="login-form" autocomplete="off">
                     <div class="form-group">
-                        <label class="form-label" for="username">Username</label>
                         <input type="text" id="username" name="username" class="form-control" placeholder="Enter username" required autofocus>
+                        <label class="form-label" for="username">Username</label>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="password">Password</label>
                         <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                        <label class="form-label" for="password">Password</label>
                     </div>
 
-                    <button type="submit" id="login-btn" class="btn btn-primary btn-block btn-lg" style="margin-top: 8px;">
-                        Sign In
+                    <div class="form-group" id="fy-group" style="display: none;">
+                        <select id="fy-select" name="fy-select" class="form-control" required>
+                            <option value="">Loading...</option>
+                        </select>
+                        <label class="form-label" for="fy-select">Financial Year</label>
+                    </div>
+
+                    <button type="submit" id="login-btn" class="btn btn-primary btn-block btn-lg btn-glow">
+                        <span>Sign In</span>
+                        <i data-lucide="arrow-right"></i>
                     </button>
                 </form>
 

@@ -9,7 +9,54 @@
         if (!user) return;
         loadCommonUI();
         loadSettings();
+        updateView();
+        updateSidebarActiveState();
     });
+
+    function updateView() {
+        var params = new URLSearchParams(window.location.search);
+        var view = params.get('view') || 'shop';
+        
+        var sections = document.querySelectorAll('.settings-section');
+        for (var i = 0; i < sections.length; i++) {
+            sections[i].style.display = 'none';
+        }
+
+        if (view === 'shop') {
+            document.getElementById('section-shop').style.display = 'block';
+        } else if (view === 'fy') {
+            document.getElementById('container-fy-book').style.display = 'grid';
+            document.getElementById('panel-fy').style.display = 'block';
+            document.getElementById('panel-book').style.display = 'none';
+        } else if (view === 'book') {
+            document.getElementById('container-fy-book').style.display = 'grid';
+            document.getElementById('panel-fy').style.display = 'none';
+            document.getElementById('panel-book').style.display = 'block';
+        } else if (view === 'security') {
+            document.getElementById('section-security').style.display = 'block';
+        }
+    }
+
+    function updateSidebarActiveState() {
+        var params = new URLSearchParams(window.location.search);
+        var view = params.get('view') || 'shop';
+        
+        var settingsNav = document.querySelector('.nav-link[data-page="settings"]');
+        if (!settingsNav) return;
+        
+        var subMenu = settingsNav.nextElementSibling;
+        if (subMenu && subMenu.classList.contains('nav-sub-menu')) {
+            var subLinks = subMenu.querySelectorAll('.nav-sub-link');
+            for (var i = 0; i < subLinks.length; i++) {
+                var href = subLinks[i].getAttribute('href');
+                if (href.includes('view=' + view)) {
+                    subLinks[i].classList.add('active');
+                } else {
+                    subLinks[i].classList.remove('active');
+                }
+            }
+        }
+    }
 
     // Event Listeners
     document.getElementById('btn-save-shop').addEventListener('click', updateShopInfo);
@@ -86,7 +133,7 @@
 
         showConfirm({
             title: 'Update Book Settings',
-            message: 'Are you sure you want to update the current Book No and Page No? This affects next auto-generated references.',
+            message: 'Are you sure you want to update the current Book No and Page No? WARNING: Changing this incorrectly might cause invoice number collisions or gaps. Only change this if you are starting a new physical ledger book.',
             confirmText: 'Update Settings',
             intent: 'primary'
         }).then(function(confirmed) {
@@ -111,39 +158,60 @@
             fyActiveBadge.innerHTML = '';
             fyList.innerHTML = '';
 
-            if (years.length === 0) {
-                fyList.innerHTML = '<p class="text-muted" style="font-size:13px;">No financial years defined.</p>';
-                return;
-            }
-
-            var html = '<table class="table" style="font-size: 13px;"><thead><tr><th>FY Name</th><th>Period</th><th>Status</th><th></th></tr></thead><tbody>';
-            years.forEach(function(fy) {
-                var isActive = fy.is_active === 1;
-                if (isActive) {
-                    fyActiveBadge.innerHTML = '<span class="badge badge-success" style="font-size:14px; padding: 8px 12px;">Active FY: ' + escapeHtml(fy.name) + '</span>';
-                }
+            api.getSettingsStatus().then(function(status) {
+                var activeDb = status.database.active_file;
                 
-                html += '<tr><td>' + escapeHtml(fy.name) + '</td><td>' + formatDate(fy.start_date) + ' to ' + formatDate(fy.end_date) + '</td><td>' + 
-                        (isActive ? '<span class="text-success">Active</span>' : '<span class="text-muted">Inactive</span>') + '</td><td>' +
-                        (!isActive ? '<button class="btn btn-ghost btn-sm" onclick="activateFY(' + fy.id + ')">Activate</button>' : '') + 
-                        '</td></tr>';
+                // Always add the default legacy database as an option
+                years.unshift({
+                    id: 'legacy',
+                    name: 'Current/Legacy Data',
+                    start_date: '2000-01-01',
+                    end_date: '2099-12-31',
+                    db_filename: 'hisaab.db',
+                    is_active: activeDb === 'hisaab.db' ? 1 : 0
+                });
+
+                if (years.length === 0) {
+                    fyList.innerHTML = '<p class="text-muted" style="font-size:13px;">No financial years defined.</p>';
+                    return;
+                }
+
+                var html = '<table class="table" style="font-size: 13px;"><thead><tr><th>FY Name</th><th>Period</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+                
+                var currentSessionDb = localStorage.getItem('hisaab_active_fy') || 'hisaab.db';
+
+                years.forEach(function(fy) {
+                    var isLiveSession = fy.db_filename === currentSessionDb;
+
+                    if (isLiveSession) {
+                        fyActiveBadge.innerHTML = '<span class="badge badge-success" style="font-size:14px; padding: 8px 12px;">Active FY: ' + escapeHtml(fy.name) + '</span>';
+                    }
+                    
+                    var periodText = fy.id === 'legacy' ? 'N/A' : (formatDate(fy.start_date) + ' to ' + formatDate(fy.end_date));
+                    
+                    html += '<tr><td>' + escapeHtml(fy.name) + '</td><td>' + periodText + '</td><td>' + 
+                            (isLiveSession ? '<span class="text-success"><strong>Active</strong></span>' : '<span class="text-muted">Inactive</span>') + '</td><td>' +
+                            (!isLiveSession ? `<button class="btn btn-ghost btn-sm" onclick="activateFY('${fy.id}', '${fy.db_filename}')">Switch To This</button>` : '') + 
+                            '</td></tr>';
+                });
+                html += '</tbody></table>';
+                fyList.innerHTML = html;
             });
-            html += '</tbody></table>';
-            fyList.innerHTML = html;
         });
     }
 
-    window.activateFY = function(id) {
+    window.activateFY = function(id, dbFilename) {
         showConfirm({
             title: 'Switch Financial Year',
-            message: 'Switch to this financial year? This change is global and will affect all data visibility.',
-            confirmText: 'Switch FY',
-            intent: 'warning'
+            message: 'Are you sure you want to switch your active session to this financial year? The page will reload.',
+            confirmText: 'Switch Session',
+            intent: 'primary'
         }).then(function(confirmed) {
             if (!confirmed) return;
+            // Also notify the backend so it remembers this state system-wide
             api.activateFinancialYear(id).then(function() {
-                showToast('Financial Year activated!', 'success');
-                loadFinancialYears();
+                localStorage.setItem('hisaab_active_fy', dbFilename);
+                window.location.reload();
             }).catch(function(err) {
                 showToast('Error: ' + err.message, 'error');
             });
@@ -164,7 +232,7 @@
 
         showConfirm({
             title: 'Create Financial Year',
-            message: 'Are you sure you want to create a new financial year?',
+            message: 'Are you sure you want to create a new financial year? Ensure dates do not overlap with existing years.',
             confirmText: 'Create FY',
             intent: 'primary'
         }).then(function(confirmed) {
@@ -189,6 +257,7 @@
             
             container.innerHTML = 
                 '<div style="font-size: 14px; line-height: 2;">' +
+                '<div><strong>Active Data File:</strong> <span class="badge badge-primary" style="font-family: monospace;">' + escapeHtml(status.database.active_file) + '</span></div>' +
                 '<div><strong>Failed Login Attempts:</strong> ' + status.security.failed_logins + ' / 5</div>' +
                 '<div><strong>Last Backup:</strong> ' + lastBackup + '</div>' +
                 '<div><strong>Total Backups Saved:</strong> ' + status.backup.total_backups + '</div>' +
@@ -232,7 +301,7 @@
 
         showConfirm({
             title: 'Change Password',
-            message: 'Are you sure you want to change your administration password?',
+            message: 'Are you sure you want to change your administration password? WARNING: If you forget the new password, you will be locked out of the system. There is no password recovery.',
             confirmText: 'Change Password',
             intent: 'warning'
         }).then(function(confirmed) {

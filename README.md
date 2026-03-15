@@ -9,12 +9,14 @@
 ## ✨ Key Features
 
 -   **Dashboard**: Real-time business overview (sales, outstanding, cash/bank balances).
+-   **Financial Year Management**: Create and switch between multiple financial years instantly.
 -   **Sales Management**: Invoice generation, tax calculation, and payment status tracking.
 -   **Payment Management**: Track incoming (customer) and outgoing (supplier) payments.
 -   **Ledger (Accounts)**: Full chart of accounts with detailed transaction history.
 -   **Financial Reports**: Daily sales, monthly revenue, debtor aging, and balance sheets.
+-   **Premium UI**: Modern glassmorphism design with animated backgrounds and high-end micro-interactions.
 -   **PDF Export**: High-quality A4 invoices and reports ready for printing.
--   **Security**: Local-first data storage (SQLCipher encryption coming in Phase 3).
+-   **Security**: Local-first data storage with context-aware database switching.
 -   **Speed**: Powered by SQLite & Vanilla JS for instant response times.
 
 ## 🚀 Quick Start

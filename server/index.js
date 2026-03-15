@@ -15,7 +15,7 @@ var config = require('./config');
 var logger = require('./shared/logger');
 
 // Initialize database (runs schema on first load)
-var { db, closeDb } = require('./db/database');
+var { db, closeDb, fyRequestContext } = require('./db/database');
 
 // Import route modules
 var authRoutes = require('./modules/auth/auth.routes');
@@ -65,6 +65,25 @@ app.use(express.static(path.join(__dirname, '../client')));
 // ============================================================
 // API ROUTES (all under /api/v1/)
 // ============================================================
+
+// Wrap all API requests in the requested Financial Year context
+app.use('/api/v1', function(req, res, next) {
+    // Prevent browser caching of API responses (crucial for FY switching)
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    var requestedFy = req.headers['x-financial-year'];
+    
+    // If not specified, default to whatever is globally active or hisaab.db
+    if (!requestedFy) {
+        requestedFy = config.database.active_database || 'hisaab.db';
+    }
+    
+    fyRequestContext(requestedFy, function() {
+        next();
+    });
+});
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/sales', salesRoutes);

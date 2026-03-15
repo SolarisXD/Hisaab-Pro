@@ -16,6 +16,20 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ============================================================
+-- ACCOUNT TYPES (Dynamic lookup)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS account_types (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT    NOT NULL UNIQUE,
+    slug        TEXT    NOT NULL UNIQUE,    -- customer | supplier | cash | bank | etc.
+    icon        TEXT    DEFAULT 'user',
+    is_system   INTEGER NOT NULL DEFAULT 0, -- 1 = cannot be deleted
+    is_active   INTEGER NOT NULL DEFAULT 1,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+-- ============================================================
 -- ACCOUNTS (Chart of Accounts)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS accounts (

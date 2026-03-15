@@ -64,6 +64,13 @@ var api = {
     _fetch: function(url, options) {
         options = options || {};
         options.credentials = 'same-origin';
+        
+        // Always attach the selected Financial Year header
+        options.headers = options.headers || {};
+        var activeFy = localStorage.getItem('hisaab_active_fy');
+        if (activeFy) {
+            options.headers['x-financial-year'] = activeFy;
+        }
 
         return fetch(url, options)
             .then(function(response) {

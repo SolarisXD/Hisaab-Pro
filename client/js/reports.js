@@ -40,21 +40,59 @@
     });
 
     // Toggle filters based on report type
-    reportType.addEventListener('change', function() {
+    window.switchReport = function(type) {
+        reportType.value = type;
+        
+        // Update active class in sidebar
+        var items = document.querySelectorAll('.report-item');
+        items.forEach(function(item) {
+            var icon = item.querySelector('i, svg');
+            var lucideName = icon ? icon.getAttribute('data-lucide') : '';
+            var typeMatch = item.textContent.trim().toLowerCase().includes(type.replace('-', ' '));
+            
+            // Simpler check: find the one that matches our type
+            item.classList.remove('active');
+        });
+        
+        // Find the right item to activate
+        var activeItem = Array.from(document.querySelectorAll('.report-item')).find(item => {
+            return item.getAttribute('onclick').includes("'" + type + "'");
+        });
+        if (activeItem) activeItem.classList.add('active');
+
+        // Update main sidebar sub-links
+        var subLinks = document.querySelectorAll('.nav-sub-link');
+        subLinks.forEach(function(link) {
+            link.classList.remove('active');
+            if (link.getAttribute('href').includes('type=' + type)) {
+                link.classList.add('active');
+            }
+        });
+
+        // Hide all results when switching
+        document.getElementById('report-panel').style.display = 'none';
+        currentReportData = null;
+
+        // Reset visibility
         reportDate.style.display = 'none';
         reportMonth.style.display = 'none';
         reportAccount.style.display = 'none';
         rangeFilters.style.display = 'none';
 
-        if (this.value === 'monthly') {
+        if (type === 'monthly') {
             reportMonth.style.display = 'block';
-        } else if (this.value === 'daily-sales') {
+        } else if (type === 'daily-sales') {
             reportDate.style.display = 'block';
-        } else if (this.value === 'account-ledger') {
+        } else if (type === 'account-ledger') {
             reportAccount.style.display = 'block';
             rangeFilters.style.display = 'flex';
         }
-    });
+        
+        // For auto-generating reports that don't need configuration (Aging, Balance Sheet, etc.)
+        if (['debtor-aging', 'creditor-schedule', 'balance-sheet', 'amount-receivable'].includes(type)) {
+            generateReport();
+        }
+    };
 
     btnGenerate.addEventListener('click', generateReport);
     
@@ -69,8 +107,11 @@
     };
 
     document.getElementById('btn-export-pdf').addEventListener('click', function() {
-        var title = document.getElementById('report-title').textContent || 'Report';
-        pdf.generateReportPDF(document.getElementById('report-content'), title, title.replace(/[^a-z0-9]/gi, '_') + '.pdf');
+        var title = (document.getElementById('report-title').textContent || 'Report').trim();
+        // Remove the icon text if present or just sanitize
+        var cleanTitle = title.replace(/[^a-z0-9 ]/gi, '').replace(/\s+/g, ' ');
+        var filename = pdf.getSafeFilename(cleanTitle, 'Report');
+        pdf.generateReportPDF(document.getElementById('report-content'), title, filename);
         closeExportModal();
     });
 
@@ -84,6 +125,7 @@
         if (currentReportType === 'daily-sales') exportData = currentReportData.sales;
         else if (currentReportType === 'account-ledger') exportData = currentReportData.transactions;
         else if (currentReportType === 'debtor-aging') exportData = currentReportData.buckets['0-30'].concat(currentReportData.buckets['30-60']).concat(currentReportData.buckets['60+']);
+        else if (currentReportType === 'amount-receivable') exportData = currentReportData.customers;
         else if (currentReportType === 'creditor-schedule') exportData = currentReportData.creditors;
         else {
             showToast('Export for this report type is pending optimization', 'info');
@@ -148,6 +190,10 @@
             case 'monthly':
                 titleEl.innerHTML = '<i data-lucide="bar-chart-3"></i> Monthly Report — ' + data.month;
                 contentEl.innerHTML = renderMonthlyReport(data);
+                break;
+            case 'amount-receivable':
+                titleEl.innerHTML = '<i data-lucide="user-plus"></i> Amount Receivable Report — ' + formatDate(data.date);
+                contentEl.innerHTML = renderAmountReceivable(data);
                 break;
             case 'debtor-aging':
                 titleEl.innerHTML = '<i data-lucide="clock"></i> Debtor Aging Report — ' + formatDate(data.date);
@@ -315,10 +361,13 @@
         if (data.transactions.length > 0) {
             html += renderTable(data.transactions, [
                 { label: 'Date', key: 'date', render: function(row) { return formatDate(row.date); } },
+                { label: 'Ref No', key: 'ref_no', render: function(row) { 
+                    return escapeHtml(row.ref_no || '—'); 
+                }},
                 { label: 'Description', key: 'description', render: function(row) { 
                     var desc = escapeHtml(row.description || 'Entry');
                     if (row.linked_invoice) desc += ' (Inv: ' + row.linked_invoice + ')';
-                    if (row.payment_mode) desc += ' [' + row.payment_mode + ']';
+                    if (row.payment_mode) desc += ' [' + row.payment_mode.toUpperCase() + ']';
                     return desc;
                 }},
                 { label: 'Debit', key: 'amount', align: 'text-right', render: function(row) { 
@@ -336,4 +385,35 @@
         }
         return html;
     }
+
+    function renderAmountReceivable(data) {
+        var html = '';
+        html += '<div class="stat-card success" style="margin-bottom:20px;"><div class="stat-label">Total Receivable</div><div class="stat-value">' + formatINR(data.total) + '</div><div class="stat-change">' + data.customers.length + ' customers</div></div>';
+
+        if (data.customers.length > 0) {
+            html += renderTable(data.customers, [
+                { label: 'Customer', key: 'name', render: function(row) { return '<span style="font-weight:600;">' + escapeHtml(row.name) + '</span>'; } },
+                { label: 'Phone', key: 'phone', render: function(row) { return escapeHtml(row.phone || '—'); } },
+                { label: 'Outstanding Balance', key: 'current_balance', align: 'text-right', render: function(row) {
+                    return '<span class="amount negative">' + formatINR(row.current_balance) + '</span>';
+                }}
+            ]);
+        } else {
+            html += '<div class="empty-state"><p>No amount receivable from any customer</p></div>';
+        }
+        return html;
+    }
+
+    // Handle URL parameters
+    var urlParams = new URLSearchParams(window.location.search);
+    var typeParam = urlParams.get('type');
+    if (typeParam) {
+        setTimeout(function() {
+            switchReport(typeParam);
+        }, 100);
+    } else {
+        switchReport('daily-sales');
+    }
+
+    lucide.createIcons();
 })();

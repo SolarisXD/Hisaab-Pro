@@ -13,6 +13,7 @@ var fs = require('fs').promises;
 var path = require('path');
 var logger = require('../../shared/logger');
 var configLoader = require('../../config');
+var settingsService = require('../settings/settings.service');
 var configPath = path.join(__dirname, '../../../config.json');
 var SALT_ROUNDS = 10;
 var MAX_FAILED_LOGINS = 5;
@@ -45,128 +46,141 @@ function createUser(username, password, role) {
  * Returns user object if valid, null if invalid
  */
 function login(username, password, ip) {
-    var user = db.prepare('SELECT * FROM users WHERE username = ? AND is_active = 1').get(username);
-    
-    // Check if system is nuked
-    var state = getSecurityState();
-    if (state.is_nuked) {
-        throw new Error('System security lockout. Please contact administrator.');
-    }
+    var dbManager = require('../../db/database');
+    return dbManager.fyRequestContext('hisaab.db', () => {
+        var user = db.prepare('SELECT * FROM users WHERE username = ? AND is_active = 1').get(username);
+        
+        // Check if system is nuked
+        var state = getSecurityState();
+        if (state.is_nuked) {
+            throw new Error('System security lockout. Please contact administrator.');
+        }
 
-    if (!user || !bcrypt.compareSync(password, user.password_hash)) {
-        incrementFailedLogins();
-        logger.warn('Auth', 'Login failed for user: ' + username + ' from IP: ' + ip);
-        throw new Error('Invalid username or password');
-    }
+        if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+            incrementFailedLogins();
+            logger.warn('Auth', 'Login failed for user: ' + username + ' from IP: ' + ip);
+            throw new Error('Invalid username or password');
+        }
 
-    // Success - reset failed logins
-    resetFailedLogins();
+        // Success - reset failed logins
+        resetFailedLogins();
 
-    var isDecoy = user.is_decoy === 1;
-    if (isDecoy) {
-        logger.info('Auth', 'Decoy login detected for user: ' + username + ' (ID: ' + user.id + ')');
-    }
+        var isDecoy = user.is_decoy === 1;
+        if (isDecoy) {
+            logger.info('Auth', 'Decoy login detected for user: ' + username + ' (ID: ' + user.id + ')');
+        }
 
-    logActivity(user.id, 'login', 'user', user.id, isDecoy ? 'DECOY MODE' : 'REAL MODE', ip);
-    
-    return {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        is_decoy: isDecoy
-    };
+        logActivity(user.id, 'login', 'user', user.id, isDecoy ? 'DECOY MODE' : 'REAL MODE', ip);
+        
+        return {
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            is_decoy: isDecoy
+        };
+    });
 }
 
 /**
  * Security State Helpers
  */
 function getSecurityState() {
-    return db.prepare('SELECT * FROM security_state WHERE id = 1').get();
+    return require('../../db/database').fyRequestContext('hisaab.db', () => {
+        return db.prepare('SELECT * FROM security_state WHERE id = 1').get();
+    });
 }
 
 function incrementFailedLogins() {
-    db.prepare('UPDATE security_state SET failed_logins = failed_logins + 1, last_failure_at = datetime(\'now\', \'localtime\'), updated_at = datetime(\'now\', \'localtime\') WHERE id = 1').run();
-    
-    var state = getSecurityState();
-    if (state.failed_logins >= MAX_FAILED_LOGINS) {
-        triggerAutoWipe();
-    }
+    require('../../db/database').fyRequestContext('hisaab.db', () => {
+        db.prepare('UPDATE security_state SET failed_logins = failed_logins + 1, last_failure_at = datetime(\'now\', \'localtime\'), updated_at = datetime(\'now\', \'localtime\') WHERE id = 1').run();
+        
+        var state = getSecurityState();
+        if (state.failed_logins >= MAX_FAILED_LOGINS) {
+            triggerAutoWipe();
+        }
+    });
 }
 
 function resetFailedLogins() {
-    db.prepare('UPDATE security_state SET failed_logins = 0, updated_at = datetime(\'now\', \'localtime\') WHERE id = 1').run();
+    require('../../db/database').fyRequestContext('hisaab.db', () => {
+        db.prepare('UPDATE security_state SET failed_logins = 0, updated_at = datetime(\'now\', \'localtime\') WHERE id = 1').run();
+    });
 }
 
 function triggerAutoWipe() {
-    logger.error('Security', 'CRITICAL: Auto-wipe triggered due to multiple failed login attempts!');
-    
-    // Record order: transactions -> payments -> sales -> accounts
-    var tables = ['transactions', 'payments', 'sales', 'accounts', 'activity_log'];
-    
-    var transaction = db.transaction(function() {
-        for (var table of tables) {
-            db.prepare('DELETE FROM ' + table + ' WHERE is_decoy = 0').run();
-        }
-        db.prepare('UPDATE security_state SET is_nuked = 1, updated_at = datetime(\'now\', \'localtime\') WHERE id = 1').run();
+    require('../../db/database').fyRequestContext('hisaab.db', () => {
+        logger.error('Security', 'CRITICAL: Auto-wipe triggered due to multiple failed login attempts!');
+        
+        // Record order: transactions -> payments -> sales -> accounts
+        var tables = ['transactions', 'payments', 'sales', 'accounts', 'activity_log'];
+        
+        var transaction = db.transaction(function() {
+            for (var table of tables) {
+                db.prepare('DELETE FROM ' + table + ' WHERE is_decoy = 0').run();
+            }
+            db.prepare('UPDATE security_state SET is_nuked = 1, updated_at = datetime(\'now\', \'localtime\') WHERE id = 1').run();
+        });
+        
+        transaction();
+        
+        logger.error('Security', 'Auto-wipe complete. All real data has been purged.');
     });
-    
-    transaction();
-    
-    logger.error('Security', 'Auto-wipe complete. All real data has been purged.');
 }
 
-/**
- * Change user's password
- */
 function changePassword(userId, oldPassword, newPassword) {
-    var stmt = db.prepare('SELECT password_hash FROM users WHERE id = ?');
-    var user = stmt.get(userId);
+    return require('../../db/database').fyRequestContext('hisaab.db', () => {
+        var stmt = db.prepare('SELECT password_hash FROM users WHERE id = ?');
+        var user = stmt.get(userId);
 
-    if (!user) {
-        throw new Error('User not found');
-    }
+        if (!user) {
+            throw new Error('User not found');
+        }
 
-    var valid = bcrypt.compareSync(oldPassword, user.password_hash);
-    if (!valid) {
-        throw new Error('Current password is incorrect');
-    }
+        var valid = bcrypt.compareSync(oldPassword, user.password_hash);
+        if (!valid) {
+            throw new Error('Current password is incorrect');
+        }
 
-    var hash = bcrypt.hashSync(newPassword, SALT_ROUNDS);
-    var update = db.prepare('UPDATE users SET password_hash = ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?');
-    update.run(hash, userId);
+        var hash = bcrypt.hashSync(newPassword, SALT_ROUNDS);
+        var update = db.prepare('UPDATE users SET password_hash = ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?');
+        update.run(hash, userId);
 
-    logger.info('Auth', 'Password changed for user ID: ' + userId);
-    return true;
+        logger.info('Auth', 'Password changed for user ID: ' + userId);
+        return true;
+    });
 }
 
-/**
- * Get user by ID
- */
 function getUserById(userId) {
-    var stmt = db.prepare('SELECT id, username, role, is_decoy, created_at FROM users WHERE id = ? AND is_active = 1');
-    return stmt.get(userId);
+    return require('../../db/database').fyRequestContext('hisaab.db', () => {
+        var stmt = db.prepare('SELECT id, username, role, is_decoy, created_at FROM users WHERE id = ? AND is_active = 1');
+        return stmt.get(userId);
+    });
 }
 
 /**
  * Log an activity (audit trail)
  */
 function logActivity(userId, action, entityType, entityId, details, ipAddress) {
-    var isDecoy = 0;
-    try {
-        if (userId) {
-            var user = db.prepare('SELECT is_decoy FROM users WHERE id = ?').get(userId);
-            if (user) isDecoy = user.is_decoy;
-        }
-    } catch (e) {}
+    require('../../db/database').fyRequestContext('hisaab.db', () => {
+        var isDecoy = 0;
+        try {
+            if (userId) {
+                var user = db.prepare('SELECT is_decoy FROM users WHERE id = ?').get(userId);
+                if (user) isDecoy = user.is_decoy;
+            }
+        } catch (e) {}
 
-    var stmt = db.prepare(
-        'INSERT INTO activity_log (user_id, action, entity_type, entity_id, details, ip_address, is_decoy) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    );
-    stmt.run(userId, action, entityType || null, entityId || null, details || null, ipAddress || null, isDecoy);
+        var stmt = db.prepare(
+            'INSERT INTO activity_log (user_id, action, entity_type, entity_id, details, ip_address, is_decoy) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        );
+        stmt.run(userId, action, entityType || null, entityId || null, details || null, ipAddress || null, isDecoy);
+    });
 }
 
 function getUserCount() {
-    return db.prepare('SELECT count(*) as count FROM users').get().count;
+    return require('../../db/database').fyRequestContext('hisaab.db', () => {
+        return db.prepare('SELECT count(*) as count FROM users').get().count;
+    });
 }
 
 module.exports = {
@@ -183,7 +197,7 @@ module.exports = {
         const count = db.prepare('SELECT count(*) as count FROM users').get();
         return count.count === 0;
     },
-    signup: async function(shopDetails, ownerUser) {
+    signup: async function(shopDetails, ownerUser, financialYear) {
         // 1. Create User
         const hashedPassword = await bcrypt.hash(ownerUser.password, 10);
         db.prepare(`
@@ -212,6 +226,9 @@ module.exports = {
             db.prepare("INSERT INTO accounts (name, type, balance) VALUES ('Cash in Hand', 'cash', 0)").run();
             db.prepare("INSERT INTO accounts (name, type, balance) VALUES ('Main Bank Account', 'bank', 0)").run();
         }
+
+        // 4. Create the initial Financial Year database
+        settingsService.createFinancialYear(financialYear);
 
         return { success: true };
     }

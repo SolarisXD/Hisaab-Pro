@@ -331,39 +331,97 @@ function showConfirm(options) {
 /**
  * Logout
  */
+/**
+ * Logout with backup prompt
+ */
 function logout() {
     showConfirm({
-        title: 'Logout Confirmation',
-        message: 'Are you sure you want to log out of Hisaab Pro?',
-        confirmText: 'Logout',
-        intent: 'danger'
-    }).then(function(confirmed) {
-        if (!confirmed) return;
-        api.post('/auth/logout')
-            .then(function() {
-                window.location.href = '/index.html';
-            })
-            .catch(function() {
-                window.location.href = '/index.html';
-            });
+        title: 'Logout',
+        message: 'Would you like to take a backup of your data before logging out?',
+        confirmText: 'Backup & Logout',
+        cancelText: 'Logout Only',
+        intent: 'primary'
+    }).then(function(wantsBackup) {
+        // Here, showConfirm returns true for 'Backup & Logout'
+        // But we need a way to detect 'Logout Only' vs 'Cancel'.
+        // Let's refine the logic to use a nested or custom prompt.
+        
+        if (wantsBackup) {
+            showToast('Creating backup...', 'info');
+            api.runManualBackup()
+                .then(function() {
+                    showToast('Backup created. Logging out...', 'success');
+                    return api.post('/auth/logout');
+                })
+                .then(function() {
+                    window.location.href = '/index.html';
+                })
+                .catch(function(err) {
+                    showToast('Backup failed: ' + err.message + '. Proceeding to logout...', 'warning');
+                    setTimeout(() => { window.location.href = '/index.html'; }, 2000);
+                });
+        } else {
+            // User clicked 'Logout Only' or Cancel? 
+            // The current showConfirm resolves false for Cancel/X/Escape.
+            // I'll update showConfirm to support a 'danger' cancel or a specific 'Logout Only' action.
+            
+            // For now, let's just do a sequential check or a simpler prompt.
+            performLogoutDirect();
+        }
     });
 }
 
-/**
- * Exit Application Confirmation
- */
-function exitApp() {
+function performLogoutDirect() {
     showConfirm({
-        title: 'Exit Application',
-        message: 'Are you sure you want to close Hisaab Pro?',
-        confirmText: 'Exit Now',
+        title: 'Confirm Logout',
+        message: 'Are you sure you want to log out without a backup?',
+        confirmText: 'Log out',
         intent: 'danger'
     }).then(function(confirmed) {
         if (!confirmed) return;
         api.post('/auth/logout').finally(function() {
-            // In a web app, we redirect to a blank or goodbye page
-            window.location.href = 'about:blank';
+            window.location.href = '/index.html';
         });
+    });
+}
+
+/**
+ * Exit Application with backup prompt
+ */
+function exitApp() {
+    showConfirm({
+        title: 'Exit Application',
+        message: 'Would you like to take a backup before closing Hisaab Pro?',
+        confirmText: 'Backup & Exit',
+        cancelText: 'Exit Only',
+        intent: 'primary'
+    }).then(function(wantsBackup) {
+        if (wantsBackup) {
+            showToast('Creating backup...', 'info');
+            api.runManualBackup()
+                .then(function() {
+                    showToast('Backup created. Closing...', 'success');
+                    return api.post('/auth/logout');
+                })
+                .then(function() {
+                    window.location.href = '/index.html';
+                })
+                .catch(function() {
+                    window.location.href = '/index.html';
+                });
+        } else {
+            showConfirm({
+                title: 'Confirm Exit',
+                message: 'Are you sure you want to exit without a backup?',
+                confirmText: 'Exit Now',
+                intent: 'danger'
+            }).then(function(confirmed) {
+                if (!confirmed) return;
+                api.post('/auth/logout').finally(function() {
+                    window.location.href = '/index.html';
+                });
+            });
+        }
     });
 }
 

@@ -30,36 +30,73 @@
                 <a href="/dashboard.html" class="nav-link" data-page="dashboard">
                     <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
                 </a>
+                
                 <a href="sales.html" class="nav-link" data-page="sales">
                     <span class="nav-icon"><i data-lucide="shopping-cart"></i></span> Sales
                 </a>
+                <div class="nav-sub-menu">
+                    <a href="sales.html?view=list" class="nav-sub-link">Show Sales</a>
+                    <a href="sales.html?view=add" class="nav-sub-link">Add Sale</a>
+                </div>
+
                 <a href="purchases.html" class="nav-link" data-page="purchases">
                     <span class="nav-icon"><i data-lucide="shopping-bag"></i></span> Purchases
                 </a>
-                <a href="/payments.html" class="nav-link active" data-page="payments">
+                <div class="nav-sub-menu">
+                    <a href="purchases.html?view=list" class="nav-sub-link">Show Purchases</a>
+                    <a href="purchases.html?view=add" class="nav-sub-link">Add Purchase</a>
+                </div>
+
+                <a href="/payments.html" class="nav-link" data-page="payments">
                     <span class="nav-icon"><i data-lucide="indian-rupee"></i></span> Payments
                 </a>
+                <div class="nav-sub-menu">
+                    <a href="payments.html?view=list" class="nav-sub-link">Show Payments</a>
+                    <a href="payments.html?view=add" class="nav-sub-link">Add Payment</a>
+                </div>
+
                 <a href="/accounts.html" class="nav-link" data-page="accounts">
                     <span class="nav-icon"><i data-lucide="users"></i></span> Accounts
                 </a>
+                <div class="nav-sub-menu">
+                    <a href="accounts.html?view=list" class="nav-sub-link">Show Accounts</a>
+                    <a href="accounts.html?view=types" class="nav-sub-link">Account Types</a>
+                </div>
+
                 <div class="nav-section-title">Analysis</div>
                 <a href="/reports.html" class="nav-link" data-page="reports">
                     <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span> Reports
                 </a>
+                <div class="nav-sub-menu">
+                    <a href="reports.html?type=daily-sales" class="nav-sub-link">Daily Sales</a>
+                    <a href="reports.html?type=amount-receivable" class="nav-sub-link">Amount Receivable</a>
+                    <a href="reports.html?type=monthly" class="nav-sub-link">Monthly Report</a>
+                    <a href="reports.html?type=account-ledger" class="nav-sub-link">Account Ledger</a>
+                    <a href="reports.html?type=debtor-aging" class="nav-sub-link">Debtor Aging</a>
+                    <a href="reports.html?type=creditor-schedule" class="nav-sub-link">Creditor Schedule</a>
+                    <a href="reports.html?type=balance-sheet" class="nav-sub-link">Balance Sheet</a>
+                </div>
+
                 <div class="nav-section-title">System</div>
                 <a href="/settings.html" class="nav-link" data-page="settings">
                     <span class="nav-icon"><i data-lucide="settings"></i></span> Settings
                 </a>
+                <div class="nav-sub-menu">
+                    <a href="settings.html?view=shop" class="nav-sub-link">Shop Information</a>
+                    <a href="settings.html?view=fy" class="nav-sub-link">Financial Year</a>
+                    <a href="settings.html?view=book" class="nav-sub-link">Book Reference</a>
+                    <a href="settings.html?view=security" class="nav-sub-link">Security & Backups</a>
+                </div>
             </nav>
             <div class="sidebar-footer">
                 <div class="shop-info">
                     <div class="shop-name" id="footer-shop-name">Loading...</div>
                     <div class="user-role">Administrator</div>
                 </div>
-                <button class="btn-logout" onclick="logout()" title="Logout">
+                <button class="btn-sidebar-action" onclick="logout()" title="Logout">
                     <i data-lucide="log-out"></i>
                 </button>
-                <button class="btn-logout" onclick="exitApp()" title="Exit Application" style="background: rgba(239, 68, 68, 0.1); color: var(--color-danger); border-color: rgba(239, 68, 68, 0.2);">
+                <button class="btn-sidebar-action danger" onclick="exitApp()" title="Exit Application">
                     <i data-lucide="power"></i>
                 </button>
             </div>
@@ -72,6 +109,7 @@
                     <h2 class="page-title">Payments</h2>
                 </div>
                 <div class="header-actions">
+                    <button class="btn btn-outline" id="btn-print-list"><i data-lucide="printer"></i> Print List</button>
                     <button class="btn btn-primary" id="btn-new-payment">+ Record Payment</button>
                 </div>
             </header>
@@ -179,6 +217,9 @@
 
     <script src="js/api.js"></script>
     <script src="js/utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="js/pdf.js"></script>
     <script src="js/payments.js"></script>
     <script>lucide.createIcons();</script>
 </body>

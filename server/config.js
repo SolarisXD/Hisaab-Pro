@@ -55,7 +55,8 @@ const config = {
     database: {
         path: './data/hisaab.db',
         ...rawConfig.database
-    }
+    },
+    financial_years: rawConfig.financial_years || []
 };
 
 function reloadConfig() {
@@ -65,6 +66,10 @@ function reloadConfig() {
         Object.assign(config.shop, newData.shop);
         if (newData.currency) config.currency = newData.currency;
         if (newData.currency_symbol) config.currency_symbol = newData.currency_symbol;
+        if (newData.financial_years) config.financial_years = newData.financial_years;
+        if (newData.database && newData.database.active_database) {
+            config.database.active_database = newData.database.active_database;
+        }
         // ... update other fields as needed
         return true;
     } catch (err) {

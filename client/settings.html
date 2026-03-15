@@ -29,36 +29,73 @@
                 <a href="/dashboard.html" class="nav-link" data-page="dashboard">
                     <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
                 </a>
+                
                 <a href="sales.html" class="nav-link" data-page="sales">
                     <span class="nav-icon"><i data-lucide="shopping-cart"></i></span> Sales
                 </a>
+                <div class="nav-sub-menu">
+                    <a href="sales.html?view=list" class="nav-sub-link">Show Sales</a>
+                    <a href="sales.html?view=add" class="nav-sub-link">Add Sale</a>
+                </div>
+
                 <a href="purchases.html" class="nav-link" data-page="purchases">
                     <span class="nav-icon"><i data-lucide="shopping-bag"></i></span> Purchases
                 </a>
+                <div class="nav-sub-menu">
+                    <a href="purchases.html?view=list" class="nav-sub-link">Show Purchases</a>
+                    <a href="purchases.html?view=add" class="nav-sub-link">Add Purchase</a>
+                </div>
+
                 <a href="/payments.html" class="nav-link" data-page="payments">
                     <span class="nav-icon"><i data-lucide="indian-rupee"></i></span> Payments
                 </a>
+                <div class="nav-sub-menu">
+                    <a href="payments.html?view=list" class="nav-sub-link">Show Payments</a>
+                    <a href="payments.html?view=add" class="nav-sub-link">Add Payment</a>
+                </div>
+
                 <a href="/accounts.html" class="nav-link" data-page="accounts">
                     <span class="nav-icon"><i data-lucide="users"></i></span> Accounts
                 </a>
+                <div class="nav-sub-menu">
+                    <a href="accounts.html?view=list" class="nav-sub-link">Show Accounts</a>
+                    <a href="accounts.html?view=types" class="nav-sub-link">Account Types</a>
+                </div>
+
                 <div class="nav-section-title">Analysis</div>
                 <a href="/reports.html" class="nav-link" data-page="reports">
                     <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span> Reports
                 </a>
+                <div class="nav-sub-menu">
+                    <a href="reports.html?type=daily-sales" class="nav-sub-link">Daily Sales</a>
+                    <a href="reports.html?type=amount-receivable" class="nav-sub-link">Amount Receivable</a>
+                    <a href="reports.html?type=monthly" class="nav-sub-link">Monthly Report</a>
+                    <a href="reports.html?type=account-ledger" class="nav-sub-link">Account Ledger</a>
+                    <a href="reports.html?type=debtor-aging" class="nav-sub-link">Debtor Aging</a>
+                    <a href="reports.html?type=creditor-schedule" class="nav-sub-link">Creditor Schedule</a>
+                    <a href="reports.html?type=balance-sheet" class="nav-sub-link">Balance Sheet</a>
+                </div>
+
                 <div class="nav-section-title">System</div>
                 <a href="/settings.html" class="nav-link active" data-page="settings">
                     <span class="nav-icon"><i data-lucide="settings"></i></span> Settings
                 </a>
+                <div class="nav-sub-menu">
+                    <a href="settings.html?view=shop" class="nav-sub-link">Shop Information</a>
+                    <a href="settings.html?view=fy" class="nav-sub-link">Financial Year</a>
+                    <a href="settings.html?view=book" class="nav-sub-link">Book Reference</a>
+                    <a href="settings.html?view=security" class="nav-sub-link">Security & Backups</a>
+                </div>
             </nav>
             <div class="sidebar-footer">
                 <div class="shop-info">
                     <div class="shop-name" id="footer-shop-name">Loading...</div>
                     <div class="user-role">Administrator</div>
                 </div>
-                <button class="btn-logout" onclick="logout()" title="Logout">
+                <button class="btn-sidebar-action" onclick="logout()" title="Logout">
                     <i data-lucide="log-out"></i>
                 </button>
-                <button class="btn-logout" onclick="exitApp()" title="Exit Application" style="background: rgba(239, 68, 68, 0.1); color: var(--color-danger); border-color: rgba(239, 68, 68, 0.2);">
+                <button class="btn-sidebar-action danger" onclick="exitApp()" title="Exit Application">
                     <i data-lucide="power"></i>
                 </button>
             </div>
@@ -74,8 +111,9 @@
 
             <div class="page-content" style="display: flex; flex-direction: column; gap: 24px;">
                 
-                <!-- Section 1: Business Profile -->
-                <div class="panel">
+                <!-- Level 1: General Settings (Low Risk) -->
+                <h3 class="section-divider" style="margin-top: 10px; margin-bottom: 5px; color: var(--color-primary); font-size: 1.1rem; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">General Settings <span style="font-size: 0.8rem; font-weight: normal; color: var(--color-text-secondary); margin-left: 8px;">(Safe to modify anytime)</span></h3>
+                <div class="panel settings-section" id="section-shop">
                     <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
                         <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="store"></i> Shop Information</h3>
                         <button class="btn btn-primary btn-sm" id="btn-save-shop">Save Changes</button>
@@ -98,9 +136,11 @@
                                     <input type="text" class="form-control" id="shop-address">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Phone</label>
-                                    <input type="text" class="form-control" id="shop-phone">
-                                </div>
+                                            <h2>Financial Years</h2>
+                                            <p style="color: var(--color-text-secondary); margin-top: 4px;">
+                                                Create new financial years or change the default year selected on the login page. To switch years, simply log out and choose a different year.
+                                            </p>
+                                        </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
@@ -116,9 +156,10 @@
                     </div>
                 </div>
 
-                <!-- Section 2: Financial Year & Ref Numbers -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                    <div class="panel">
+                <!-- Level 2: Advanced Setup (Medium Risk) -->
+                <h3 class="section-divider" style="margin-top: 10px; margin-bottom: 5px; color: var(--color-warning); font-size: 1.1rem; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">Advanced Setup <span style="font-size: 0.8rem; font-weight: normal; color: var(--color-text-secondary); margin-left: 8px;">(Modify carefully during setup or transitions)</span></h3>
+                <div id="container-fy-book" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;" class="settings-section">
+                    <div class="panel" id="panel-fy">
                         <div class="panel-header">
                             <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="calendar"></i> Financial Year</h3>
                         </div>
@@ -129,7 +170,7 @@
                         </div>
                     </div>
 
-                    <div class="panel">
+                    <div class="panel" id="panel-book">
                         <div class="panel-header">
                             <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="book"></i> Book Reference Settings</h3>
                         </div>
@@ -149,8 +190,9 @@
                     </div>
                 </div>
 
-                <!-- Section 3: Security & Backups -->
-                <div class="panel">
+                <!-- Level 3: Critical Operations (High Risk) -->
+                <h3 class="section-divider" style="margin-top: 10px; margin-bottom: 5px; color: var(--color-danger); font-size: 1.1rem; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">Critical Operations <span style="font-size: 0.8rem; font-weight: normal; color: var(--color-text-secondary); margin-left: 8px;">(Action required: proceed with caution)</span></h3>
+                <div class="panel settings-section border-danger" id="section-security" style="border: 1px solid rgba(239, 68, 68, 0.3);">
                     <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
                         <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="shield-check"></i> Security & Backups</h3>
                         <button id="btn-manual-backup" class="btn btn-secondary btn-sm">Create Manual Backup</button>
@@ -170,7 +212,7 @@
                     </div>
                 </div>
 
-                <!-- Section 4: System Info -->
+                <!-- System Info (Info Only) -->
                 <div class="panel">
                     <div class="panel-body">
                          <div style="display:flex; justify-content: space-between; align-items: center; color: var(--color-text-secondary); font-size: 13px;">

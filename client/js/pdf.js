@@ -9,6 +9,16 @@
 
 var pdf = {
     /**
+     * Helper to generate a clean, professional filename
+     */
+    getSafeFilename: function(baseName, type) {
+        var date = getToday();
+        var name = (baseName || 'Hisaab').replace(/[^a-z0-9]/gi, '_');
+        var suffix = (type || 'Report').replace(/[^a-z0-9]/gi, '_');
+        return `${name}_${suffix}_${date}.pdf`;
+    },
+
+    /**
      * Generate PDF from an HTML element
      * @param {HTMLElement} element - The element to capture
      * @param {string} filename - The name of the PDF file
@@ -129,7 +139,8 @@ var pdf = {
             document.body.appendChild(printEl);
 
             // Capture and remove
-            pdf.fromElement(printEl, 'Invoice_' + sale.invoice_no + '.pdf')
+            var filename = pdf.getSafeFilename('Invoice', sale.invoice_no);
+            pdf.fromElement(printEl, filename)
                 .finally(function() {
                     document.body.removeChild(printEl);
                 });
@@ -160,6 +171,65 @@ var pdf = {
             `;
             
             printEl.innerHTML = headerHtml + contentEl.innerHTML;
+            document.body.appendChild(printEl);
+            
+            pdf.fromElement(printEl, filename)
+                .finally(function() {
+                    document.body.removeChild(printEl);
+                });
+        });
+    },
+
+    /**
+     * Generate PDF from a data array and columns definition
+     * @param {Array} data - Array of objects
+     * @param {Array} columns - Array of column definitions {label, key, render}
+     * @param {string} title - Report title
+     * @param {string} filename - Filename
+     */
+    generateTablePDF: function(data, columns, title, filename) {
+        var printEl = document.createElement('div');
+        printEl.className = 'print-report-container';
+        printEl.style.width = '800px';
+        printEl.style.padding = '40px';
+        printEl.style.background = 'white';
+
+        api.getConfig().then(function(config) {
+            var headerHtml = `
+                <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
+                    <h1 style="margin: 0; font-size: 22px;">${escapeHtml(config.shop.name)}</h1>
+                    <p style="margin: 3px 0; font-size: 13px;">${escapeHtml(config.shop.address)}</p>
+                    <p style="margin: 3px 0; font-size: 13px;"><strong>Report:</strong> ${escapeHtml(title)} | <strong>Generated on:</strong> ${formatDate(getToday())}</p>
+                </div>
+            `;
+            
+            var tableHtml = '<table style="width:100%; border-collapse: collapse; font-size: 11px;">';
+            // Header
+            tableHtml += '<thead><tr style="background: #f3f4f6;">';
+            columns.forEach(col => {
+                tableHtml += `<th style="border: 1px solid #e5e7eb; padding: 8px; text-align: ${col.align || 'left'};">${escapeHtml(col.label)}</th>`;
+            });
+            tableHtml += '</tr></thead><tbody>';
+            
+            // Body
+            data.forEach(row => {
+                tableHtml += '<tr>';
+                columns.forEach(col => {
+                    var val = col.render ? col.render(row) : (row[col.key] || '');
+                    // Strip HTML if render returns HTML for table use elsewhere
+                    if (typeof val === 'string' && val.includes('<')) {
+                        var tmp = document.createElement('DIV');
+                        tmp.innerHTML = val;
+                        val = tmp.textContent || tmp.innerText || '';
+                    }
+                    tableHtml += `<td style="border: 1px solid #e5e7eb; padding: 8px; text-align: ${col.align || 'left'};">${escapeHtml(val)}</td>`;
+                });
+                tableHtml += '</tr>';
+            });
+            
+            tableHtml += '</tbody></table>';
+
+            printEl.innerHTML = headerHtml + tableHtml;
             document.body.appendChild(printEl);
             
             pdf.fromElement(printEl, filename)

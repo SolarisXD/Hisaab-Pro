@@ -85,10 +85,22 @@ router.get('/account-ledger', function(req, res) {
     try {
         const { account_id, date_from, date_to } = req.query;
         if (!account_id) throw new Error('Account ID is required');
-        const data = reportsService.getAccountLedger(account_id, date_from, date_to, req.session.is_decoy);
+        const data = reportsService.getAccountLedger(account_id, date_from, date_to, req.session.user.is_decoy);
         res.json(data);
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * GET /amount-receivable
+ */
+router.get('/amount-receivable', function(req, res) {
+    try {
+        var report = reportsService.getAmountReceivableReport(req.session.user.is_decoy);
+        res.json(report);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 

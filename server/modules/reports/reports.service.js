@@ -195,10 +195,12 @@ function getAccountLedger(accountId, dateFrom, dateTo, isDecoy) {
     let sql = `
         SELECT t.*, 
             s.invoice_no as linked_invoice,
+            COALESCE(s.ref_no, p.ref_no, pur.ref_no) as ref_no,
             p.mode as payment_mode
         FROM transactions t
         LEFT JOIN sales s ON t.linked_sale_id = s.id
         LEFT JOIN payments p ON t.linked_payment_id = p.id
+        LEFT JOIN purchases pur ON t.linked_purchase_id = pur.id
         WHERE t.account_id = ? AND t.is_decoy = ? AND t.is_deleted = 0
     `;
     const params = [accountId, isDecoy ? 1 : 0];
@@ -244,11 +246,33 @@ function getAccountLedger(accountId, dateFrom, dateTo, isDecoy) {
     };
 }
 
+/**
+ * Amount Receivable Report
+ * Lists all customers with current_balance > 0 (strictly debit)
+ */
+function getAmountReceivableReport(isDecoy) {
+    const customers = db.prepare(
+        'SELECT id, name, phone, current_balance FROM accounts ' +
+        'WHERE type = \'customer\' AND current_balance > 0 AND is_active = 1 AND is_decoy = ? ' +
+        'ORDER BY name COLLATE NOCASE'
+    ).all(isDecoy ? 1 : 0);
+
+    const total = customers.reduce((sum, c) => sum + c.current_balance, 0);
+
+    return {
+        date: new Date().toISOString().split('T')[0],
+        customers: customers,
+        total: total,
+        shop: config.shop
+    };
+}
+
 module.exports = {
     getDailySalesReport: getDailySalesReport,
     getMonthlyReport: getMonthlyReport,
     getDebtorAgingReport: getDebtorAgingReport,
     getCreditorSchedule: getCreditorSchedule,
     getBalanceSheet: getBalanceSheet,
-    getAccountLedger: getAccountLedger
+    getAccountLedger: getAccountLedger,
+    getAmountReceivableReport: getAmountReceivableReport
 };

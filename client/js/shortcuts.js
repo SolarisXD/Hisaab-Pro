@@ -34,6 +34,12 @@ var shortcuts = {
             this.triggerAction('print');
         }
 
+        // Alt + E - Edit
+        if (e.altKey && (key === 'e' || key === 'E')) {
+            e.preventDefault();
+            this.triggerAction('edit');
+        }
+
         // Escape - Close modals / cancels
         if (key === 'Escape') {
             e.preventDefault();
@@ -105,6 +111,12 @@ var shortcuts = {
             var printBtn = document.querySelector('.modal-overlay.active #btn-download-sale, .modal-overlay.active #btn-print-invoice, #btn-print');
             if (printBtn && !printBtn.disabled) {
                 printBtn.click();
+            }
+        } else if (action === 'edit') {
+            // Find edit button (likely in ledger view or similar)
+            var editBtn = document.querySelector('#btn-edit-ledger-account, .btn-primary[onclick*="edit"], .btn-edit');
+            if (editBtn && !editBtn.disabled && editBtn.offsetParent !== null) {
+                editBtn.click();
             }
         } else if (action === 'close') {
             // Close active modal

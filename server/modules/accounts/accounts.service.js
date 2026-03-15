@@ -28,7 +28,7 @@ function listAccounts(filters, isDecoy) {
         params.push('%' + filters.search + '%');
     }
 
-    var sql = 'SELECT * FROM accounts WHERE ' + conditions.join(' AND ') + ' ORDER BY type, name';
+    var sql = 'SELECT * FROM accounts WHERE ' + conditions.join(' AND ') + ' ORDER BY name COLLATE NOCASE';
     return db.prepare(sql).all.apply(db.prepare(sql), params);
 }
 
@@ -46,9 +46,10 @@ function createAccount(data, isDecoy) {
     if (!data.name) throw new Error('Account name is required');
     if (!data.type) throw new Error('Account type is required');
 
-    var validTypes = ['customer', 'supplier', 'cash', 'bank', 'expense', 'revenue'];
-    if (validTypes.indexOf(data.type) === -1) {
-        throw new Error('Invalid account type. Must be one of: ' + validTypes.join(', '));
+    const accountTypesService = require('./account-types.service');
+    var typeObj = accountTypesService.getAccountType(data.type);
+    if (!typeObj || !typeObj.is_active) {
+        throw new Error('Invalid or inactive account type: ' + data.type);
     }
 
     var openingBalance = data.opening_balance || 0;

@@ -12,6 +12,10 @@ var router = express.Router();
 var settingsService = require('./settings.service');
 var { requireAuth, requireRole } = require('../auth/auth.middleware');
 
+router.use('/public-financial-years', function(req, res) {
+    res.json(settingsService.listFinancialYears());
+});
+
 router.use(requireAuth);
 
 /**

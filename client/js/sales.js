@@ -12,7 +12,36 @@
         loadCommonUI();
         loadSales();
         loadCustomers();
+        
+        // Handle view parameters
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('view') === 'add') {
+            openSaleModal();
+        }
+        updateSidebarActiveState();
     });
+
+    function updateSidebarActiveState() {
+        var params = new URLSearchParams(window.location.search);
+        var view = params.get('view') || 'list';
+        
+        // Deactivate all sub-links in the Sales section
+        var salesNav = document.querySelector('.nav-link[data-page="sales"]');
+        if (!salesNav) return;
+        
+        var subMenu = salesNav.nextElementSibling;
+        if (subMenu && subMenu.classList.contains('nav-sub-menu')) {
+            var subLinks = subMenu.querySelectorAll('.nav-sub-link');
+            for (var i = 0; i < subLinks.length; i++) {
+                var href = subLinks[i].getAttribute('href');
+                if (href.includes('view=' + view)) {
+                    subLinks[i].classList.add('active');
+                } else {
+                    subLinks[i].classList.remove('active');
+                }
+            }
+        }
+    }
 
     // New Sale button
     document.getElementById('btn-new-sale').addEventListener('click', function() {
@@ -24,6 +53,14 @@
     if (btnSave) btnSave.addEventListener('click', function() {
         saveSale();
     });
+
+    // Print List button
+    var btnPrintList = document.getElementById('btn-print-list');
+    if (btnPrintList) btnPrintList.addEventListener('click', function() {
+        printSalesList();
+    });
+
+    var currentSalesData = [];
 
     // Auto-calculating Ref No (Book-Page)
     function fetchNextRefNo() {
@@ -71,6 +108,7 @@
 
         api.get('/sales', params)
             .then(function(sales) {
+                currentSalesData = sales;
                 renderSalesList(sales);
             })
             .catch(function(err) {
@@ -156,6 +194,31 @@
         editingSaleId = null;
     };
 
+    function resetSaleModalForNext() {
+        var form = document.getElementById('sale-form');
+        if (form) form.reset();
+        
+        // Robust reset for select and other fields
+        var customerSelect = document.getElementById('sale-customer');
+        if (customerSelect) {
+            customerSelect.value = '';
+            customerSelect.selectedIndex = 0;
+        }
+        
+        document.getElementById('sale-date').value = getToday();
+        document.getElementById('sale-amount-paid').value = 0;
+        document.getElementById('sale-notes').value = '';
+        
+        editingSaleId = null;
+        fetchNextRefNo();
+        fetchNextInvoiceNo();
+        
+        // Small delay to ensure focus works after form reset
+        setTimeout(function() {
+            document.getElementById('sale-total').focus();
+        }, 50);
+    }
+
 
     function saveSale() {
         var total = parseFloat(document.getElementById('sale-total').value);
@@ -189,7 +252,11 @@
             promise
                 .then(function(sale) {
                     showToast(editingSaleId ? 'Sale updated!' : 'Sale created: ' + sale.invoice_no, 'success');
-                    closeSaleModal();
+                    if (editingSaleId) {
+                        closeSaleModal();
+                    } else {
+                        resetSaleModalForNext();
+                    }
                     loadSales();
                 })
                 .catch(function(err) {
@@ -247,4 +314,23 @@
                 });
         });
     };
+
+    function printSalesList() {
+        if (!currentSalesData || currentSalesData.length === 0) {
+            showToast('No sales data to print', 'warning');
+            return;
+        }
+
+        var columns = [
+            { label: 'Invoice No', key: 'invoice_no' },
+            { label: 'Ref No', key: 'ref_no' },
+            { label: 'Date', key: 'date', render: (row) => formatDate(row.date) },
+            { label: 'Customer', key: 'customer_name', render: (row) => row.customer_name || 'Walk-in' },
+            { label: 'Total', key: 'total', align: 'text-right', render: (row) => formatINR(row.total) },
+            { label: 'Status', key: 'status', render: (row) => row.status.toUpperCase() }
+        ];
+
+        var filename = pdf.getSafeFilename('Sales', 'Report');
+        pdf.generateTablePDF(currentSalesData, columns, 'Sales Report', filename);
+    }
 })();
