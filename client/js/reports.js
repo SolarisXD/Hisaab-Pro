@@ -287,7 +287,7 @@
                     return '<span class="badge ' + cls + '">' + row.days_outstanding + ' days</span>';
                 }},
                 { label: 'Outstanding', key: 'current_balance', align: 'text-right', render: function(row) {
-                    return '<span class="amount negative">' + formatINR(row.current_balance) + '</span>';
+                    return '<span class="amount negative">' + formatBalance(row.current_balance, 'customer') + '</span>';
                 }}
             ]);
         }
@@ -304,7 +304,7 @@
                 { label: 'Phone', key: 'phone', render: function(row) { return escapeHtml(row.phone || '—'); } },
                 { label: 'Last Payment', key: 'last_payment_date', render: function(row) { return formatDate(row.last_payment_date); } },
                 { label: 'Amount Due', key: 'current_balance', align: 'text-right', render: function(row) {
-                    return '<span class="amount negative">' + formatINR(row.current_balance) + '</span>';
+                    return '<span class="amount negative">' + formatBalance(row.current_balance, 'supplier') + '</span>';
                 }}
             ]);
         } else {
@@ -326,11 +326,11 @@
             var typeTotal = 0;
             for (var i = 0; i < accounts.length; i++) typeTotal += accounts[i].current_balance;
 
-            html += '<h4 style="margin:20px 0 12px;">' + (typeLabels[type] || type) + ' — Total: <span class="amount">' + formatINR(typeTotal) + '</span></h4>';
+            html += '<h4 style="margin:20px 0 12px;">' + (typeLabels[type] || type) + ' — Total: <span class="amount">' + formatBalance(typeTotal, type) + '</span></h4>';
             html += renderTable(accounts, [
                 { label: 'Account', key: 'name', render: function(row) { return escapeHtml(row.name); } },
                 { label: 'Balance', key: 'current_balance', align: 'text-right', render: function(row) {
-                    return '<span class="amount">' + formatINR(row.current_balance) + '</span>';
+                    return '<span class="amount">' + formatBalance(row.current_balance, type) + '</span>';
                 }}
             ]);
         }
@@ -352,11 +352,11 @@
         }
 
         html += '<div class="stats-row" style="margin-bottom:20px;">';
-        html += '<div class="stat-card primary"><div class="stat-label">Opening Balance</div><div class="stat-value">' + formatINR(data.opening_balance) + '</div></div>';
+        html += '<div class="stat-card primary"><div class="stat-label">Opening Balance</div><div class="stat-value">' + formatBalance(data.opening_balance, data.account.type) + '</div></div>';
         html += '<div class="stat-card success"><div class="stat-label">Total Credits</div><div class="stat-value">' + formatINR(totalCredits) + '</div></div>';
         html += '<div class="stat-card danger"><div class="stat-label">Total Debits</div><div class="stat-value">' + formatINR(totalDebits) + '</div></div>';
         html += '</div>';
-        html += '<div class="stat-card" style="margin-bottom:20px;"><div class="stat-label">Closing Balance</div><div class="stat-value" style="color:var(--color-primary);">' + formatINR(data.closing_balance) + '</div></div>';
+        html += '<div class="stat-card" style="margin-bottom:20px;"><div class="stat-label">Closing Balance</div><div class="stat-value" style="color:var(--color-primary);">' + formatBalance(data.closing_balance, data.account.type) + '</div></div>';
 
         if (data.transactions.length > 0) {
             html += renderTable(data.transactions, [
@@ -377,7 +377,7 @@
                     return row.type === 'credit' ? '<span class="amount positive">' + formatINR(row.amount) + '</span>' : '—'; 
                 }},
                 { label: 'Balance', key: 'running_balance', align: 'text-right', render: function(row) { 
-                    return '<strong>' + formatINR(row.running_balance) + '</strong>'; 
+                    return '<strong>' + formatBalance(row.running_balance, data.account.type) + '</strong>'; 
                 }}
             ]);
         } else {
@@ -395,7 +395,7 @@
                 { label: 'Customer', key: 'name', render: function(row) { return '<span style="font-weight:600;">' + escapeHtml(row.name) + '</span>'; } },
                 { label: 'Phone', key: 'phone', render: function(row) { return escapeHtml(row.phone || '—'); } },
                 { label: 'Outstanding Balance', key: 'current_balance', align: 'text-right', render: function(row) {
-                    return '<span class="amount negative">' + formatINR(row.current_balance) + '</span>';
+                    return '<span class="amount negative">' + formatBalance(row.current_balance, 'customer') + '</span>';
                 }}
             ]);
         } else {

@@ -49,11 +49,11 @@
                 document.getElementById('month-sales').textContent = formatINR(data.month_sales.total);
                 document.getElementById('month-sales-count').textContent = data.month_sales.count + ' invoice' + (data.month_sales.count !== 1 ? 's' : '');
 
-                document.getElementById('total-debtors').textContent = formatINR(data.total_debtors);
-                document.getElementById('total-creditors').textContent = formatINR(data.total_creditors);
+                document.getElementById('total-debtors').textContent = formatBalance(data.total_debtors, 'customer');
+                document.getElementById('total-creditors').textContent = formatBalance(data.total_creditors, 'supplier');
 
-                document.getElementById('cash-balance').textContent = formatINR(data.cash_balance);
-                document.getElementById('bank-balance').textContent = formatINR(data.bank_balance);
+                document.getElementById('cash-balance').textContent = formatBalance(data.cash_balance, 'cash');
+                document.getElementById('bank-balance').textContent = formatBalance(data.bank_balance, 'bank');
 
                 // Recent transactions
                 renderRecentTransactions(data.recent_transactions);

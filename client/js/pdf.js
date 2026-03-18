@@ -216,13 +216,11 @@ var pdf = {
                 tableHtml += '<tr>';
                 columns.forEach(col => {
                     var val = col.render ? col.render(row) : (row[col.key] || '');
-                    // Strip HTML if render returns HTML for table use elsewhere
+                    // Strip HTML tags safely if render returns HTML (e.g. badges or colored spans)
                     if (typeof val === 'string' && val.includes('<')) {
-                        var tmp = document.createElement('DIV');
-                        tmp.innerHTML = val;
-                        val = tmp.textContent || tmp.innerText || '';
+                        val = val.replace(/<[^>]*>?/gm, '');
                     }
-                    tableHtml += `<td style="border: 1px solid #e5e7eb; padding: 8px; text-align: ${col.align || 'left'};">${escapeHtml(val)}</td>`;
+                    tableHtml += `<td style="border: 1px solid #e5e7eb; padding: 8px; text-align: ${col.align || 'left'};">${escapeHtml(String(val))}</td>`;
                 });
                 tableHtml += '</tr>';
             });

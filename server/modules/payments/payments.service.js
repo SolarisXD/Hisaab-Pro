@@ -9,6 +9,7 @@
 
 var { db } = require('../../db/database');
 var logger = require('../../shared/logger');
+var accountsService = require('../accounts/accounts.service');
 
 /**
  * List payments with optional filters
@@ -102,14 +103,15 @@ function createPayment(data, isDecoy) {
 
         var paymentId = result.lastInsertRowid;
 
-        // Update account balance
-        // 'in' = payment received → reduce customer debt (decrease balance)
-        // 'out' = payment made → reduce supplier liability (decrease balance)
-        var balanceChange = data.type === 'in' ? -data.amount : -data.amount;
+        var partyAccount = accountsService.getAccountById(data.account_id, isDecoy);
+
+        // --- Leg 1: Update Party account (Customer/Supplier) ---
+        // 'in' = payment received FROM customer → reduces their debt (decrease balance)
+        // 'out' = payment made TO supplier → reduces our liability (increase balance)
+        var balanceChange = data.type === 'in' ? -data.amount : data.amount;
         db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
             .run(balanceChange, data.account_id);
 
-        // Record transaction
         db.prepare(
             'INSERT INTO transactions (date, account_id, type, amount, description, linked_payment_id, is_decoy)' +
             ' VALUES (?, ?, ?, ?, ?, ?, ?)'
@@ -122,6 +124,29 @@ function createPayment(data, isDecoy) {
             paymentId,
             isDecoy ? 1 : 0
         );
+
+        // --- Leg 2: Update Asset account (Cash/Bank) ---
+        var assetAccount = data.mode === 'cash' ? accountsService.getDefaultCashAccount(isDecoy) : accountsService.getDefaultBankAccount(isDecoy);
+        if (assetAccount) {
+            // 'in' (received FROM customer) -> asset increases (Debit)
+            // 'out' (paid TO supplier) -> asset decreases (Credit)
+            var assetBalanceChange = data.type === 'in' ? data.amount : -data.amount;
+            db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                .run(assetBalanceChange, assetAccount.id);
+
+            db.prepare(
+                'INSERT INTO transactions (date, account_id, type, amount, description, linked_payment_id, is_decoy)' +
+                ' VALUES (?, ?, ?, ?, ?, ?, ?)'
+            ).run(
+                data.date || new Date().toISOString().split('T')[0],
+                assetAccount.id,
+                data.type === 'in' ? 'debit' : 'credit',
+                data.amount,
+                'Payment ' + (data.type === 'in' ? 'received' : 'made') + ' from ' + (partyAccount ? partyAccount.name : 'Account #' + data.account_id),
+                paymentId,
+                isDecoy ? 1 : 0
+            );
+        }
 
         // If linked to a sale, update sale's amount_paid
         if (data.sale_id && data.type === 'in') {
@@ -160,13 +185,18 @@ function updatePayment(id, data, isDecoy) {
         var oldType = existing.type;
         var oldAccountId = existing.account_id;
 
-        // Revert account balance for the old payment
-        // If oldType was 'in', balance was decreased by oldAmount, so add it back.
-        // If oldType was 'out', balance was decreased by oldAmount, so add it back.
-        // The balance change for payments is always negative (reducing liability/debt).
-        // So to revert, we add the old amount back to the account.
+        // Revert party account balance
+        var revertAmount = oldType === 'in' ? oldAmount : -oldAmount;
         db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
-            .run(oldAmount, oldAccountId); // Add back the old amount
+            .run(revertAmount, oldAccountId);
+
+        // Revert asset account balance
+        var assetAccount = existing.mode === 'cash' ? accountsService.getDefaultCashAccount(isDecoy) : accountsService.getDefaultBankAccount(isDecoy);
+        if (assetAccount) {
+            var assetRevertAmount = oldType === 'in' ? -oldAmount : oldAmount;
+            db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                .run(assetRevertAmount, assetAccount.id);
+        }
 
         // Revert sale's amount_paid if linked and was 'in'
         if (existing.sale_id && oldType === 'in') {
@@ -175,7 +205,7 @@ function updatePayment(id, data, isDecoy) {
             ).run(oldAmount, oldAmount, oldAmount, existing.sale_id);
         }
 
-        // Mark old transaction as deleted
+        // Mark old transactions as deleted
         db.prepare('UPDATE transactions SET is_deleted = 1 WHERE linked_payment_id = ? AND is_decoy = ?').run(id, isDecoy ? 1 : 0);
 
         // --- Update payment record ---
@@ -194,22 +224,14 @@ function updatePayment(id, data, isDecoy) {
             isDecoy ? 1 : 0
         );
 
-        // --- Apply new balance and sales ---
-        // Update account balance for the new payment
-        // 'in' = payment received → reduce customer debt (decrease balance)
-        // 'out' = payment made → reduce supplier liability (decrease balance)
-        var newBalanceChange = newType === 'in' ? -newAmount : -newAmount;
+        // --- Apply new balance and transactions (Double-Entry) ---
+        var partyAccount = accountsService.getAccountById(newAccountId, isDecoy);
+        
+        // Leg 1: Party
+        var newBalanceChange = newType === 'in' ? -newAmount : newAmount;
         db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
             .run(newBalanceChange, newAccountId);
 
-        // Update sale's amount_paid if linked and is 'in'
-        if (existing.sale_id && newType === 'in') { // Assuming sale_id doesn't change, or if it does, it's handled by other logic
-            db.prepare(
-                'UPDATE sales SET amount_paid = amount_paid + ?, status = CASE WHEN amount_paid + ? >= total THEN \'paid\' ELSE \'partial\' END, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?'
-            ).run(newAmount, newAmount, existing.sale_id);
-        }
-
-        // Create new transaction
         db.prepare(
             'INSERT INTO transactions (date, account_id, type, amount, description, linked_payment_id, is_decoy, is_deleted)' +
             ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
@@ -218,10 +240,38 @@ function updatePayment(id, data, isDecoy) {
             newAccountId,
             newType === 'in' ? 'credit' : 'debit',
             newAmount,
-            (newType === 'in' ? 'Payment In' : 'Payment Out') + ' (Updated)',
+            (newType === 'in' ? 'Payment Received' : 'Payment Made') + ' (Updated)',
             id,
             isDecoy ? 1 : 0
         );
+
+        // Leg 2: Asset
+        var newAssetAccount = newMode === 'cash' ? accountsService.getDefaultCashAccount(isDecoy) : accountsService.getDefaultBankAccount(isDecoy);
+        if (newAssetAccount) {
+            var newAssetBalanceChange = newType === 'in' ? newAmount : -newAmount;
+            db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                .run(newAssetBalanceChange, newAssetAccount.id);
+
+            db.prepare(
+                'INSERT INTO transactions (date, account_id, type, amount, description, linked_payment_id, is_decoy, is_deleted)' +
+                ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
+            ).run(
+                newDate,
+                newAssetAccount.id,
+                newType === 'in' ? 'debit' : 'credit',
+                newAmount,
+                (newType === 'in' ? 'Payment Received' : 'Payment Made') + ' from ' + (partyAccount ? partyAccount.name : 'Account #' + newAccountId),
+                id,
+                isDecoy ? 1 : 0
+            );
+        }
+
+        // Update sale's amount_paid if linked and is 'in'
+        if (existing.sale_id && newType === 'in') {
+            db.prepare(
+                'UPDATE sales SET amount_paid = amount_paid + ?, status = CASE WHEN amount_paid + ? >= total THEN \'paid\' ELSE \'partial\' END, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?'
+            ).run(newAmount, newAmount, existing.sale_id);
+        }
     });
 
     transaction(); // Execute the transaction
@@ -240,9 +290,10 @@ function deletePayment(id, isDecoy) {
         // Mark payment as deleted
         db.prepare('UPDATE payments SET is_deleted = 1, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?').run(id);
 
-        // Roll back account balance (it was decreased by amount, so increase it back)
-        db.prepare('UPDATE accounts SET current_balance = current_balance - ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
-            .run(payment.type === 'in' ? -payment.amount : -payment.amount, payment.account_id);
+        // Roll back account balance (opposite of what create did)
+        var rollbackAmount = payment.type === 'in' ? payment.amount : -payment.amount;
+        db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+            .run(rollbackAmount, payment.account_id);
 
         // Mark transaction as deleted
         db.prepare('UPDATE transactions SET is_deleted = 1 WHERE linked_payment_id = ?').run(id);
@@ -252,6 +303,16 @@ function deletePayment(id, isDecoy) {
             db.prepare(
                 'UPDATE sales SET amount_paid = amount_paid - ?, status = CASE WHEN amount_paid - ? >= total THEN \'paid\' WHEN amount_paid - ? > 0 THEN \'partial\' ELSE \'pending\' END, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?'
             ).run(payment.amount, payment.amount, payment.amount, payment.sale_id);
+        }
+
+        // --- Leg 2: Roll back Asset account (Cash/Bank) ---
+        var assetAccount = payment.mode === 'cash' ? accountsService.getDefaultCashAccount(isDecoy) : accountsService.getDefaultBankAccount(isDecoy);
+        if (assetAccount) {
+            // Revert asset change: opposite of create
+            // If create was +amount (type in), rollback is -amount.
+            var assetRollback = payment.type === 'in' ? -payment.amount : payment.amount;
+            db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                .run(assetRollback, assetAccount.id);
         }
 
         return true;

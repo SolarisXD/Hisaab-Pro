@@ -8,6 +8,7 @@
 
 var { db } = require('../../db/database');
 var logger = require('../../shared/logger');
+var accountsService = require('../accounts/accounts.service');
 
 /**
  * List purchases
@@ -82,27 +83,64 @@ function createPurchase(data, isDecoy) {
         var purchaseId = result.lastInsertRowid;
 
         // Update supplier balance (increase our liability/debt to them)
+        // Update supplier balance
         if (data.supplier_account_id) {
             var outstandingAmount = total - amountPaid;
-            // Liability increases for us = they become more of a creditor (negative balance if we use customer-positive convention?)
-            // Usually Creditors have Credit balance. Let's assume current_balance is "Net Owed to Us".
-            // So Purchase increases liability => current_balance decreases.
+            // Purchase increases liability => current_balance decreases
             db.prepare('UPDATE accounts SET current_balance = current_balance - ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
                 .run(outstandingAmount, data.supplier_account_id);
 
-            // Record transaction
+            // --- Leg 1: Record the Purchase in ledger (Credit Supplier) ---
             db.prepare(
-                'INSERT INTO transactions (date, account_id, type, amount, description, linked_purchase_id, is_decoy)' +
-                ' VALUES (?, ?, ?, ?, ?, ?, ?)'
+                'INSERT INTO transactions (date, account_id, type, amount, description, linked_purchase_id, is_decoy, is_deleted)' +
+                ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
             ).run(
                 data.date || new Date().toISOString().split('T')[0],
                 data.supplier_account_id,
-                'credit', // Credit the supplier
+                'credit', 
                 total,
                 'Purchase ' + data.invoice_no,
                 purchaseId,
                 isDecoy ? 1 : 0
             );
+
+            // --- Leg 2: Record the Payment in ledger (Double-Entry) ---
+            if (amountPaid > 0) {
+                // Leg 2a: Debit Supplier (reduces liability)
+                db.prepare(
+                    'INSERT INTO transactions (date, account_id, type, amount, description, linked_purchase_id, is_decoy, is_deleted)' +
+                    ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
+                ).run(
+                    data.date || new Date().toISOString().split('T')[0],
+                    data.supplier_account_id,
+                    'debit',
+                    amountPaid,
+                    'Payment made for ' + data.invoice_no,
+                    purchaseId,
+                    isDecoy ? 1 : 0
+                );
+
+                // Leg 2b: Credit Cash/Bank (reduces asset)
+                var assetAccount = accountsService.getDefaultCashAccount(isDecoy);
+                if (assetAccount) {
+                    db.prepare('UPDATE accounts SET current_balance = current_balance - ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                        .run(amountPaid, assetAccount.id);
+
+                    var supplierAccount = accountsService.getAccountById(data.supplier_account_id, isDecoy);
+                    db.prepare(
+                        'INSERT INTO transactions (date, account_id, type, amount, description, linked_purchase_id, is_decoy, is_deleted)' +
+                        ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
+                    ).run(
+                        data.date || new Date().toISOString().split('T')[0],
+                        assetAccount.id,
+                        'credit',
+                        amountPaid,
+                        'Payment made for ' + data.invoice_no + ' to ' + (supplierAccount ? supplierAccount.name : 'Supplier'),
+                        purchaseId,
+                        isDecoy ? 1 : 0
+                    );
+                }
+            }
         }
 
         return purchaseId;
@@ -129,6 +167,15 @@ function deletePurchase(id, isDecoy) {
             var outstanding = purchase.total - (purchase.amount_paid || 0);
             db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
                 .run(outstanding, purchase.supplier_account_id);
+            
+            // Roll back asset balance if paid
+            if (purchase.amount_paid > 0) {
+                var assetAccount = accountsService.getDefaultCashAccount(isDecoy);
+                if (assetAccount) {
+                    db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                        .run(purchase.amount_paid, assetAccount.id);
+                }
+            }
         }
 
         // Mark associated transactions as deleted

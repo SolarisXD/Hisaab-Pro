@@ -183,6 +183,24 @@ function getCashBankBalances(isDecoy) {
     return stmt.all(isDecoy ? 1 : 0);
 }
 
+/**
+ * Get the primary cash account (lowest ID of type 'cash')
+ */
+function getDefaultCashAccount(isDecoy) {
+    return db.prepare(
+        'SELECT * FROM accounts WHERE type = \'cash\' AND is_active = 1 AND is_decoy = ? ORDER BY id ASC LIMIT 1'
+    ).get(isDecoy ? 1 : 0);
+}
+
+/**
+ * Get the primary bank account (lowest ID of type 'bank')
+ */
+function getDefaultBankAccount(isDecoy) {
+    return db.prepare(
+        'SELECT * FROM accounts WHERE type = \'bank\' AND is_active = 1 AND is_decoy = ? ORDER BY id ASC LIMIT 1'
+    ).get(isDecoy ? 1 : 0);
+}
+
 module.exports = {
     listAccounts: listAccounts,
     getAccountById: getAccountById,
@@ -193,5 +211,7 @@ module.exports = {
     getAccountsSummary: getAccountsSummary,
     getTotalDebtors: getTotalDebtors,
     getTotalCreditors: getTotalCreditors,
-    getCashBankBalances: getCashBankBalances
+    getCashBankBalances: getCashBankBalances,
+    getDefaultCashAccount: getDefaultCashAccount,
+    getDefaultBankAccount: getDefaultBankAccount
 };

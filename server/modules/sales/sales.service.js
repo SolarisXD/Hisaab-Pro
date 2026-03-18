@@ -11,6 +11,7 @@
 var { db } = require('../../db/database');
 var config = require('../../config');
 var logger = require('../../shared/logger');
+var accountsService = require('../accounts/accounts.service');
 
 /**
  * Generate next invoice number: INV-XX
@@ -181,7 +182,7 @@ function createSale(data, isDecoy) {
                     .run(outstandingAmount, data.customer_account_id);
             }
 
-            // 2. Insert the ledger transaction
+            // 2. Record the Sale in ledger (Debit Customer)
             db.prepare(
                 'INSERT INTO transactions (date, account_id, type, amount, description, linked_sale_id, is_decoy, is_deleted)' +
                 ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
@@ -194,6 +195,43 @@ function createSale(data, isDecoy) {
                 saleId,
                 isDecoy ? 1 : 0
             );
+
+            // 3. Record the payment in ledger if paid at time of sale
+            if (data.amount_paid > 0) {
+                // Leg 1: Credit Customer (decrease debt)
+                db.prepare(
+                    'INSERT INTO transactions (date, account_id, type, amount, description, linked_sale_id, is_decoy, is_deleted)' +
+                    ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
+                ).run(
+                    data.date || localISOTime,
+                    data.customer_account_id,
+                    'credit',
+                    data.amount_paid,
+                    'Payment received for ' + invoiceNo,
+                    saleId,
+                    isDecoy ? 1 : 0
+                );
+
+                // Leg 2: Debit Cash/Bank (increase asset)
+                var assetAccount = accountsService.getDefaultCashAccount(isDecoy); // Default to cash for sales
+                if (assetAccount) {
+                    db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                        .run(data.amount_paid, assetAccount.id);
+
+                    db.prepare(
+                        'INSERT INTO transactions (date, account_id, type, amount, description, linked_sale_id, is_decoy, is_deleted)' +
+                        ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
+                    ).run(
+                        data.date || localISOTime,
+                        assetAccount.id,
+                        'debit',
+                        data.amount_paid,
+                        'Payment received for ' + invoiceNo + ' from ' + (data.customer_name || 'Customer'),
+                        saleId,
+                        isDecoy ? 1 : 0
+                    );
+                }
+            }
         }
 
         return saleId;
@@ -252,7 +290,7 @@ function updateSale(id, data, isDecoy) {
                     .run(newOutstanding, newCustomerId);
             }
             
-            // Create a new fresh transaction
+            // Create a new fresh transaction (Debit)
             db.prepare(
                 'INSERT INTO transactions (date, account_id, type, amount, description, linked_sale_id, is_decoy, is_deleted)' +
                 ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
@@ -265,6 +303,43 @@ function updateSale(id, data, isDecoy) {
                 id,
                 isDecoy ? 1 : 0
             );
+
+            // Create payment transactions if any (Double-Entry)
+            if (amountPaid > 0) {
+                // Leg 1: Party
+                db.prepare(
+                    'INSERT INTO transactions (date, account_id, type, amount, description, linked_sale_id, is_decoy, is_deleted)' +
+                    ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
+                ).run(
+                    data.date || existing.date,
+                    newCustomerId,
+                    'credit',
+                    amountPaid,
+                    'Payment received for ' + (data.invoice_no || existing.invoice_no),
+                    id,
+                    isDecoy ? 1 : 0
+                );
+
+                // Leg 2: Asset
+                var assetAccount = accountsService.getDefaultCashAccount(isDecoy);
+                if (assetAccount) {
+                    db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                        .run(amountPaid, assetAccount.id);
+
+                    db.prepare(
+                        'INSERT INTO transactions (date, account_id, type, amount, description, linked_sale_id, is_decoy, is_deleted)' +
+                        ' VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
+                    ).run(
+                        data.date || existing.date,
+                        assetAccount.id,
+                        'debit',
+                        amountPaid,
+                        'Payment received for ' + (data.invoice_no || existing.invoice_no) + ' from ' + (existing.customer_name || 'Customer'),
+                        id,
+                        isDecoy ? 1 : 0
+                    );
+                }
+            }
         }
     });
 

@@ -7,15 +7,12 @@
 'use strict';
 
 /**
- * Format amount as Indian Rupees
+ * Format amount as Indian Rupees (Positive only)
  */
 function formatINR(amount) {
-    if (amount === null || amount === undefined) return '₹0';
-    var num = parseFloat(amount);
-    if (isNaN(num)) return '₹0';
-
-    var isNegative = num < 0;
-    num = Math.abs(num);
+    if (amount === null || amount === undefined) return '₹0.00';
+    var num = Math.abs(parseFloat(amount));
+    if (isNaN(num)) return '₹0.00';
 
     // Indian number formatting: 1,23,456.78
     var parts = num.toFixed(2).split('.');
@@ -30,7 +27,39 @@ function formatINR(amount) {
     }
     var formatted = remaining.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
 
-    return (isNegative ? '-' : '') + '₹' + formatted + '.' + decPart;
+    return '₹' + formatted + '.' + decPart;
+}
+
+/**
+ * Format balance with DR/CR notation
+ * @param {number} amount - The numeric balance
+ * @param {string} type - Account grouping (customer, supplier, cash, bank, expense, revenue)
+ */
+function formatBalance(amount, type) {
+    if (amount === null || amount === undefined || isNaN(parseFloat(amount))) return '₹0.00';
+    var num = parseFloat(amount);
+    if (Math.abs(num) < 0.01) return '₹0.00';
+
+    var formatted = formatINR(num);
+    
+    // Default accounting notation:
+    // Customer (Asset): Positive = DR, Negative = CR
+    // Supplier (Liability): Positive = CR, Negative = DR
+    // Cash/Bank (Asset): Positive = DR, Negative = CR
+    // Expense: Positive = DR, Negative = CR
+    // Revenue: Positive = CR, Negative = DR
+    
+    var suffix = '';
+    if (type === 'customer' || type === 'cash' || type === 'bank' || type === 'expense') {
+        suffix = num > 0 ? ' DR' : ' CR';
+    } else if (type === 'supplier' || type === 'revenue') {
+        suffix = num > 0 ? ' CR' : ' DR';
+    } else {
+        // Fallback for unknown types (Asset-like convention)
+        suffix = num > 0 ? ' DR' : ' CR';
+    }
+
+    return formatted + suffix;
 }
 
 /**

@@ -234,7 +234,7 @@
             { label: 'Phone', key: 'phone', render: function(row) { return escapeHtml(row.phone || '—'); } },
             { label: 'Balance', key: 'current_balance', align: 'text-right', render: function(row) {
                 var cls = row.current_balance > 0 ? 'negative' : (row.current_balance < 0 ? 'positive' : '');
-                return '<span class="amount ' + cls + '">' + formatINR(row.current_balance) + '</span>';
+                return '<span class="amount ' + cls + '">' + formatBalance(row.current_balance, row.type) + '</span>';
             }}
         ], { onRowClick: 'viewLedger' });
         
@@ -296,8 +296,8 @@
         document.getElementById('ledger-account-name').textContent = 'Ledger — ' + data.account.name;
         
         var statsHtml = '<div class="stats-row" style="margin-bottom:20px;">';
-        statsHtml += '<div class="stat-card primary"><div class="stat-label">Opening Balance</div><div class="stat-value">' + formatINR(data.opening_balance) + '</div></div>';
-        statsHtml += '<div class="stat-card" style="background:var(--color-surface); border:1px solid var(--color-border);"><div class="stat-label">Closing Balance</div><div class="stat-value" style="color:var(--color-primary);">' + formatINR(data.closing_balance) + '</div></div>';
+        statsHtml += '<div class="stat-card primary"><div class="stat-label">Opening Balance</div><div class="stat-value">' + formatBalance(data.opening_balance, data.account.type) + '</div></div>';
+        statsHtml += '<div class="stat-card" style="background:var(--color-surface); border:1px solid var(--color-border);"><div class="stat-label">Closing Balance</div><div class="stat-value" style="color:var(--color-primary);">' + formatBalance(data.closing_balance, data.account.type) + '</div></div>';
         statsHtml += '</div>';
         document.getElementById('ledger-stats').innerHTML = statsHtml;
 
@@ -322,7 +322,7 @@
                     return row.type === 'credit' ? '<span class="amount positive">' + formatINR(row.amount) + '</span>' : '—'; 
                 }},
                 { label: 'Balance', key: 'running_balance', align: 'text-right', render: function(row) { 
-                    return '<strong>' + formatINR(row.running_balance) + '</strong>'; 
+                    return '<strong>' + formatBalance(row.running_balance, data.account.type) + '</strong>'; 
                 }}
             ]);
         } else {
@@ -506,7 +506,7 @@
             { label: 'Name', key: 'name' },
             { label: 'Group', key: 'type', render: (row) => row.type.toUpperCase() },
             { label: 'Phone', key: 'phone' },
-            { label: 'Balance', key: 'current_balance', align: 'text-right', render: (row) => formatINR(row.current_balance) }
+            { label: 'Balance', key: 'current_balance', align: 'text-right', render: (row) => formatBalance(row.current_balance, row.type) }
         ];
         var filename = pdf.getSafeFilename(currentType ? currentType.toUpperCase() : 'Accounts', 'List');
         pdf.generateTablePDF(currentAccountsData, columns, title, filename);
