@@ -81,7 +81,7 @@ var pdf = {
         var printEl = document.createElement('div');
         printEl.className = 'print-only-container';
         printEl.style.width = '800px'; // Fixed width for consistent capture
-        printEl.style.padding = '40px';
+        printEl.style.padding = '30px';
         printEl.style.background = 'white';
         printEl.style.color = 'black';
         printEl.style.fontFamily = 'Arial, sans-serif';
@@ -89,49 +89,51 @@ var pdf = {
         // Get shop info
         api.getConfig().then(function(config) {
             var html = `
-                <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 30px;">
-                    <h1 style="margin: 0; font-size: 24px;">${escapeHtml(config.shop.name)}</h1>
-                    <p style="margin: 5px 0; font-size: 14px;">${escapeHtml(config.shop.address)}</p>
-                    <p style="margin: 5px 0; font-size: 14px;">Phone: ${escapeHtml(config.shop.phone)} | GSTIN: ${escapeHtml(config.shop.gstin)}</p>
+                <div style="text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px; background-color: #f8fafc; padding-top: 15px; border-radius: 4px 4px 0 0;">
+                    <h1 style="margin: 0; font-size: 26px; text-transform: uppercase; font-weight: 900; color: #1e3a8a; letter-spacing: 1.5px;">${escapeHtml(config.shop.name)}</h1>
+                    <p style="margin: 6px 0 2px 0; font-size: 14px; font-weight: 600; color: #333;">${escapeHtml(config.shop.address)}</p>
+                    <p style="margin: 2px 0; font-size: 13px; color: #555;"><strong>Phone:</strong> ${escapeHtml(config.shop.phone)} &nbsp;|&nbsp; <strong>GSTIN:</strong> ${escapeHtml(config.shop.gstin)}</p>
                 </div>
                 
-                <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
                     <div>
-                        <h3 style="margin: 0 0 10px 0; color: #666; font-size: 12px; text-transform: uppercase;">Invoice To:</h3>
-                        <p style="margin: 0; font-weight: bold; font-size: 16px;">${escapeHtml(sale.customer_name || 'Walk-in Customer')}</p>
+                        <h3 style="margin: 0 0 8px 0; color: #666; font-size: 11px; text-transform: uppercase;">Invoice To:</h3>
+                        <p style="margin: 0; font-weight: bold; font-size: 15px;">${escapeHtml(sale.customer_name || 'Walk-in Customer')}</p>
                     </div>
                     <div style="text-align: right;">
-                        <h2 style="margin: 0; font-size: 20px; color: #2563EB;">INVOICE</h2>
-                        <p style="margin: 5px 0;"><strong>No:</strong> ${escapeHtml(sale.invoice_no)}</p>
-                        <p style="margin: 5px 0;"><strong>Date:</strong> ${formatDate(sale.date)}</p>
+                        <h2 style="margin: 0; font-size: 18px; color: #2563EB;">INVOICE</h2>
+                        <p style="margin: 4px 0; font-size: 13px;"><strong>No:</strong> ${escapeHtml(sale.invoice_no)}</p>
+                        <p style="margin: 4px 0; font-size: 13px;"><strong>Date:</strong> ${formatDate(sale.date)}</p>
                     </div>
                 </div>
 
-                <div style="padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 30px; background: #fafafa;">
-                    <p style="margin: 0; font-size: 14px; color: #666;">Description:</p>
-                    <p style="margin: 5px 0 0 0; font-size: 16px;">${escapeHtml(sale.notes || 'Hisaab Sale Transaction')}</p>
+                <div style="padding: 15px; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 20px; background: #fafafa;">
+                    <p style="margin: 0; font-size: 13px; color: #666;">Description:</p>
+                    <p style="margin: 4px 0 0 0; font-size: 14px;">${escapeHtml(sale.notes || 'Hisaab Sale Transaction')}</p>
                 </div>
 
                 <div style="display: flex; justify-content: flex-end;">
                     <div style="width: 250px;">
-                        <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                        <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
                             <span>Subtotal:</span>
                             <span>${formatINR(sale.subtotal)}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                        ${sale.tax_amount > 0 ? `
+                        <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
                             <span>GST (${sale.tax_percent}%):</span>
                             <span>${formatINR(sale.tax_amount)}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 2px solid #333; margin-top: 10px; font-weight: bold; font-size: 18px;">
+                        ` : ''}
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-top: 2px solid #333; margin-top: 8px; font-weight: bold; font-size: 16px;">
                             <span>Total:</span>
                             <span style="color: #2563EB;">${formatINR(sale.total)}</span>
                         </div>
                     </div>
                 </div>
 
-                <div style="margin-top: 50px; border-top: 1px solid #e5e7eb; padding-top: 20px; font-size: 12px; color: #666; text-align: center;">
-                    <p>Thank you for your business!</p>
-                    <p>Computer generated invoice — signature not required.</p>
+                <div style="margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 15px; font-size: 11px; color: #666; text-align: center;">
+                    <p style="margin: 2px 0;">Thank you for your business!</p>
+                    <p style="margin: 2px 0;">Computer generated invoice — signature not required.</p>
                 </div>
             `;
 
@@ -158,19 +160,47 @@ var pdf = {
         var printEl = document.createElement('div');
         printEl.className = 'print-report-container';
         printEl.style.width = '800px';
-        printEl.style.padding = '40px';
+        printEl.style.padding = '30px';
         printEl.style.background = 'white';
+        printEl.style.color = 'black';
+        printEl.style.fontFamily = 'Arial, sans-serif';
 
         api.getConfig().then(function(config) {
             var headerHtml = `
-                <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
-                    <h1 style="margin: 0; font-size: 22px;">${escapeHtml(config.shop.name)}</h1>
-                    <p style="margin: 3px 0; font-size: 13px;">${escapeHtml(config.shop.address)}</p>
-                    <p style="margin: 3px 0; font-size: 13px;"><strong>Report:</strong> ${escapeHtml(title)} | <strong>Generated on:</strong> ${formatDate(getToday())}</p>
+                <div style="text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 12px; margin-bottom: 15px; background-color: #f8fafc; padding-top: 12px; border-radius: 4px 4px 0 0;">
+                    <h1 style="margin: 0; font-size: 22px; text-transform: uppercase; font-weight: 900; color: #1e3a8a; letter-spacing: 1px;">${escapeHtml(config.shop.name)}</h1>
+                    <p style="margin: 5px 0 2px 0; font-size: 13px; font-weight: 600; color: #333;">${escapeHtml(config.shop.address)}</p>
+                    <p style="margin: 2px 0; font-size: 12px; color: #555;"><strong>Report:</strong> ${escapeHtml(title)} &nbsp;|&nbsp; <strong>Generated on:</strong> ${formatDate(getToday())}</p>
                 </div>
             `;
             
-            printEl.innerHTML = headerHtml + contentEl.innerHTML;
+            var styleHtml = `
+                <style>
+                    .print-report-container * { box-sizing: border-box; }
+                    .print-report-container .btn,
+                    .print-report-container button,
+                    .print-report-container .header-actions,
+                    .print-report-container .no-print { display: none !important; }
+                    .print-report-container .panel,
+                    .print-report-container .stat-card {
+                        box-shadow: none !important;
+                        border: 1px solid #e5e7eb !important;
+                        margin-bottom: 15px !important;
+                        border-radius: 4px !important;
+                    }
+                    .print-report-container .panel-body,
+                    .print-report-container .stat-card { padding: 12px 15px !important; }
+                    .print-report-container .stats-row { gap: 15px !important; margin-bottom: 15px !important; }
+                    .print-report-container table { font-size: 11px !important; margin-bottom: 0 !important; width: 100% !important; border-collapse: collapse !important; }
+                    .print-report-container th { background: #f3f4f6 !important; border: 1px solid #e5e7eb !important; padding: 6px 8px !important; }
+                    .print-report-container td { border: 1px solid #e5e7eb !important; padding: 6px 8px !important; }
+                    .print-report-container h3 { font-size: 15px !important; margin: 0 0 10px 0 !important; color: #111 !important; }
+                    .print-report-container .stat-label { font-size: 11px !important; margin-bottom: 4px !important; }
+                    .print-report-container .stat-value { font-size: 18px !important; }
+                </style>
+            `;
+            
+            printEl.innerHTML = styleHtml + headerHtml + contentEl.innerHTML;
             document.body.appendChild(printEl);
             
             pdf.fromElement(printEl, filename)
@@ -191,15 +221,17 @@ var pdf = {
         var printEl = document.createElement('div');
         printEl.className = 'print-report-container';
         printEl.style.width = '800px';
-        printEl.style.padding = '40px';
+        printEl.style.padding = '30px';
         printEl.style.background = 'white';
+        printEl.style.color = 'black';
+        printEl.style.fontFamily = 'Arial, sans-serif';
 
         api.getConfig().then(function(config) {
             var headerHtml = `
-                <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
-                    <h1 style="margin: 0; font-size: 22px;">${escapeHtml(config.shop.name)}</h1>
-                    <p style="margin: 3px 0; font-size: 13px;">${escapeHtml(config.shop.address)}</p>
-                    <p style="margin: 3px 0; font-size: 13px;"><strong>Report:</strong> ${escapeHtml(title)} | <strong>Generated on:</strong> ${formatDate(getToday())}</p>
+                <div style="text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 12px; margin-bottom: 15px; background-color: #f8fafc; padding-top: 12px; border-radius: 4px 4px 0 0;">
+                    <h1 style="margin: 0; font-size: 22px; text-transform: uppercase; font-weight: 900; color: #1e3a8a; letter-spacing: 1px;">${escapeHtml(config.shop.name)}</h1>
+                    <p style="margin: 5px 0 2px 0; font-size: 13px; font-weight: 600; color: #333;">${escapeHtml(config.shop.address)}</p>
+                    <p style="margin: 2px 0; font-size: 12px; color: #555;"><strong>Report:</strong> ${escapeHtml(title)} &nbsp;|&nbsp; <strong>Generated on:</strong> ${formatDate(getToday())}</p>
                 </div>
             `;
             
@@ -207,7 +239,7 @@ var pdf = {
             // Header
             tableHtml += '<thead><tr style="background: #f3f4f6;">';
             columns.forEach(col => {
-                tableHtml += `<th style="border: 1px solid #e5e7eb; padding: 8px; text-align: ${col.align || 'left'};">${escapeHtml(col.label)}</th>`;
+                tableHtml += `<th style="border: 1px solid #e5e7eb; padding: 6px 8px; text-align: ${col.align || 'left'}; font-weight: 600;">${escapeHtml(col.label)}</th>`;
             });
             tableHtml += '</tr></thead><tbody>';
             
@@ -220,7 +252,7 @@ var pdf = {
                     if (typeof val === 'string' && val.includes('<')) {
                         val = val.replace(/<[^>]*>?/gm, '');
                     }
-                    tableHtml += `<td style="border: 1px solid #e5e7eb; padding: 8px; text-align: ${col.align || 'left'};">${escapeHtml(String(val))}</td>`;
+                    tableHtml += `<td style="border: 1px solid #e5e7eb; padding: 4px 8px; text-align: ${col.align || 'left'};">${escapeHtml(String(val))}</td>`;
                 });
                 tableHtml += '</tr>';
             });

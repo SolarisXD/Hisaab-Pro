@@ -241,7 +241,11 @@ function updateShopConfig(data) {
         Object.assign(currentConfig.shop, data.shop);
     }
     if (data.tax_rate !== undefined) currentConfig.tax_rate = data.tax_rate;
-    if (data.invoice_prefix) currentConfig.invoice_prefix = data.invoice_prefix;
+    if (data.invoice_prefix !== undefined) currentConfig.invoice_prefix = data.invoice_prefix;
+    if (data.backup_path !== undefined) {
+        if (!currentConfig.backup) currentConfig.backup = {};
+        currentConfig.backup.custom_path = data.backup_path;
+    }
 
     fs.writeFileSync(configPath, JSON.stringify(currentConfig, null, 2), 'utf-8');
     

@@ -1,0 +1,24 @@
+Issues-
+1. If the financial year starts from 1st April, then we should not be able to make any transactions or changes before 1st April in that financial year data.
+2. In sales or purchases we have Amount Paid (Full, Partial, Pending). So if they paid full or partial then we there is an entry for that payment that is shown just in ledger so but that should be also visible in payments history also.
+3. in settings, make a separate shorcuts page:
+throughout the app
+  a dropdown with the following appears when we click Alt+F3
+    -add sale
+    -add purchase 
+    -add payment 
+    -add receipt
+  add print sales, purchase, ledger, report.. Alt+P
+  add account Alt+F1 
+  Show a particular account ledger Alt+L
+4.make an inapp calculator and give me a shorcuts F10 small size
+5.now the backups storage location is default but when i make it like a product then i want the user to himself dedicate a folder on his system for the app
+6. I want to have like modules in the app:
+  -accounting
+  - business management system
+    -payroll to the staffs and workers(day wise payments)
+    for example:
+    staff has salary of 30k month then he gets 1000 per day. so if he works for 25 days then he gets 25000 and if he works for 30 days then he gets 30000. and if he works for 25.5 days then he gets 25500. 
+    he can also take some money on loan so we can treat it as an account and in that advance/needed payment
+  -settings
+

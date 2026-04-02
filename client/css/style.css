@@ -1,0 +1,110 @@
+/* Hisaab Pro Global Utility Styles */
+
+/* Toast System */
+.toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.toast {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(196, 198, 205, 0.2);
+    min-width: 300px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    color: #001919;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+}
+
+.toast.success { border-left: 4px solid #006a6a; }
+.toast.error { border-left: 4px solid #ba1a1a; }
+.toast.warning { border-left: 4px solid #e1c29b; }
+.toast.info { border-left: 4px solid #001919; }
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.95); }
+}
+
+/* Modal System (Global Overlays) */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(116, 119, 125, 0.3);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+}
+
+.modal-content {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 440px;
+    overflow: hidden;
+    transform: scale(0.95);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+
+/* Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Global Navigation States */
+.sidebar-active {
+    background-color: #e4e2e1 !important;
+    color: #001919 !important;
+    font-weight: 700 !important;
+    border-right: 4px solid #001919;
+}
+
+.tab-active {
+    background-color: #001919 !important;
+    color: white !important;
+    font-weight: 800 !important;
+}
+
+.category-tab.tab-active {
+    background-color: #001919 !important;
+}
+
+.nav-link {
+    transition: all 0.2s ease-in-out;
+}

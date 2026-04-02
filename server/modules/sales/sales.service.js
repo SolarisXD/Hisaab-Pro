@@ -112,7 +112,11 @@ function listSales(filters, isDecoy) {
         params.push(filters.offset);
     }
 
-    return db.prepare(sql).all.apply(db.prepare(sql), params);
+    var results = db.prepare(sql).all.apply(db.prepare(sql), params);
+    results.forEach(function(r) {
+        try { r.images = JSON.parse(r.images || '[]'); } catch(e) { r.images = []; }
+    });
+    return results;
 }
 
 /**
@@ -126,6 +130,8 @@ function getSaleById(id, isDecoy) {
     ).get(id, isDecoy ? 1 : 0);
 
     if (!sale) return null;
+    
+    try { sale.images = JSON.parse(sale.images || '[]'); } catch(e) { sale.images = []; }
 
     return sale;
 }
@@ -143,9 +149,14 @@ function createSale(data, isDecoy) {
     var discount = data.discount || 0;
     var taxAmount = data.tax_amount || 0;
 
+    var imagesJson = '[]';
+    if (data.images && Array.isArray(data.images)) {
+        imagesJson = JSON.stringify(data.images);
+    }
+
     var insertSale = db.prepare(
-        'INSERT INTO sales (invoice_no, date, customer_account_id, subtotal, tax_percent, tax_amount, discount, total, amount_paid, status, notes, ref_no, is_decoy)' +
-        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO sales (invoice_no, date, customer_account_id, subtotal, tax_percent, tax_amount, discount, total, amount_paid, status, notes, ref_no, is_decoy, images)' +
+        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
 
 
@@ -167,7 +178,8 @@ function createSale(data, isDecoy) {
             data.amount_paid >= total ? 'paid' : (data.amount_paid > 0 ? 'partial' : 'pending'),
             data.notes || null,
             data.ref_no || null,
-            isDecoy ? 1 : 0
+            isDecoy ? 1 : 0,
+            imagesJson
         );
 
         var saleId = result.lastInsertRowid;
@@ -177,10 +189,8 @@ function createSale(data, isDecoy) {
             var outstandingAmount = total - (data.amount_paid || 0);
             
             // 1. Update account balance (increase debt)
-            if (outstandingAmount > 0) {
-                db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
-                    .run(outstandingAmount, data.customer_account_id);
-            }
+            db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                .run(outstandingAmount, data.customer_account_id);
 
             // 2. Record the Sale in ledger (Debit Customer)
             db.prepare(
@@ -230,6 +240,22 @@ function createSale(data, isDecoy) {
                         saleId,
                         isDecoy ? 1 : 0
                     );
+                    
+                    // Add to payments history
+                    db.prepare(
+                        'INSERT INTO payments (date, account_id, amount, type, mode, reference, sale_id, notes, is_decoy)' +
+                        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                    ).run(
+                        data.date || localISOTime,
+                        data.customer_account_id,
+                        data.amount_paid,
+                        'in',
+                        'cash',
+                        invoiceNo,
+                        saleId,
+                        'Payment received for ' + invoiceNo,
+                        isDecoy ? 1 : 0
+                    );
                 }
             }
         }
@@ -256,21 +282,36 @@ function updateSale(id, data, isDecoy) {
     var taxAmount = data.tax_amount !== undefined ? data.tax_amount : existing.tax_amount;
     var amountPaid = data.amount_paid !== undefined ? data.amount_paid : existing.amount_paid;
 
+    var imagesJson = existing.images !== undefined ? JSON.stringify(existing.images) : '[]';
+    if (data.images && Array.isArray(data.images)) {
+        imagesJson = JSON.stringify(data.images);
+    }
+
     var transaction = db.transaction(function() {
-        // 1. Rollback old balance and transaction
+        // 1. Rollback old balance impact
         if (existing.customer_account_id) {
             var oldOutstanding = existing.total - (existing.amount_paid || 0);
-            if (oldOutstanding > 0) {
-                db.prepare('UPDATE accounts SET current_balance = current_balance - ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
-                    .run(oldOutstanding, existing.customer_account_id);
+            // Revert customer balance: substract what we added
+            db.prepare('UPDATE accounts SET current_balance = current_balance - ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                .run(oldOutstanding, existing.customer_account_id);
+            
+            // Revert asset account balance if paid
+            if (existing.amount_paid > 0) {
+                var oldAssetAccount = accountsService.getDefaultCashAccount(isDecoy);
+                if (oldAssetAccount) {
+                    db.prepare('UPDATE accounts SET current_balance = current_balance - ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                        .run(existing.amount_paid, oldAssetAccount.id);
+                }
             }
-            // Mark old transaction as deleted
+            // Mark old transactions as deleted
             db.prepare('UPDATE transactions SET is_deleted = 1 WHERE linked_sale_id = ?').run(id);
+            // Mark old payments as deleted
+            db.prepare('UPDATE payments SET is_deleted = 1 WHERE sale_id = ?').run(id);
         }
 
         // 2. Update sale
         db.prepare(
-            'UPDATE sales SET date = ?, customer_account_id = ?, subtotal = ?, tax_percent = ?, tax_amount = ?, discount = ?, total = ?, amount_paid = ?, status = ?, notes = ?, ref_no = ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?'
+            'UPDATE sales SET date = ?, customer_account_id = ?, subtotal = ?, tax_percent = ?, tax_amount = ?, discount = ?, total = ?, amount_paid = ?, status = ?, notes = ?, ref_no = ?, images = ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?'
         ).run(
             data.date || existing.date,
             data.customer_account_id !== undefined ? data.customer_account_id : existing.customer_account_id,
@@ -278,17 +319,16 @@ function updateSale(id, data, isDecoy) {
             amountPaid >= total ? 'paid' : (amountPaid > 0 ? 'partial' : 'pending'),
             data.notes !== undefined ? data.notes : existing.notes,
             data.ref_no !== undefined ? data.ref_no : existing.ref_no,
+            imagesJson,
             id
         );
 
-        // 3. Apply new balance and transaction
+        // 3. Apply new balance impact
         var newCustomerId = data.customer_account_id !== undefined ? data.customer_account_id : existing.customer_account_id;
         if (newCustomerId) {
             var newOutstanding = total - amountPaid;
-            if (newOutstanding > 0) {
-                db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
-                    .run(newOutstanding, newCustomerId);
-            }
+            db.prepare('UPDATE accounts SET current_balance = current_balance + ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                .run(newOutstanding, newCustomerId);
             
             // Create a new fresh transaction (Debit)
             db.prepare(
@@ -338,6 +378,22 @@ function updateSale(id, data, isDecoy) {
                         id,
                         isDecoy ? 1 : 0
                     );
+                    
+                    // Add to payments history
+                    db.prepare(
+                        'INSERT INTO payments (date, account_id, amount, type, mode, reference, sale_id, notes, is_decoy)' +
+                        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                    ).run(
+                        data.date || existing.date,
+                        newCustomerId,
+                        amountPaid,
+                        'in',
+                        'cash',
+                        (data.invoice_no || existing.invoice_no),
+                        id,
+                        'Payment received for ' + (data.invoice_no || existing.invoice_no),
+                        isDecoy ? 1 : 0
+                    );
                 }
             }
         }
@@ -364,14 +420,15 @@ function deleteSale(id, isDecoy) {
         // Rollback balance if it's a customer sale
         if (sale.customer_account_id) {
             var outstanding = sale.total - (sale.amount_paid || 0);
-            if (outstanding > 0) {
-                db.prepare('UPDATE accounts SET current_balance = current_balance - ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
-                    .run(outstanding, sale.customer_account_id);
-            }
+            db.prepare('UPDATE accounts SET current_balance = current_balance - ?, updated_at = datetime(\'now\', \'localtime\') WHERE id = ?')
+                .run(outstanding, sale.customer_account_id);
         }
 
         // Mark associated transactions as deleted
         db.prepare('UPDATE transactions SET is_deleted = 1 WHERE linked_sale_id = ?').run(id);
+
+        // Mark associated payments as deleted
+        db.prepare('UPDATE payments SET is_deleted = 1 WHERE sale_id = ?').run(id);
 
         return true;
     });

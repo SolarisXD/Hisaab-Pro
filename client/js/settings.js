@@ -18,44 +18,67 @@
         var view = params.get('view') || 'shop';
         
         var sections = document.querySelectorAll('.settings-section');
-        for (var i = 0; i < sections.length; i++) {
-            sections[i].style.display = 'none';
-        }
+        sections.forEach(s => s.classList.add('hidden'));
 
         if (view === 'shop') {
-            document.getElementById('section-shop').style.display = 'block';
+            document.getElementById('section-shop').classList.remove('hidden');
         } else if (view === 'fy') {
-            document.getElementById('container-fy-book').style.display = 'grid';
-            document.getElementById('panel-fy').style.display = 'block';
-            document.getElementById('panel-book').style.display = 'none';
+            document.getElementById('container-fy-book').classList.remove('hidden');
+            document.getElementById('panel-fy').classList.remove('hidden');
+            document.getElementById('panel-book').classList.add('hidden', 'md:block'); // On desktop, both might show if structured that way, but let's follow the routing
         } else if (view === 'book') {
-            document.getElementById('container-fy-book').style.display = 'grid';
-            document.getElementById('panel-fy').style.display = 'none';
-            document.getElementById('panel-book').style.display = 'block';
+            document.getElementById('container-fy-book').classList.remove('hidden');
+            document.getElementById('panel-fy').classList.add('hidden', 'md:block');
+            document.getElementById('panel-book').classList.remove('hidden');
         } else if (view === 'security') {
-            document.getElementById('section-security').style.display = 'block';
+            document.getElementById('section-security').classList.remove('hidden');
         }
+
+        // Update top tabs
+        var tabs = document.querySelectorAll('.settings-nav-tab');
+        tabs.forEach(tab => {
+            if (tab.getAttribute('data-view') === view) {
+                tab.classList.add('bg-primary/10', 'text-primary');
+                tab.classList.remove('text-on-surface-variant');
+            } else {
+                tab.classList.remove('bg-primary/10', 'text-primary');
+                tab.classList.add('text-on-surface-variant');
+            }
+        });
+    }
+
+    // Toggle sidebar
+    var sidebarToggle = document.getElementById('sidebar-toggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        });
+    }
+    
+    var sidebarOverlay = document.getElementById('sidebar-overlay');
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', function() {
+            var sidebar = document.getElementById('sidebar');
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        });
     }
 
     function updateSidebarActiveState() {
-        var params = new URLSearchParams(window.location.search);
-        var view = params.get('view') || 'shop';
-        
-        var settingsNav = document.querySelector('.nav-link[data-page="settings"]');
-        if (!settingsNav) return;
-        
-        var subMenu = settingsNav.nextElementSibling;
-        if (subMenu && subMenu.classList.contains('nav-sub-menu')) {
-            var subLinks = subMenu.querySelectorAll('.nav-sub-link');
-            for (var i = 0; i < subLinks.length; i++) {
-                var href = subLinks[i].getAttribute('href');
-                if (href.includes('view=' + view)) {
-                    subLinks[i].classList.add('active');
-                } else {
-                    subLinks[i].classList.remove('active');
-                }
+        var links = document.querySelectorAll('#sidebar [data-page]');
+        links.forEach(function(link) {
+            if (link.getAttribute('data-page') === 'settings') {
+                link.classList.add('sidebar-active');
+                link.classList.remove('text-slate-600', 'hover:bg-[#e4e2e1]/50');
+                var icon = link.querySelector('.material-symbols-outlined');
+                if (icon) icon.style.fontVariationSettings = "'FILL' 1";
+            } else {
+                link.classList.remove('sidebar-active');
             }
-        }
+        });
     }
 
     // Event Listeners
@@ -64,6 +87,18 @@
     document.getElementById('btn-manual-backup').addEventListener('click', runManualBackup);
     document.getElementById('password-form').addEventListener('submit', updatePassword);
     document.getElementById('btn-save-fy').addEventListener('click', createFinancialYear);
+    
+    var btnSaveBackupPath = document.getElementById('btn-save-backup-path');
+    if (btnSaveBackupPath) {
+        btnSaveBackupPath.addEventListener('click', function() {
+            var path = document.getElementById('backup-custom-path').value;
+            api.updateShopConfig({ backup_path: path }).then(function() {
+                showToast('Backup path updated!', 'success');
+            }).catch(function(err) {
+                showToast('Error: ' + err.message, 'error');
+            });
+        });
+    }
 
     function loadSettings() {
         // Load Shop Config
@@ -75,6 +110,9 @@
             document.getElementById('shop-phone').value = config.shop.phone || '';
             document.getElementById('shop-tax-rate').value = config.tax_rate || 0;
             document.getElementById('shop-prefix').value = config.invoice_prefix || '';
+            
+            var backupPathEl = document.getElementById('backup-custom-path');
+            if (backupPathEl) backupPathEl.value = config.backup_path || '';
         });
 
         // Load Book settings
@@ -161,10 +199,9 @@
             api.getSettingsStatus().then(function(status) {
                 var activeDb = status.database.active_file;
                 
-                // Always add the default legacy database as an option
                 years.unshift({
                     id: 'legacy',
-                    name: 'Current/Legacy Data',
+                    name: 'Default Root Store',
                     start_date: '2000-01-01',
                     end_date: '2099-12-31',
                     db_filename: 'hisaab.db',
@@ -172,30 +209,35 @@
                 });
 
                 if (years.length === 0) {
-                    fyList.innerHTML = '<p class="text-muted" style="font-size:13px;">No financial years defined.</p>';
+                    fyList.innerHTML = '<p class="text-[10px] font-bold text-on-surface-variant/40 text-center py-10 uppercase tracking-widest">No archival periods defined</p>';
                     return;
                 }
 
-                var html = '<table class="table" style="font-size: 13px;"><thead><tr><th>FY Name</th><th>Period</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-                
                 var currentSessionDb = localStorage.getItem('hisaab_active_fy') || 'hisaab.db';
 
                 years.forEach(function(fy) {
                     var isLiveSession = fy.db_filename === currentSessionDb;
-
+                    
                     if (isLiveSession) {
-                        fyActiveBadge.innerHTML = '<span class="badge badge-success" style="font-size:14px; padding: 8px 12px;">Active FY: ' + escapeHtml(fy.name) + '</span>';
+                        fyActiveBadge.innerHTML = '<div class="flex items-center gap-2 px-4 py-2 bg-on-primary-container/10 rounded-xl border border-on-primary-container/20"><span class="w-2 h-2 rounded-full bg-on-primary-container animate-pulse"></span><span class="text-[10px] font-black text-on-primary-container uppercase tracking-widest leading-none">Primary Active Session: ' + escapeHtml(fy.name) + '</span></div>';
                     }
                     
-                    var periodText = fy.id === 'legacy' ? 'N/A' : (formatDate(fy.start_date) + ' to ' + formatDate(fy.end_date));
+                    var periodText = fy.id === 'legacy' ? 'Continuous Ledger' : (formatDate(fy.start_date) + ' — ' + formatDate(fy.end_date));
                     
-                    html += '<tr><td>' + escapeHtml(fy.name) + '</td><td>' + periodText + '</td><td>' + 
-                            (isLiveSession ? '<span class="text-success"><strong>Active</strong></span>' : '<span class="text-muted">Inactive</span>') + '</td><td>' +
-                            (!isLiveSession ? `<button class="btn btn-ghost btn-sm" onclick="activateFY('${fy.id}', '${fy.db_filename}')">Switch To This</button>` : '') + 
-                            '</td></tr>';
+                    var fyItem = document.createElement('div');
+                    fyItem.className = 'flex items-center justify-between p-5 bg-white rounded-2xl border border-outline-variant/10 hover:border-primary/20 transition-all group';
+                    fyItem.innerHTML = `
+                        <div>
+                            <p class="font-black text-primary tracking-tight">${escapeHtml(fy.name)}</p>
+                            <p class="text-[10px] font-bold text-on-surface-variant opacity-60 uppercase tracking-tighter mt-0.5">${periodText}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            ${isLiveSession ? '<span class="text-[9px] font-black text-on-primary-container bg-on-primary-container/10 px-2 py-1 rounded uppercase tracking-widest">LIVE</span>' : ''}
+                            ${!isLiveSession ? `<button class="px-4 py-2 bg-surface-container-high rounded-xl text-[10px] font-black text-primary uppercase hover:bg-primary hover:text-white transition-all" onclick="activateFY('${fy.id}', '${fy.db_filename}')">Switch Context</button>` : ''}
+                        </div>
+                    `;
+                    fyList.appendChild(fyItem);
                 });
-                html += '</tbody></table>';
-                fyList.innerHTML = html;
             });
         });
     }
@@ -255,14 +297,30 @@
                 ? formatDate(status.backup.last_backup.time) + ' (' + status.backup.last_backup.filename + ')'
                 : 'Never';
             
-            container.innerHTML = 
-                '<div style="font-size: 14px; line-height: 2;">' +
-                '<div><strong>Active Data File:</strong> <span class="badge badge-primary" style="font-family: monospace;">' + escapeHtml(status.database.active_file) + '</span></div>' +
-                '<div><strong>Failed Login Attempts:</strong> ' + status.security.failed_logins + ' / 5</div>' +
-                '<div><strong>Last Backup:</strong> ' + lastBackup + '</div>' +
-                '<div><strong>Total Backups Saved:</strong> ' + status.backup.total_backups + '</div>' +
-                '<div><strong>Security Status:</strong> ' + (status.security.is_nuked ? '<span class="badge badge-danger">WIPED/DECOY MODE</span>' : '<span class="badge badge-success">OK</span>') + '</div>' +
-                '</div>';
+            container.innerHTML = `
+                <div class="grid grid-cols-2 gap-y-4 gap-x-10">
+                    <div class="space-y-1">
+                        <p class="opacity-40 font-black uppercase tracking-widest text-[8px]">Active Vault File</p>
+                        <p class="font-mono font-bold text-primary truncate">${escapeHtml(status.database.active_file)}</p>
+                    </div>
+                    <div class="space-y-1 text-right">
+                        <p class="opacity-40 font-black uppercase tracking-widest text-[8px]">Failed Accesses</p>
+                        <p class="font-black text-error text-sm">${status.security.failed_logins} / 5</p>
+                    </div>
+                    <div class="space-y-1 col-span-2">
+                        <p class="opacity-40 font-black uppercase tracking-widest text-[8px]">Last Sync Timestamp</p>
+                        <p class="font-bold text-primary">${lastBackup}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="opacity-40 font-black uppercase tracking-widest text-[8px]">Archived Snapshots</p>
+                        <p class="font-black text-primary text-sm">${status.backup.total_backups}</p>
+                    </div>
+                    <div class="space-y-1 text-right">
+                        <p class="opacity-40 font-black uppercase tracking-widest text-[8px]">Integrity Check</p>
+                        <p class="font-black ${status.security.is_nuked ? 'text-error' : 'text-green-600'} text-[10px] uppercase">${status.security.is_nuked ? 'COMPROMISED' : 'VERIFIED'}</p>
+                    </div>
+                </div>
+            `;
         });
     }
     function runManualBackup() {
@@ -319,10 +377,18 @@
     }
 
     window.openFYModal = function() {
-        document.getElementById('fy-modal').classList.add('active');
+        var modal = document.getElementById('fy-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.add('opacity-100');
+            modal.querySelector('.scale-95').classList.remove('scale-95');
+        }, 10);
     };
     window.closeFYModal = function() {
-        document.getElementById('fy-modal').classList.remove('active');
+        var modal = document.getElementById('fy-modal');
+        modal.classList.remove('opacity-100');
+        modal.querySelector('.transform').classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
     };
 
 })();

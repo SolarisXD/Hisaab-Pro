@@ -1,226 +1,275 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payments — Hisaab Pro</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/print.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Payments | Hisaab Pro</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="js/tailwind-config.js"></script>
+    <link href="css/style.css" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(252, 249, 248, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(196, 198, 205, 0.1);
+        }
+        #payment-modal.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
 </head>
-<body>
-    <div class="app-layout">
-        <div id="sidebar-overlay" class="sidebar-overlay"></div>
-        <aside id="sidebar" class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <div class="logo-icon-wrapper-sm">
-                        <i data-lucide="book-open"></i>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-fixed-dim selection:text-primary-container">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-surface-container-low border-r border-outline-variant/10 flex flex-col z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+        <div class="p-6">
+            <h1 class="font-headline font-extrabold text-2xl tracking-tighter text-primary">Hisaab Pro</h1>
+            <p id="sidebar-shop-name" class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-semibold mt-1">Enterprise Ledger</p>
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
+            <a href="dashboard.html" data-page="dashboard" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-sm font-medium">Dashboard</span>
+            </a>
+            <a href="sales.html" data-page="sales" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">receipt_long</span>
+                <span class="text-sm font-medium">Sales</span>
+            </a>
+            <a href="purchases.html" data-page="purchases" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">shopping_cart</span>
+                <span class="text-sm font-medium">Purchases</span>
+            </a>
+            <a href="payments.html" data-page="payments" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-all sidebar-active">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+                <span class="text-sm font-bold">Payments</span>
+            </a>
+            <a href="accounts.html" data-page="accounts" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">account_balance</span>
+                <span class="text-sm font-medium">Accounts</span>
+            </a>
+            <a href="staff.html" data-page="staff" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">group</span>
+                <span class="text-sm font-medium">Staff</span>
+            </a>
+            <a href="reports.html" data-page="reports" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">assessment</span>
+                <span class="text-sm font-medium">Reports</span>
+            </a>
+            <a href="settings.html" data-page="settings" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-sm font-medium">Settings</span>
+            </a>
+        </nav>
+
+        <div class="p-6 mt-auto border-t border-outline-variant/10">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">A</div>
+                <div class="overflow-hidden">
+                    <p id="footer-shop-name" class="text-xs font-bold text-primary truncate">Loading...</p>
+                    <p class="text-[10px] text-on-surface-variant font-medium">Administrator</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-error/5 text-error text-xs font-bold hover:bg-error/10 transition-colors">
+                <span class="material-symbols-outlined text-sm">logout</span> Sign Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="md:ml-64 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant/5 px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button id="sidebar-toggle" class="md:hidden p-2 hover:bg-surface-container-low rounded-xl transition-colors">
+                    <span class="material-symbols-outlined text-primary">menu</span>
+                </button>
+                <div class="flex flex-col">
+                    <h2 class="font-headline text-2xl font-black text-primary tracking-tight">Financial Flow</h2>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Capital Movement Ledger</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button id="btn-print-list" class="p-2.5 bg-surface-container-high text-primary rounded-xl hover:bg-surface-container-highest transition-all">
+                    <span class="material-symbols-outlined">print</span>
+                </button>
+                <button id="btn-new-payment" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    <span class="material-symbols-outlined text-lg">add_circle</span> Record Flow
+                </button>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="p-8 space-y-8 flex-1">
+            <!-- Summary Stats -->
+            <div id="payment-summary" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Static placeholders, JS will update if logic exists -->
+                <div class="glass-panel p-6 rounded-3xl space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-50">Total Inflow</span>
+                        <span class="material-symbols-outlined text-lg text-green-600">arrow_downward</span>
                     </div>
-                    <div><h1>Hisaab Pro</h1><small id="sidebar-shop-name">Business Ledger</small></div>
+                    <p id="summary-received" class="text-3xl font-black text-primary tracking-tighter">₹0.00</p>
+                </div>
+                <div class="glass-panel p-6 rounded-3xl space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-50">Total Outflow</span>
+                        <span class="material-symbols-outlined text-lg text-red-600">arrow_upward</span>
+                    </div>
+                    <p id="summary-paid" class="text-3xl font-black text-primary tracking-tighter">₹0.00</p>
+                </div>
+                <div class="glass-panel p-6 rounded-3xl space-y-4 shadow-xl border-primary/10 bg-primary/5">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-primary/50">Net Position</span>
+                        <span class="material-symbols-outlined text-lg text-primary">account_balance</span>
+                    </div>
+                    <p id="summary-net" class="text-3xl font-black text-primary tracking-tighter">₹0.00</p>
                 </div>
             </div>
-            <nav class="sidebar-nav">
-                <div class="nav-section-title">Main</div>
-                <a href="/dashboard.html" class="nav-link" data-page="dashboard">
-                    <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
-                </a>
-                
-                <a href="sales.html" class="nav-link" data-page="sales">
-                    <span class="nav-icon"><i data-lucide="shopping-cart"></i></span> Sales
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="sales.html?view=list" class="nav-sub-link">Show Sales</a>
-                    <a href="sales.html?view=add" class="nav-sub-link">Add Sale</a>
+
+            <!-- Toolbar & Tabs -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="flex bg-surface-container-low p-1.5 rounded-2xl w-fit">
+                    <button class="tab px-6 py-2.5 rounded-xl text-xs font-bold transition-all active" onclick="filterByType(this, '')">All Cycles</button>
+                    <button class="tab px-6 py-2.5 rounded-xl text-xs font-bold text-on-surface-variant hover:text-primary transition-all" onclick="filterByType(this, 'in')">Inflow</button>
+                    <button class="tab px-6 py-2.5 rounded-xl text-xs font-bold text-on-surface-variant hover:text-primary transition-all" onclick="filterByType(this, 'out')">Outflow</button>
                 </div>
 
-                <a href="purchases.html" class="nav-link" data-page="purchases">
-                    <span class="nav-icon"><i data-lucide="shopping-bag"></i></span> Purchases
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="purchases.html?view=list" class="nav-sub-link">Show Purchases</a>
-                    <a href="purchases.html?view=add" class="nav-sub-link">Add Purchase</a>
-                </div>
-
-                <a href="/payments.html" class="nav-link" data-page="payments">
-                    <span class="nav-icon"><i data-lucide="indian-rupee"></i></span> Payments
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="payments.html?view=list" class="nav-sub-link">Show Payments</a>
-                    <a href="payments.html?view=add" class="nav-sub-link">Add Payment</a>
-                </div>
-
-                <a href="/accounts.html" class="nav-link" data-page="accounts">
-                    <span class="nav-icon"><i data-lucide="users"></i></span> Accounts
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="accounts.html?view=list" class="nav-sub-link">Show Accounts</a>
-                    <a href="accounts.html?view=types" class="nav-sub-link">Account Types</a>
-                </div>
-
-                <div class="nav-section-title">Analysis</div>
-                <a href="/reports.html" class="nav-link" data-page="reports">
-                    <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span> Reports
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="reports.html?type=daily-sales" class="nav-sub-link">Daily Sales</a>
-                    <a href="reports.html?type=amount-receivable" class="nav-sub-link">Amount Receivable</a>
-                    <a href="reports.html?type=monthly" class="nav-sub-link">Monthly Report</a>
-                    <a href="reports.html?type=account-ledger" class="nav-sub-link">Account Ledger</a>
-                    <a href="reports.html?type=debtor-aging" class="nav-sub-link">Debtor Aging</a>
-                    <a href="reports.html?type=creditor-schedule" class="nav-sub-link">Creditor Schedule</a>
-                    <a href="reports.html?type=balance-sheet" class="nav-sub-link">Balance Sheet</a>
-                </div>
-
-                <div class="nav-section-title">System</div>
-                <a href="/settings.html" class="nav-link" data-page="settings">
-                    <span class="nav-icon"><i data-lucide="settings"></i></span> Settings
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="settings.html?view=shop" class="nav-sub-link">Shop Information</a>
-                    <a href="settings.html?view=fy" class="nav-sub-link">Financial Year</a>
-                    <a href="settings.html?view=book" class="nav-sub-link">Book Reference</a>
-                    <a href="settings.html?view=security" class="nav-sub-link">Security & Backups</a>
-                </div>
-            </nav>
-            <div class="sidebar-footer">
-                <div class="shop-info">
-                    <div class="shop-name" id="footer-shop-name">Loading...</div>
-                    <div class="user-role">Administrator</div>
-                </div>
-                <button class="btn-sidebar-action" onclick="logout()" title="Logout">
-                    <i data-lucide="log-out"></i>
-                </button>
-                <button class="btn-sidebar-action danger" onclick="exitApp()" title="Exit Application">
-                    <i data-lucide="power"></i>
-                </button>
-            </div>
-        </aside>
-
-        <main class="main-content">
-            <header class="top-header">
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <button id="sidebar-toggle" class="sidebar-toggle"><i data-lucide="menu"></i></button>
-                    <h2 class="page-title">Payments</h2>
-                </div>
-                <div class="header-actions">
-                    <button class="btn btn-outline" id="btn-print-list"><i data-lucide="printer"></i> Print List</button>
-                    <button class="btn btn-primary" id="btn-new-payment">+ Record Payment</button>
-                </div>
-            </header>
-
-            <div class="page-content">
-                <!-- Tabs -->
-                <div class="tabs">
-                    <button class="tab active" data-type="" onclick="filterByType(this, '')">All</button>
-                    <button class="tab" data-type="in" onclick="filterByType(this, 'in')"><i data-lucide="arrow-down-left" style="width: 14px; height: 14px; color: var(--color-success);"></i> Received</button>
-                    <button class="tab" data-type="out" onclick="filterByType(this, 'out')"><i data-lucide="arrow-up-right" style="width: 14px; height: 14px; color: var(--color-danger);"></i> Paid Out</button>
-                </div>
-
-                <!-- Filters -->
-                <div class="panel">
-                    <div class="panel-body">
-                        <div class="toolbar">
-                            <div class="search-box">
-                                <span class="search-icon"><i data-lucide="search"></i></span>
-                                <input type="text" id="search-input" placeholder="Search by account, reference...">
-                            </div>
-                            <div class="filter-group">
-                                <select class="form-control" id="filter-mode" style="width:150px;min-height:38px;">
-                                    <option value="">All Modes</option>
-                                    <option value="cash">Cash</option>
-                                    <option value="bank_transfer">Bank Transfer</option>
-                                    <option value="upi">UPI / Online</option>
-                                    <option value="cheque">Cheque</option>
-                                </select>
-                                <input type="date" class="form-control" id="filter-date-from" style="width:150px;min-height:38px;">
-                                <input type="date" class="form-control" id="filter-date-to" style="width:150px;min-height:38px;">
-                            </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="relative group min-w-[320px]">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 group-focus-within:text-primary transition-colors text-lg">search</span>
+                        <input type="text" id="search-input" placeholder="Search by account or ref..." class="w-full pl-12 pr-4 py-3 bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-xl text-sm font-semibold transition-all">
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 ml-1">Protocol</label>
+                            <select id="filter-mode" class="bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-xl px-4 py-3 text-xs font-bold text-primary">
+                                <option value="">All Modes</option>
+                                <option value="cash">Physical Cash</option>
+                                <option value="bank_transfer">Direct Deposit</option>
+                                <option value="upi">UPI / Online</option>
+                                <option value="cheque">Instrument / Cheque</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 ml-1">Period From</label>
+                            <input type="date" id="filter-date-from" class="bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-xl px-4 py-3 text-xs font-bold text-primary">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 ml-1">Period To</label>
+                            <input type="date" id="filter-date-to" class="bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-xl px-4 py-3 text-xs font-bold text-primary">
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Payments List -->
-                <div class="panel">
-                    <div class="panel-body" id="payments-list">
-                        <div class="loading-overlay"><div class="spinner lg"></div></div>
+            <!-- List Panel -->
+            <div class="bg-surface-container-lowest rounded-[2rem] overflow-hidden border border-outline-variant/10 shadow-sm relative min-h-[500px]">
+                <div id="payments-list" class="divide-y divide-outline-variant/5">
+                    <!-- Dynamic Content -->
+                    <div class="flex flex-col items-center justify-center py-40 opacity-30">
+                        <span class="material-symbols-outlined text-6xl animate-pulse">sync</span>
+                        <p class="text-[10px] font-black uppercase tracking-widest mt-4">Retrieving Ledger Streams...</p>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
-    <!-- New Payment Modal -->
-    <div class="modal-overlay" id="payment-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>Record Payment</h3>
-                <button class="modal-close" onclick="closePaymentModal()">✕</button>
+    <!-- Modal: New Payment -->
+    <div id="payment-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-xl">
+            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined">payments</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline text-2xl font-black text-primary tracking-tight">Record Financial Flow</h3>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Synchronize Ledger Transaction</p>
+                    </div>
+                </div>
+                <button onclick="closePaymentModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
             </div>
-            <div class="modal-body">
-                <form id="payment-form">
-                    <div class="form-group">
-                        <label class="form-label">Type <span class="required">*</span></label>
-                        <select class="form-control" id="payment-type" required>
-                            <option value="in">Payment Received (from Customer)</option>
-                            <option value="out">Payment Made (to Supplier)</option>
+
+            <div class="p-8">
+                <form id="payment-form" onsubmit="return false;" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Flow Direction</label>
+                            <select id="payment-type" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+                                <option value="in">Inflow (Payment Received)</option>
+                                <option value="out">Outflow (Payment Made)</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Fiscal Date</label>
+                            <input type="date" id="payment-date" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Counterparty Account</label>
+                        <select id="payment-account" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+                            <option value="">Select counterparty account...</option>
                         </select>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Date <span class="required">*</span></label>
-                            <input type="date" class="form-control" id="payment-date" required>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-primary/5 p-8 rounded-3xl border border-primary/10">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Monetary Volume (₹)</label>
+                            <input type="number" id="payment-amount" step="0.01" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-2xl font-black text-primary tracking-tight transition-all" placeholder="0.00" required>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Account <span class="required">*</span></label>
-                            <select class="form-control" id="payment-account" required>
-                                <option value="">Select account</option>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Transfer Protocol</label>
+                            <select id="payment-mode" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-sm font-bold text-primary">
+                                <option value="cash">Physical Cash</option>
+                                <option value="bank_transfer">Direct Deposit</option>
+                                <option value="upi">UPI / Digital</option>
+                                <option value="cheque">Instrument / Cheque</option>
                             </select>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Amount (₹) <span class="required">*</span></label>
-                            <input type="number" class="form-control" id="payment-amount" step="0.01" min="0.01" required placeholder="0.00">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Protocol Identifier (Ref)</label>
+                            <input type="text" id="payment-reference" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="ID or sequence no.">
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Mode <span class="required">*</span></label>
-                            <select class="form-control" id="payment-mode" required>
-                                <option value="cash">Cash</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                                <option value="upi">UPI / Online</option>
-                                <option value="cheque">Cheque</option>
-                            </select>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Internal Annotation</label>
+                            <input type="text" id="payment-notes" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="Optional context...">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Reference</label>
-                        <input type="text" class="form-control" id="payment-reference" placeholder="Cheque No., UPI ID, etc.">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Notes</label>
-                        <input type="text" class="form-control" id="payment-notes" placeholder="Optional notes">
+
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" onclick="closePaymentModal()" class="flex-1 py-4 bg-surface-container-high text-primary font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-surface-container-highest transition-all">Abort</button>
+                        <button type="button" id="btn-save-payment" class="flex-[2] py-4 bg-primary text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all">Authorize Release</button>
                     </div>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closePaymentModal()">Cancel</button>
-                <button class="btn btn-primary" id="btn-save-payment">Save Payment</button>
             </div>
         </div>
     </div>
 
     <script src="js/api.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/shortcuts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="js/pdf.js"></script>
     <script src="js/payments.js"></script>
-    <script>lucide.createIcons();</script>
 </body>
 </html>

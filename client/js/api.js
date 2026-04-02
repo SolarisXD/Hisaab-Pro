@@ -115,6 +115,10 @@ var api = {
         return this.post('/settings/system-settings', { key: key, value: value });
     },
 
+    getPublicFinancialYears: function() {
+        return this.get('/settings/public-financial-years');
+    },
+
     getFinancialYears: function() {
         return this.get('/settings/financial-years');
     },
@@ -154,6 +158,34 @@ var api = {
 
     getNextInvoiceNo: function() {
         return this.get('/sales/next-invoice-no');
+    },
+
+    // --- Uploads ---
+    uploadBills: function(formData) {
+        var options = {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        };
+        var activeFy = localStorage.getItem('hisaab_active_fy');
+        if (activeFy) {
+            options.headers = { 'x-financial-year': activeFy };
+        }
+        return fetch(API_BASE + '/uploads/bills', options).then(function(response) {
+            if (response.status === 401) {
+                var path = window.location.pathname;
+                if (path !== '/' && !path.endsWith('/index.html')) {
+                    window.location.href = '/index.html';
+                }
+                return Promise.reject(new Error('Session expired'));
+            }
+            return response.json().then(function(data) {
+                if (!response.ok) {
+                    throw new Error(data.error || 'Upload failed');
+                }
+                return data;
+            });
+        });
     }
 };
 

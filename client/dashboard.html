@@ -1,211 +1,245 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Dashboard — Hisaab Pro</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/print.css">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="js/tailwind-config.js"></script>
+    <link href="css/style.css" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+    </style>
 </head>
-<body>
-    <div class="app-layout">
-        <!-- Sidebar Overlay (mobile) -->
-        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+<body class="bg-surface text-on-surface selection:bg-primary-fixed-dim selection:text-on-primary-fixed">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-[#f6f3f2] dark:bg-slate-900 flex flex-col p-6 space-y-2 z-50 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="w-10 h-10 bg-primary flex items-center justify-center rounded-lg">
+                <span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+            </div>
+            <div>
+                <h2 class="font-extrabold text-lg text-[#001919] dark:text-white leading-tight">Hisaab Pro</h2>
+                <p id="sidebar-shop-name" class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Business Ledger</p>
+            </div>
+        </div>
 
-        <!-- Sidebar Navigation -->
-        <aside id="sidebar" class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <div class="logo-icon-wrapper-sm">
-                        <i data-lucide="book-open"></i>
+        <nav class="flex-1 space-y-1">
+            <a href="dashboard.html" class="nav-link flex items-center gap-3 px-3 py-2.5 transition-all rounded-sm sidebar-active" data-page="dashboard">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                <span class="font-medium text-sm">Dashboard</span>
+            </a>
+            <a href="sales.html" class="nav-link flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#001919] dark:hover:text-white hover:bg-[#e4e2e1]/50 dark:hover:bg-slate-800/50 transition-all rounded-sm" data-page="sales">
+                <span class="material-symbols-outlined">receipt_long</span>
+                <span class="font-medium text-sm">Sales</span>
+            </a>
+            <a href="purchases.html" class="nav-link flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#001919] dark:hover:text-white hover:bg-[#e4e2e1]/50 dark:hover:bg-slate-800/50 transition-all rounded-sm" data-page="purchases">
+                <span class="material-symbols-outlined">shopping_cart</span>
+                <span class="font-medium text-sm">Purchases</span>
+            </a>
+            <a href="payments.html" class="nav-link flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#001919] dark:hover:text-white hover:bg-[#e4e2e1]/50 dark:hover:bg-slate-800/50 transition-all rounded-sm" data-page="payments">
+                <span class="material-symbols-outlined">payments</span>
+                <span class="font-medium text-sm">Payments</span>
+            </a>
+            <a href="accounts.html" class="nav-link flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#001919] dark:hover:text-white hover:bg-[#e4e2e1]/50 dark:hover:bg-slate-800/50 transition-all rounded-sm" data-page="accounts">
+                <span class="material-symbols-outlined">account_balance</span>
+                <span class="font-medium text-sm">Accounts</span>
+            </a>
+            <a href="staff.html" class="nav-link flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#001919] dark:hover:text-white hover:bg-[#e4e2e1]/50 dark:hover:bg-slate-800/50 transition-all rounded-sm" data-page="staff">
+                <span class="material-symbols-outlined">group</span>
+                <span class="font-medium text-sm">Staff</span>
+            </a>
+            <a href="reports.html" class="nav-link flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#001919] dark:hover:text-white hover:bg-[#e4e2e1]/50 dark:hover:bg-slate-800/50 transition-all rounded-sm" data-page="reports">
+                <span class="material-symbols-outlined">assessment</span>
+                <span class="font-medium text-sm">Reports</span>
+            </a>
+            <a href="settings.html" class="nav-link flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-[#001919] dark:hover:text-white hover:bg-[#e4e2e1]/50 dark:hover:bg-slate-800/50 transition-all rounded-sm" data-page="settings">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="font-medium text-sm">Settings</span>
+            </a>
+        </nav>
+
+        <div class="pt-6 mt-auto border-t border-outline-variant/10 space-y-1">
+            <div class="px-3 py-2 mb-2">
+                <p id="footer-shop-name" class="text-xs font-bold text-primary truncate">Loading...</p>
+                <p class="text-[10px] text-on-surface-variant">Administrator</p>
+            </div>
+            <a href="#" onclick="logout()" class="flex items-center gap-3 px-3 py-2 text-error hover:bg-error/5 transition-colors text-sm font-medium rounded-sm">
+                <span class="material-symbols-outlined text-lg">logout</span> Logout
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 min-h-screen flex flex-col">
+        <!-- Top Bar -->
+        <header class="sticky top-0 z-40 bg-[#fcf9f8] backdrop-blur-md bg-opacity-80 dark:bg-slate-950 flex items-center justify-between px-8 py-3 w-full border-b border-outline-variant/5">
+            <div class="flex items-center gap-4">
+                <button id="sidebar-toggle" class="md:hidden p-2 text-on-surface-variant hover:bg-surface-container-low rounded-lg">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <h2 class="text-xl font-bold tracking-tight text-primary">Dashboard</h2>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button class="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all" onclick="location.reload()">
+                    <span class="material-symbols-outlined text-sm">refresh</span> Refresh
+                </button>
+                <div class="h-6 w-[1px] bg-outline-variant/20 mx-2"></div>
+                <div id="user-menu-toggle" class="flex items-center gap-3 pl-2 cursor-pointer group relative">
+                    <div class="text-right">
+                        <p id="username-display" class="text-xs font-bold text-primary leading-none">Admin</p>
+                        <p class="text-[10px] text-on-surface-variant">Global Access</p>
                     </div>
-                    <div><h1>Hisaab Pro</h1><small id="sidebar-shop-name">Business Ledger</small></div>
+                    <div id="user-avatar" class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs border border-surface-container-high group-hover:scale-105 transition-transform">
+                        A
+                    </div>
+
+                    <!-- Dropdown Menu -->
+                    <div id="user-dropdown" class="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-outline-variant/10 py-2 hidden">
+                        <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low transition-colors">
+                            <span class="material-symbols-outlined text-sm">person</span> Profile
+                        </a>
+                        <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low transition-colors">
+                            <span class="material-symbols-outlined text-sm">settings</span> Settings
+                        </a>
+                        <div class="h-px bg-outline-variant/10 my-1"></div>
+                        <a href="#" onclick="logout()" class="flex items-center gap-3 px-4 py-2 text-sm text-error hover:bg-error/5 transition-colors">
+                            <span class="material-symbols-outlined text-sm">logout</span> Logout
+                        </a>
+                    </div>
                 </div>
             </div>
-            <nav class="sidebar-nav">
-                <div class="nav-section-title">Main</div>
-                <a href="/dashboard.html" class="nav-link" data-page="dashboard">
-                    <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
-                </a>
+        </header>
+
+        <!-- Content Body -->
+        <div class="p-8 space-y-8 flex-1">
+            <!-- Metric Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="p-6 bg-surface-container-low rounded-xl space-y-3 group hover:bg-surface-container-high transition-colors">
+                    <p class="text-xs font-medium text-on-surface-variant flex justify-between">
+                        Today's Sales <span id="today-sales-count" class="font-bold text-primary">0 invoices</span>
+                    </p>
+                    <div class="flex items-baseline gap-1">
+                        <span id="today-sales" class="text-2xl font-bold text-primary tracking-tight">₹0</span>
+                    </div>
+                    <div class="h-1 w-full bg-primary/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-primary w-[65%]"></div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-surface-container-low rounded-xl space-y-3 group hover:bg-surface-container-high transition-colors">
+                    <p class="text-xs font-medium text-on-surface-variant flex justify-between">
+                        This Month <span id="month-sales-count" class="font-bold text-primary">0 invoices</span>
+                    </p>
+                    <div class="flex items-baseline gap-1">
+                        <span id="month-sales" class="text-2xl font-bold text-primary tracking-tight">₹0</span>
+                    </div>
+                    <div class="h-1 w-full bg-primary-container/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-primary-container w-[45%]"></div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-surface-container-low rounded-xl space-y-3 group hover:bg-surface-container-high transition-colors">
+                    <p class="text-xs font-medium text-on-surface-variant">Outstanding (Debtors)</p>
+                    <div class="flex items-baseline gap-1">
+                        <span id="total-debtors" class="text-2xl font-bold text-error tracking-tight">₹0</span>
+                    </div>
+                    <div class="h-1 w-full bg-error/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-error w-[30%]"></div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-surface-container-low rounded-xl space-y-3 group hover:bg-surface-container-high transition-colors">
+                    <p class="text-xs font-medium text-on-surface-variant">Outstanding (Creditors)</p>
+                    <div class="flex items-baseline gap-1">
+                        <span id="total-creditors" class="text-2xl font-bold text-secondary-fixed-variant tracking-tight">₹0</span>
+                    </div>
+                    <div class="h-1 w-full bg-secondary-container/20 rounded-full overflow-hidden">
+                        <div class="h-full bg-secondary-container w-[20%]"></div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-primary text-white rounded-xl space-y-2 flex flex-col justify-center shadow-lg shadow-primary/20">
+                    <p class="text-[10px] font-bold tracking-widest uppercase opacity-70">Cash & Bank</p>
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="opacity-80">Cash</span>
+                            <span id="cash-balance" class="font-bold font-mono">₹0</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="opacity-80">Bank</span>
+                            <span id="bank-balance" class="font-bold font-mono">₹0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/5 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-sm font-bold text-primary flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg">trending_up</span> Daily Sales Trend
+                        </h3>
+                        <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Last 7 Days</span>
+                    </div>
+                    <div class="relative" style="height: 250px;">
+                        <canvas id="daily-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/5 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-sm font-bold text-primary flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg">bar_chart</span> Monthly Comparison
+                        </h3>
+                        <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Yearly Cycle</span>
+                    </div>
+                    <div class="relative" style="height: 250px;">
+                        <canvas id="monthly-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/5 shadow-sm">
+                <div class="px-8 py-5 flex items-center justify-between border-b border-outline-variant/5">
+                    <h3 class="text-sm font-bold text-primary flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">history</span> Recent Transactions
+                    </h3>
+                    <a href="sales.html" class="flex items-center gap-1 text-[10px] font-bold text-primary-container bg-primary-fixed/20 px-3 py-1.5 rounded-lg hover:bg-primary-fixed/40 transition-colors">
+                        View Ledger <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </a>
+                </div>
                 
-                <a href="sales.html" class="nav-link" data-page="sales">
-                    <span class="nav-icon"><i data-lucide="shopping-cart"></i></span> Sales
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="sales.html?view=list" class="nav-sub-link">Show Sales</a>
-                    <a href="sales.html?view=add" class="nav-sub-link">Add Sale</a>
-                </div>
-
-                <a href="purchases.html" class="nav-link" data-page="purchases">
-                    <span class="nav-icon"><i data-lucide="shopping-bag"></i></span> Purchases
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="purchases.html?view=list" class="nav-sub-link">Show Purchases</a>
-                    <a href="purchases.html?view=add" class="nav-sub-link">Add Purchase</a>
-                </div>
-
-                <a href="/payments.html" class="nav-link" data-page="payments">
-                    <span class="nav-icon"><i data-lucide="indian-rupee"></i></span> Payments
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="payments.html?view=list" class="nav-sub-link">Show Payments</a>
-                    <a href="payments.html?view=add" class="nav-sub-link">Add Payment</a>
-                </div>
-
-                <a href="/accounts.html" class="nav-link" data-page="accounts">
-                    <span class="nav-icon"><i data-lucide="users"></i></span> Accounts
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="accounts.html?view=list" class="nav-sub-link">Show Accounts</a>
-                    <a href="accounts.html?view=types" class="nav-sub-link">Account Types</a>
-                </div>
-
-                <div class="nav-section-title">Analysis</div>
-                <a href="/reports.html" class="nav-link" data-page="reports">
-                    <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span> Reports
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="reports.html?type=daily-sales" class="nav-sub-link">Daily Sales</a>
-                    <a href="reports.html?type=amount-receivable" class="nav-sub-link">Amount Receivable</a>
-                    <a href="reports.html?type=monthly" class="nav-sub-link">Monthly Report</a>
-                    <a href="reports.html?type=account-ledger" class="nav-sub-link">Account Ledger</a>
-                    <a href="reports.html?type=debtor-aging" class="nav-sub-link">Debtor Aging</a>
-                    <a href="reports.html?type=creditor-schedule" class="nav-sub-link">Creditor Schedule</a>
-                    <a href="reports.html?type=balance-sheet" class="nav-sub-link">Balance Sheet</a>
-                </div>
-
-                <div class="nav-section-title">System</div>
-                <a href="/settings.html" class="nav-link" data-page="settings">
-                    <span class="nav-icon"><i data-lucide="settings"></i></span> Settings
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="settings.html?view=shop" class="nav-sub-link">Shop Information</a>
-                    <a href="settings.html?view=fy" class="nav-sub-link">Financial Year</a>
-                    <a href="settings.html?view=book" class="nav-sub-link">Book Reference</a>
-                    <a href="settings.html?view=security" class="nav-sub-link">Security & Backups</a>
-                </div>
-            </nav>
-            <div class="sidebar-footer">
-                <div class="shop-info">
-                    <div class="shop-name" id="footer-shop-name">Loading...</div>
-                    <div class="user-role">Administrator</div>
-                </div>
-                <button class="btn-sidebar-action" onclick="logout()" title="Logout">
-                    <i data-lucide="log-out"></i>
-                </button>
-                <button class="btn-sidebar-action danger" onclick="exitApp()" title="Exit Application">
-                    <i data-lucide="power"></i>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="top-header">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <button id="sidebar-toggle" class="sidebar-toggle"><i data-lucide="menu"></i></button>
-                    <h2 class="page-title">Dashboard</h2>
-                </div>
-                <div class="header-actions">
-                    <button class="btn btn-outline btn-sm" onclick="location.reload()" title="Refresh Dashboard">
-                        <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Refresh
-                    </button>
-                    <div class="dropdown">
-                        <div class="user-menu" id="user-menu-toggle">
-                            <div class="user-avatar" id="user-avatar">A</div>
-                            <span id="username-display" style="font-size: 14px; font-weight: 500;">Admin</span>
-                            <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: var(--color-text-muted);"></i>
-                        </div>
-                        <div class="dropdown-menu" id="user-dropdown">
-                            <button class="dropdown-item" onclick="window.location.href='/settings.html'"><i data-lucide="user"></i> Profile</button>
-                            <button class="dropdown-item" onclick="window.location.href='/settings.html'"><i data-lucide="settings"></i> Settings</button>
-                            <div class="dropdown-divider"></div>
-                            <button class="dropdown-item" onclick="logout()" style="color: var(--color-danger);"><i data-lucide="log-out"></i> Logout</button>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <div class="page-content">
-                <!-- Stats Cards -->
-                <div class="stats-row">
-                    <div class="stat-card primary">
-                        <div class="stat-label">Today's Sales</div>
-                        <div class="stat-value" id="today-sales">₹0</div>
-                        <div class="stat-change" id="today-sales-count">0 invoices</div>
-                    </div>
-                    <div class="stat-card info">
-                        <div class="stat-label">This Month</div>
-                        <div class="stat-value" id="month-sales">₹0</div>
-                        <div class="stat-change" id="month-sales-count">0 invoices</div>
-                    </div>
-                    <div class="stat-card danger">
-                        <div class="stat-label">Outstanding (Debtors)</div>
-                        <div class="stat-value" id="total-debtors">₹0</div>
-                    </div>
-                    <div class="stat-card warning">
-                        <div class="stat-label">Payable (Creditors)</div>
-                        <div class="stat-value" id="total-creditors">₹0</div>
-                    </div>
-                </div>
-
-                <div class="stats-row">
-                    <div class="stat-card success">
-                        <div class="stat-label">Cash Balance</div>
-                        <div class="stat-value" id="cash-balance">₹0</div>
-                    </div>
-                    <div class="stat-card info">
-                        <div class="stat-label">Bank Balance</div>
-                        <div class="stat-value" id="bank-balance">₹0</div>
-                    </div>
-                </div>
-
-                <!-- Charts Row -->
-                <div class="grid-2">
-                    <div class="panel">
-                        <div class="panel-header">
-                            <h3><i data-lucide="line-chart" style="width:18px; height:18px; vertical-align:text-bottom; margin-right:8px;"></i> Daily Sales Trend (Last 7 Days)</h3>
-                        </div>
-                        <div class="panel-body">
-                            <canvas id="daily-chart" height="250"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <div class="panel-header">
-                            <h3><i data-lucide="bar-chart" style="width:18px; height:18px; vertical-align:text-bottom; margin-right:8px;"></i> Monthly Comparison</h3>
-                        </div>
-                        <div class="panel-body">
-                            <canvas id="monthly-chart" height="250"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Transactions -->
-                <div class="panel">
-                    <div class="panel-header">
-                        <h3><i data-lucide="history" style="width:18px; height:18px; vertical-align:text-bottom; margin-right:8px;"></i> Recent Transactions</h3>
-                        <a href="/sales.html" class="btn btn-outline btn-sm">View All <i data-lucide="arrow-right" style="width:14px; height:14px;"></i></a>
-                    </div>
-                    <div class="panel-body" id="recent-transactions">
-                        <div class="loading-overlay">
-                            <div class="spinner lg"></div>
-                        </div>
+                <div id="recent-transactions" class="relative">
+                    <!-- Tables are dynamically injected here by dashboard.js -->
+                    <div class="flex justify-center items-center py-20">
+                        <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
+    <!-- Sidebar Overlay (mobile) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/api.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/shortcuts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="js/pdf.js"></script>
     <script src="js/dashboard.js"></script>
-    <script>lucide.createIcons();</script>
 </body>
 </html>

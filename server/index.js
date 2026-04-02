@@ -26,6 +26,8 @@ var dashboardRoutes = require('./modules/dashboard/dashboard.routes');
 var reportsRoutes = require('./modules/reports/reports.routes');
 var settingsRoutes = require('./modules/settings/settings.routes');
 var purchasesRoutes = require('./modules/purchases/purchases.routes');
+var uploadsRoutes = require('./modules/uploads/uploads.routes');
+var staffRoutes = require('./modules/staff/staff.routes');
 var backup = require('../scripts/backup');
 
 // Create Express app
@@ -62,6 +64,9 @@ app.use(session({
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '../client')));
 
+// Serve static uploaded files
+app.use('/data/uploads', express.static(path.join(__dirname, '../../data/uploads')));
+
 // ============================================================
 // API ROUTES (all under /api/v1/)
 // ============================================================
@@ -93,6 +98,8 @@ app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/reports', reportsRoutes);
 app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/purchases', purchasesRoutes);
+app.use('/api/v1/uploads', uploadsRoutes);
+app.use('/api/v1/staff', staffRoutes);
 
 // ============================================================
 // CONFIG ENDPOINT (public — sends non-sensitive shop info to frontend)
@@ -105,7 +112,8 @@ app.get('/api/v1/config', function(req, res) {
         currency_symbol: config.currency_symbol,
         tax_rate: config.tax_rate,
         invoice_prefix: config.invoice_prefix,
-        locale: config.locale
+        locale: config.locale,
+        backup_path: config.backup && config.backup.custom_path ? config.backup.custom_path : ''
     });
 });
 

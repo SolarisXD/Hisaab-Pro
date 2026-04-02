@@ -41,44 +41,69 @@ function listPurchases(filters, isDecoy) {
         ' WHERE ' + conditions.join(' AND ') +
         ' ORDER BY p.date DESC, p.id DESC';
 
-    return db.prepare(sql).all(...params);
+    var results = db.prepare(sql).all(...params);
+    results.forEach(function(r) {
+        try { r.images = JSON.parse(r.images || '[]'); } catch(e) { r.images = []; }
+    });
+    return results;
 }
 
 /**
  * Get purchase by ID
  */
 function getPurchaseById(id, isDecoy) {
-    return db.prepare(
+    var purchase = db.prepare(
         'SELECT p.*, a.name as supplier_name FROM purchases p' +
         ' LEFT JOIN accounts a ON p.supplier_account_id = a.id' +
         ' WHERE p.id = ? AND p.is_decoy = ? AND p.is_deleted = 0'
     ).get(id, isDecoy ? 1 : 0);
+    
+    if (!purchase) return null;
+    try { purchase.images = JSON.parse(purchase.images || '[]'); } catch(e) { purchase.images = []; }
+    return purchase;
 }
 
 /**
  * Create purchase
  */
 function createPurchase(data, isDecoy) {
-    var total = data.total || 0;
-    var amountPaid = data.amount_paid || 0;
+    var total = parseFloat(data.total) || 0;
+    var amountPaid = parseFloat(data.amount_paid) || 0;
+    var subtotal = parseFloat(data.subtotal) || total;
+    var taxPercent = parseFloat(data.tax_percent) || 0;
+    var taxAmount = parseFloat(data.tax_amount) || 0;
+
+    var imagesJson = '[]';
+    if (data.images && Array.isArray(data.images)) {
+        imagesJson = JSON.stringify(data.images);
+    }
 
     var insertPurchase = db.prepare(
-        'INSERT INTO purchases (invoice_no, date, supplier_account_id, total, amount_paid, status, ref_no, notes, is_decoy)' +
-        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO purchases (invoice_no, date, supplier_account_id, subtotal, tax_percent, tax_amount, total, amount_paid, status, ref_no, notes, is_decoy, images)' +
+        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
 
     var transaction = db.transaction(function() {
-        var result = insertPurchase.run(
-            data.invoice_no,
+        var args = [
+            data.invoice_no || ('PUR-' + Date.now()),
             data.date || new Date().toISOString().split('T')[0],
             data.supplier_account_id || null,
+            subtotal,
+            taxPercent,
+            taxAmount,
             total,
             amountPaid,
             amountPaid >= total ? 'paid' : (amountPaid > 0 ? 'partial' : 'pending'),
             data.ref_no || null,
             data.notes || null,
-            isDecoy ? 1 : 0
-        );
+            isDecoy ? 1 : 0,
+            imagesJson
+        ];
+
+        console.log('--- INSERTING PURCHASE ---');
+        args.forEach((val, idx) => console.log(`Param ${idx + 1}: ${val} (${typeof val})`));
+
+        var result = insertPurchase.run(...args);
 
         var purchaseId = result.lastInsertRowid;
 
@@ -139,6 +164,22 @@ function createPurchase(data, isDecoy) {
                         purchaseId,
                         isDecoy ? 1 : 0
                     );
+                    
+                    // Add to payments history
+                    db.prepare(
+                        'INSERT INTO payments (date, account_id, amount, type, mode, reference, purchase_id, notes, is_decoy)' +
+                        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                    ).run(
+                        data.date || new Date().toISOString().split('T')[0],
+                        data.supplier_account_id,
+                        amountPaid,
+                        'out',
+                        'cash',
+                        data.invoice_no,
+                        purchaseId,
+                        'Payment for purchase ' + data.invoice_no,
+                        isDecoy ? 1 : 0
+                    );
                 }
             }
         }
@@ -180,6 +221,9 @@ function deletePurchase(id, isDecoy) {
 
         // Mark associated transactions as deleted
         db.prepare('UPDATE transactions SET is_deleted = 1 WHERE linked_purchase_id = ?').run(id);
+
+        // Mark associated payments as deleted
+        db.prepare('UPDATE payments SET is_deleted = 1 WHERE purchase_id = ?').run(id);
 
         return true;
     });

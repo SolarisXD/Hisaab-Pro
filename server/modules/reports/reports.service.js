@@ -92,22 +92,26 @@ function getMonthlyReport(yearMonth, isDecoy) {
  * Debtor aging report
  * Buckets: 0-30 days, 30-60 days, 60+ days
  */
-function getDebtorAgingReport(isDecoy) {
-    var today = new Date().toISOString().split('T')[0];
+function getDebtorAgingReport(asOfDate, isDecoy) {
+    var today = asOfDate || new Date().toISOString().split('T')[0];
 
     var debtors = db.prepare(
-        'SELECT a.id, a.name, a.phone, a.current_balance,' +
-        ' (SELECT MAX(s.date) FROM sales s WHERE s.customer_account_id = a.id AND s.is_deleted = 0 AND s.is_decoy = ?) as last_sale_date,' +
-        ' (SELECT MAX(p.date) FROM payments p WHERE p.account_id = a.id AND p.type = \'in\' AND p.is_deleted = 0 AND p.is_decoy = ?) as last_payment_date' +
-        ' FROM accounts a WHERE a.type = \'customer\' AND a.current_balance > 0 AND a.is_active = 1 AND a.is_decoy = ?' +
-        ' ORDER BY a.current_balance DESC'
-    ).all(isDecoy ? 1 : 0, isDecoy ? 1 : 0, isDecoy ? 1 : 0);
+        'SELECT a.id, a.name, a.phone, a.opening_balance,' +
+        ' (SELECT COALESCE(SUM(CASE WHEN t.type = \'debit\' THEN t.amount ELSE -t.amount END), 0) FROM transactions t WHERE t.account_id = a.id AND t.is_deleted = 0 AND t.is_decoy = ? AND t.date <= ?) as transaction_sum,' +
+        ' (SELECT MAX(s.date) FROM sales s WHERE s.customer_account_id = a.id AND s.is_deleted = 0 AND s.is_decoy = ? AND s.date <= ?) as last_sale_date,' +
+        ' (SELECT MAX(p.date) FROM payments p WHERE p.account_id = a.id AND p.type = \'in\' AND p.is_deleted = 0 AND p.is_decoy = ? AND p.date <= ?) as last_payment_date' +
+        ' FROM accounts a WHERE a.type = \'customer\' AND a.is_active = 1 AND a.is_decoy = ?'
+    ).all(isDecoy ? 1 : 0, today, isDecoy ? 1 : 0, today, isDecoy ? 1 : 0, today, isDecoy ? 1 : 0);
 
     var buckets = { '0-30': [], '30-60': [], '60+': [] };
     var totals = { '0-30': 0, '30-60': 0, '60+': 0 };
 
     for (var i = 0; i < debtors.length; i++) {
         var debtor = debtors[i];
+        debtor.current_balance = debtor.opening_balance + debtor.transaction_sum;
+        
+        if (debtor.current_balance <= 0) continue;
+
         var lastDate = debtor.last_sale_date || debtor.last_payment_date;
         var daysOld = 0;
 
@@ -142,22 +146,30 @@ function getDebtorAgingReport(isDecoy) {
 /**
  * Creditor payment schedule
  */
-function getCreditorSchedule(isDecoy) {
-    var creditors = db.prepare(
-        'SELECT a.id, a.name, a.phone, a.current_balance,' +
-        ' (SELECT MAX(p.date) FROM payments p WHERE p.account_id = a.id AND p.type = \'out\' AND p.is_deleted = 0 AND p.is_decoy = ?) as last_payment_date' +
-        ' FROM accounts a WHERE a.type = \'supplier\' AND a.current_balance > 0 AND a.is_active = 1 AND a.is_decoy = ?' +
-        ' ORDER BY a.current_balance DESC'
-    ).all(isDecoy ? 1 : 0, isDecoy ? 1 : 0);
+function getCreditorSchedule(asOfDate, isDecoy) {
+    var today = asOfDate || new Date().toISOString().split('T')[0];
 
+    var creditors = db.prepare(
+        'SELECT a.id, a.name, a.phone, a.opening_balance,' +
+        ' (SELECT COALESCE(SUM(CASE WHEN t.type = \'debit\' THEN t.amount ELSE -t.amount END), 0) FROM transactions t WHERE t.account_id = a.id AND t.is_deleted = 0 AND t.is_decoy = ? AND t.date <= ?) as transaction_sum,' +
+        ' (SELECT MAX(p.date) FROM payments p WHERE p.account_id = a.id AND p.type = \'out\' AND p.is_deleted = 0 AND p.is_decoy = ? AND p.date <= ?) as last_payment_date' +
+        ' FROM accounts a WHERE a.type = \'supplier\' AND a.is_active = 1 AND a.is_decoy = ?'
+    ).all(isDecoy ? 1 : 0, today, isDecoy ? 1 : 0, today, isDecoy ? 1 : 0);
+
+    var filteredCreditors = [];
     var total = 0;
     for (var i = 0; i < creditors.length; i++) {
-        total += creditors[i].current_balance;
+        var creditor = creditors[i];
+        creditor.current_balance = creditor.opening_balance + creditor.transaction_sum;
+        if (Math.abs(creditor.current_balance) > 0) {
+            total += creditor.current_balance;
+            filteredCreditors.push(creditor);
+        }
     }
 
     return {
-        date: new Date().toISOString().split('T')[0],
-        creditors: creditors,
+        date: today,
+        creditors: filteredCreditors,
         total: total,
         shop: config.shop
     };
@@ -166,20 +178,27 @@ function getCreditorSchedule(isDecoy) {
 /**
  * Balance sheet — all account balances
  */
-function getBalanceSheet(isDecoy) {
+function getBalanceSheet(asOfDate, isDecoy) {
+    var today = asOfDate || new Date().toISOString().split('T')[0];
+
     var accounts = db.prepare(
-        'SELECT id, name, type, current_balance FROM accounts WHERE is_active = 1 AND is_decoy = ? ORDER BY type, name'
-    ).all(isDecoy ? 1 : 0);
+        'SELECT id, name, type, opening_balance,' +
+        ' (SELECT COALESCE(SUM(CASE WHEN t.type = \'debit\' THEN t.amount ELSE -t.amount END), 0) FROM transactions t WHERE t.account_id = accounts.id AND t.is_deleted = 0 AND t.is_decoy = ? AND t.date <= ?) as transaction_sum' +
+        ' FROM accounts WHERE is_active = 1 AND is_decoy = ? ORDER BY type, name'
+    ).all(isDecoy ? 1 : 0, today, isDecoy ? 1 : 0);
 
     var grouped = {};
     for (var i = 0; i < accounts.length; i++) {
-        var type = accounts[i].type;
+        var acc = accounts[i];
+        acc.current_balance = acc.opening_balance + acc.transaction_sum;
+        
+        var type = acc.type;
         if (!grouped[type]) grouped[type] = [];
-        grouped[type].push(accounts[i]);
+        grouped[type].push(acc);
     }
 
     return {
-        date: new Date().toISOString().split('T')[0],
+        date: today,
         accounts: grouped,
         shop: config.shop
     };
@@ -196,7 +215,9 @@ function getAccountLedger(accountId, dateFrom, dateTo, isDecoy) {
         SELECT t.*, 
             s.invoice_no as linked_invoice,
             COALESCE(s.ref_no, p.ref_no, pur.ref_no) as ref_no,
-            p.mode as payment_mode
+            p.mode as payment_mode,
+            s.images as sale_images,
+            pur.images as purchase_images
         FROM transactions t
         LEFT JOIN sales s ON t.linked_sale_id = s.id
         LEFT JOIN payments p ON t.linked_payment_id = p.id
@@ -250,18 +271,31 @@ function getAccountLedger(accountId, dateFrom, dateTo, isDecoy) {
  * Amount Receivable Report
  * Lists all customers with current_balance > 0 (strictly debit)
  */
-function getAmountReceivableReport(isDecoy) {
-    const customers = db.prepare(
-        'SELECT id, name, phone, current_balance FROM accounts ' +
-        'WHERE type = \'customer\' AND current_balance > 0 AND is_active = 1 AND is_decoy = ? ' +
-        'ORDER BY name COLLATE NOCASE'
-    ).all(isDecoy ? 1 : 0);
+function getAmountReceivableReport(asOfDate, isDecoy) {
+    var today = asOfDate || new Date().toISOString().split('T')[0];
 
-    const total = customers.reduce((sum, c) => sum + c.current_balance, 0);
+    var customers = db.prepare(
+        'SELECT id, name, phone, opening_balance,' +
+        ' (SELECT COALESCE(SUM(CASE WHEN t.type = \'debit\' THEN t.amount ELSE -t.amount END), 0) FROM transactions t WHERE t.account_id = a.id AND t.is_deleted = 0 AND t.is_decoy = ? AND t.date <= ?) as transaction_sum' +
+        ' FROM accounts a ' +
+        ' WHERE type = \'customer\' AND is_active = 1 AND is_decoy = ? ' +
+        ' ORDER BY name COLLATE NOCASE'
+    ).all(isDecoy ? 1 : 0, today, isDecoy ? 1 : 0);
+
+    var filteredCustomers = [];
+    var total = 0;
+    for (var i = 0; i < customers.length; i++) {
+        var customer = customers[i];
+        customer.current_balance = customer.opening_balance + customer.transaction_sum;
+        if (customer.current_balance > 0) {
+            total += customer.current_balance;
+            filteredCustomers.push(customer);
+        }
+    }
 
     return {
-        date: new Date().toISOString().split('T')[0],
-        customers: customers,
+        date: today,
+        customers: filteredCustomers,
         total: total,
         shop: config.shop
     };

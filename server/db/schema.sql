@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     notes           TEXT,
     is_decoy        INTEGER NOT NULL DEFAULT 0,
     is_active       INTEGER NOT NULL DEFAULT 1,
+    is_deleted      INTEGER NOT NULL DEFAULT 0,
     created_at      TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
     updated_at      TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
@@ -67,6 +68,7 @@ CREATE TABLE IF NOT EXISTS sales (
     notes               TEXT,
     is_decoy            INTEGER NOT NULL DEFAULT 0,
     is_deleted          INTEGER NOT NULL DEFAULT 0,
+    images              TEXT    DEFAULT '[]',
     created_at          TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
     updated_at          TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (customer_account_id) REFERENCES accounts(id)
@@ -80,6 +82,9 @@ CREATE TABLE IF NOT EXISTS purchases (
     invoice_no          TEXT    NOT NULL,
     date                TEXT    NOT NULL,
     supplier_account_id INTEGER,
+    subtotal            REAL    NOT NULL DEFAULT 0,
+    tax_percent         REAL    NOT NULL DEFAULT 0,
+    tax_amount          REAL    NOT NULL DEFAULT 0,
     total               REAL    NOT NULL DEFAULT 0,
     amount_paid         REAL    NOT NULL DEFAULT 0,
     status              TEXT    NOT NULL DEFAULT 'pending',
@@ -87,6 +92,7 @@ CREATE TABLE IF NOT EXISTS purchases (
     notes               TEXT,
     is_decoy            INTEGER NOT NULL DEFAULT 0,
     is_deleted          INTEGER NOT NULL DEFAULT 0,
+    images              TEXT    DEFAULT '[]',
     created_at          TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
     updated_at          TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (supplier_account_id) REFERENCES accounts(id)
@@ -241,3 +247,23 @@ CREATE INDEX IF NOT EXISTS idx_activity_log_timestamp ON activity_log(timestamp)
 CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id);
 
 CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(type);
+
+-- ============================================================
+-- STAFF & PAYROLL
+-- ============================================================
+CREATE TABLE IF NOT EXISTS staff_details (
+    account_id      INTEGER PRIMARY KEY,
+    monthly_salary  REAL    NOT NULL DEFAULT 0,
+    daily_wage      REAL    NOT NULL DEFAULT 0,
+    FOREIGN KEY (account_id) REFERENCES accounts(id)
+);
+
+CREATE TABLE IF NOT EXISTS staff_attendance (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_id      INTEGER NOT NULL,
+    date            TEXT    NOT NULL,
+    status          TEXT    NOT NULL,
+    notes           TEXT,
+    FOREIGN KEY (account_id) REFERENCES accounts(id),
+    UNIQUE(account_id, date)
+);

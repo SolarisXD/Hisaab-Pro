@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Staff & Payroll | Hisaab Pro</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="js/tailwind-config.js"></script>
+    <link href="css/style.css" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(252, 249, 248, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(196, 198, 205, 0.1);
+        }
+        #staff-modal.active, #attendance-modal.active, #payroll-modal.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-fixed-dim selection:text-primary-container">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-surface-container-low border-r border-outline-variant/10 flex flex-col z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+        <div class="p-6">
+            <h1 class="font-headline font-extrabold text-2xl tracking-tighter text-primary">Hisaab Pro</h1>
+            <p id="sidebar-shop-name" class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-semibold mt-1">Enterprise Ledger</p>
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
+            <a href="dashboard.html" data-page="dashboard" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-sm font-medium">Dashboard</span>
+            </a>
+            <a href="sales.html" data-page="sales" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">receipt_long</span>
+                <span class="text-sm font-medium">Sales</span>
+            </a>
+            <a href="purchases.html" data-page="purchases" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">shopping_cart</span>
+                <span class="text-sm font-medium">Purchases</span>
+            </a>
+            <a href="payments.html" data-page="payments" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">payments</span>
+                <span class="text-sm font-medium">Payments</span>
+            </a>
+            <a href="accounts.html" data-page="accounts" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">account_balance</span>
+                <span class="text-sm font-medium">Accounts</span>
+            </a>
+            <a href="staff.html" data-page="staff" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-all sidebar-active">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+                <span class="text-sm font-bold">Staff</span>
+            </a>
+            <a href="reports.html" data-page="reports" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">assessment</span>
+                <span class="text-sm font-medium">Reports</span>
+            </a>
+            <a href="settings.html" data-page="settings" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-sm font-medium">Settings</span>
+            </a>
+        </nav>
+
+        <div class="p-6 mt-auto border-t border-outline-variant/10">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">A</div>
+                <div class="overflow-hidden">
+                    <p id="footer-shop-name" class="text-xs font-bold text-primary truncate">Loading...</p>
+                    <p class="text-[10px] text-on-surface-variant font-medium">Administrator</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-error/5 text-error text-xs font-bold hover:bg-error/10 transition-colors">
+                <span class="material-symbols-outlined text-sm">logout</span> Sign Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="md:ml-64 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant/5 px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button id="sidebar-toggle" class="md:hidden p-2 hover:bg-surface-container-low rounded-xl transition-colors">
+                    <span class="material-symbols-outlined text-primary">menu</span>
+                </button>
+                <div class="flex flex-col">
+                    <h2 class="font-headline text-2xl font-black text-primary tracking-tight">Personnel Directory</h2>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Human Capital Management</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="window.openAttendanceModal()" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all">
+                    <span class="material-symbols-outlined text-lg">calendar_month</span> Attendance
+                </button>
+                <button id="btn-generate-payroll" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all">
+                    <span class="material-symbols-outlined text-lg">account_balance_wallet</span> Payroll
+                </button>
+                <button id="btn-new-staff" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    <span class="material-symbols-outlined text-lg">person_add</span> Enlist New
+                </button>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="p-8 space-y-8 flex-1">
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Static placeholders, JS will update if logic exists -->
+                <div class="glass-panel p-6 rounded-3xl space-y-4">
+                    <div class="flex justify-between items-center text-on-surface-variant/50">
+                        <span class="text-[10px] font-black uppercase tracking-widest">Active Personnel</span>
+                        <span class="material-symbols-outlined text-lg">badge</span>
+                    </div>
+                    <p id="stat-total-staff" class="text-3xl font-black text-primary tracking-tighter">0</p>
+                </div>
+                <div class="glass-panel p-6 rounded-3xl space-y-4">
+                    <div class="flex justify-between items-center text-on-surface-variant/50">
+                        <span class="text-[10px] font-black uppercase tracking-widest">Monthly Payroll</span>
+                        <span class="material-symbols-outlined text-lg">payments</span>
+                    </div>
+                    <p id="stat-total-payroll" class="text-3xl font-black text-primary tracking-tighter">₹0.00</p>
+                </div>
+                <div class="glass-panel p-6 rounded-3xl space-y-4 shadow-xl border-primary/10 bg-primary/5">
+                    <div class="flex justify-between items-center text-primary/50">
+                        <span class="text-[10px] font-black uppercase tracking-widest">Attendance Rate</span>
+                        <span class="material-symbols-outlined text-lg">rule</span>
+                    </div>
+                    <p id="stat-present-today" class="text-3xl font-black text-primary tracking-tighter">0 / 0</p>
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div class="bg-surface-container-lowest rounded-[2rem] overflow-hidden border border-outline-variant/10 shadow-sm relative min-h-[500px]">
+                <div class="p-6 border-b border-outline-variant/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex bg-surface-container-low p-1.5 rounded-2xl w-fit">
+                        <button class="px-6 py-2.5 rounded-xl text-xs font-bold transition-all bg-white text-primary shadow-sm">Personnel Ledger</button>
+                    </div>
+                    <div class="relative group min-w-[320px]">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 group-focus-within:text-primary transition-colors text-lg">search</span>
+                        <input type="text" id="staff-search" placeholder="Search by name, role or ID..." class="w-full pl-12 pr-4 py-3 bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-xl text-sm font-semibold transition-all">
+                    </div>
+                </div>
+
+                <div id="staff-list" class="divide-y divide-outline-variant/5">
+                    <!-- Dynamic Content -->
+                    <div class="flex flex-col items-center justify-center py-40 opacity-30">
+                        <span class="material-symbols-outlined text-6xl animate-pulse">sync</span>
+                        <p class="text-[10px] font-black uppercase tracking-widest mt-4">Retrieving Human Resources...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: New/Edit Staff -->
+    <div id="staff-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-2xl">
+            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined">person_add</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline text-2xl font-black text-primary tracking-tight" id="staff-modal-title">Establish Personnel Record</h3>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">HR Logistics Protocol</p>
+                    </div>
+                </div>
+                <button onclick="closeStaffModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="p-8">
+                <form id="staff-form" onsubmit="return false;" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Legal Full Name</label>
+                            <input type="text" id="staff-name" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="Enter full name..." required>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Functional Designation</label>
+                            <input type="text" id="staff-role" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="e.g. Senior Manager" required>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-primary/5 p-8 rounded-3xl border border-primary/10">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Mobile Contact No</label>
+                            <input type="text" id="staff-phone" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="+91 00000 00000">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Fixed Monthly Remuneration (₹)</label>
+                            <input type="number" id="staff-salary" step="0.01" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-lg font-black text-primary tracking-tight transition-all" placeholder="0.00" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Opening Balance (₹)</label>
+                            <input type="number" id="staff-opening-balance" step="0.01" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-lg font-black text-primary tracking-tight transition-all" placeholder="0.00" value="0">
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Official Address</label>
+                        <textarea id="staff-address" rows="3" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-xs font-bold transition-all resize-none" placeholder="Provide residential details..."></textarea>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Commencement Date</label>
+                        <input type="date" id="staff-join-date" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+                    </div>
+
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" id="btn-delete-staff" class="hidden py-4 px-6 bg-error/10 text-error font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-error/20 transition-all">Revoke</button>
+                        <button type="button" onclick="closeStaffModal()" class="flex-1 py-4 bg-surface-container-high text-primary font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-surface-container-highest transition-all">Abort</button>
+                        <button type="button" id="btn-save-staff" class="flex-[2] py-4 bg-primary text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all">Authorize Entry</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Attendance & Payroll Integration -->
+    <div id="attendance-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-4xl bg-surface-container-lowest">
+            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined">rule</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline text-2xl font-black text-primary tracking-tight" id="att-staff-name">Personnel Name</h3>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Individual Performance Audit</p>
+                    </div>
+                </div>
+                <button onclick="closeAttendanceModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="p-8">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Left: Stats & Entry -->
+                    <div class="lg:col-span-4 space-y-6">
+                        <div class="grid grid-cols-1 gap-4">
+                            <div class="glass-panel p-4 rounded-2xl border-primary/5">
+                                <p class="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1">Monthly Salary</p>
+                                <p id="att-monthly-salary" class="text-xl font-black text-primary">₹0.00</p>
+                            </div>
+                            <div class="glass-panel p-4 rounded-2xl border-primary/5">
+                                <p class="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1">Daily Wage</p>
+                                <p id="att-daily-wage" class="text-xl font-black text-primary">₹0.00</p>
+                            </div>
+                            <div class="glass-panel p-4 rounded-2xl border-primary/5 bg-primary/5">
+                                <p class="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Account Balance</p>
+                                <p id="att-account-balance" class="text-xl font-black text-primary">₹0.00</p>
+                            </div>
+                        </div>
+
+                        <form id="att-form" onsubmit="return false;" class="bg-surface-container-low p-6 rounded-3xl space-y-4 border border-outline-variant/10">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Manual Entry</h4>
+                            <div class="space-y-4">
+                                <div class="space-y-1">
+                                    <label class="text-[8px] font-bold uppercase tracking-widest opacity-50 ml-1">Date</label>
+                                    <input type="date" id="form-att-date" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-3 py-2.5 rounded-xl text-xs font-bold transition-all" required>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[8px] font-bold uppercase tracking-widest opacity-50 ml-1">Status</label>
+                                    <select id="form-att-status" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-3 py-2.5 rounded-xl text-xs font-bold transition-all" required>
+                                        <option value="present">Present</option>
+                                        <option value="absent">Absent</option>
+                                        <option value="half_day">Half Day</option>
+                                        <option value="leave">Paid Leave</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="w-full py-3 bg-primary text-white font-bold text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">Submit Entry</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Right: History & Filter -->
+                    <div class="lg:col-span-8 space-y-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Attendance Logs</h4>
+                            <div class="flex items-center gap-2">
+                                <input type="month" id="att-month-picker" class="bg-surface-container-low border-0 px-3 py-1.5 rounded-lg text-xs font-bold text-primary focus:ring-0">
+                            </div>
+                        </div>
+                        
+                        <div class="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl overflow-hidden min-h-[400px]">
+                            <div id="att-list" class="divide-y divide-outline-variant/5">
+                                <!-- History entries injected here -->
+                                <div class="py-20 text-center opacity-30">
+                                    <span class="material-symbols-outlined text-4xl mb-2">history</span>
+                                    <p class="text-[10px] font-black uppercase tracking-widest">Select month to view logs</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Payroll Engine -->
+    <div id="payroll-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-3xl">
+            <div class="p-8 pb-4 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-green-600 text-white flex items-center justify-center">
+                        <span class="material-symbols-outlined">account_balance_wallet</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline text-2xl font-black text-green-700 tracking-tight">Payroll Dispersement</h3>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-green-600/60">Automated Compensation Engine</p>
+                    </div>
+                </div>
+                <button onclick="closePayrollModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="p-8">
+                <div id="payroll-content" class="space-y-6">
+                    <!-- Dynamic Generation -->
+                </div>
+                <div class="flex gap-3 pt-8 border-t border-outline-variant/10 mt-8">
+                    <button onclick="closePayrollModal()" class="flex-1 py-4 bg-surface-container-high text-primary font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-surface-container-highest transition-all">Abort Process</button>
+                    <button id="btn-confirm-payroll" class="flex-[2] py-4 bg-green-600 text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-green-600/20 hover:scale-[1.01] transition-all">Authorize Dispersement</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/shortcuts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="js/pdf.js"></script>
+    <script src="js/staff.js"></script>
+</body>
+</html>

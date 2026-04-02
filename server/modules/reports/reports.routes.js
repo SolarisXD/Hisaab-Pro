@@ -50,7 +50,8 @@ router.get('/monthly', function(req, res) {
  */
 router.get('/debtor-aging', function(req, res) {
     try {
-        var report = reportsService.getDebtorAgingReport(req.session.user.is_decoy);
+        var date = req.query.date;
+        var report = reportsService.getDebtorAgingReport(date, req.session.user.is_decoy);
         res.json(report);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -62,7 +63,8 @@ router.get('/debtor-aging', function(req, res) {
  */
 router.get('/creditor-schedule', function(req, res) {
     try {
-        var report = reportsService.getCreditorSchedule(req.session.user.is_decoy);
+        var date = req.query.date;
+        var report = reportsService.getCreditorSchedule(date, req.session.user.is_decoy);
         res.json(report);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -74,7 +76,8 @@ router.get('/creditor-schedule', function(req, res) {
  */
 router.get('/balance-sheet', function(req, res) {
     try {
-        var report = reportsService.getBalanceSheet(req.session.user.is_decoy);
+        var date = req.query.date;
+        var report = reportsService.getBalanceSheet(date, req.session.user.is_decoy);
         res.json(report);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -97,7 +100,8 @@ router.get('/account-ledger', function(req, res) {
  */
 router.get('/amount-receivable', function(req, res) {
     try {
-        var report = reportsService.getAmountReceivableReport(req.session.user.is_decoy);
+        var date = req.query.date;
+        var report = reportsService.getAmountReceivableReport(date, req.session.user.is_decoy);
         res.json(report);
     } catch (err) {
         res.status(500).json({ error: err.message });

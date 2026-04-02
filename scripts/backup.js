@@ -8,8 +8,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '../data/hisaab.db');
-const BACKUP_DIR = path.join(__dirname, '../backups');
+const config = require('../server/config');
+const activeDbName = config.database.active_database || 'hisaab.db';
+const DB_PATH = path.join(__dirname, '../data', activeDbName);
+const BACKUP_DIR = (config.backup && config.backup.custom_path) ? config.backup.custom_path : path.join(__dirname, '../backups');
 
 function backup() {
     if (!fs.existsSync(DB_PATH)) {

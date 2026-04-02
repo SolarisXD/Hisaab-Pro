@@ -57,6 +57,10 @@
     var filterDateFrom = document.getElementById('filter-date-from');
     var filterDateTo = document.getElementById('filter-date-to');
 
+    var fy = getFinancialYearDates();
+    if (filterDateFrom && !filterDateFrom.value) filterDateFrom.value = fy.start;
+    if (filterDateTo && !filterDateTo.value) filterDateTo.value = fy.end;
+
     var debouncedSearch = debounce(function() { loadPayments(); }, 400);
     if (searchInput) searchInput.addEventListener('input', debouncedSearch);
     if (filterMode) filterMode.addEventListener('change', function() { loadPayments(); });
@@ -94,9 +98,8 @@
         })
         .catch(function(err) {
             var container = document.getElementById('payments-list');
-            if (container) container.innerHTML = '<div class="error-state"><i data-lucide="alert-circle"></i><p>' + escapeHtml(err.message) + '</p></div>';
+            if (container) container.innerHTML = '<div class="error-state p-8 text-center text-error font-bold flex items-center justify-center gap-2"><span class="material-symbols-outlined">error</span> ' + escapeHtml(err.message) + '</div>';
             showToast('Failed to load payments: ' + err.message, 'error');
-            lucide.createIcons();
         });
     }
 
@@ -118,10 +121,9 @@
             { label: 'Ref No', key: 'ref_no', render: function(row) { return escapeHtml(row.ref_no || '—'); } },
             { label: 'Reference', key: 'reference', render: function(row) { return escapeHtml(row.reference || '—'); } },
             { label: '', key: 'actions', render: function(row) {
-                return '<button class="btn btn-ghost btn-sm" onclick="deletePayment(' + row.id + ')" style="color:var(--color-danger);" title="Delete"><i data-lucide="trash-2" style="width:14px; height:14px;"></i></button>';
+                return '<button class="btn btn-ghost btn-sm" onclick="deletePayment(' + row.id + ')" style="color:var(--color-danger);" title="Delete"><span class="material-symbols-outlined" style="font-size:18px;">delete</span></button>';
             }}
         ]);
-        lucide.createIcons();
     }
 
     function loadAccounts() {
@@ -133,22 +135,37 @@
 
     function loadAccountsForType(type) {
         var select = document.getElementById('payment-account');
+        var currentValue = select.value;
         select.innerHTML = '<option value="">Select account</option>';
         var accounts = window._allAccounts || [];
-        var filterType = type === 'in' ? 'customer' : 'supplier';
+        
+        // Sort accounts by type then name
+        accounts.sort(function(a, b) {
+            if (a.type !== b.type) return a.type.localeCompare(b.type);
+            return a.name.localeCompare(b.name);
+        });
 
         for (var i = 0; i < accounts.length; i++) {
-            if (accounts[i].type === filterType || accounts[i].type === 'cash' || accounts[i].type === 'bank' || accounts[i].type === 'expense') {
-                var option = document.createElement('option');
-                option.value = accounts[i].id;
-                option.textContent = accounts[i].name + ' (' + accounts[i].type + ')';
-                select.appendChild(option);
-            }
+            var option = document.createElement('option');
+            option.value = accounts[i].id;
+            // Show type in uppercase for clarity
+            var displayType = accounts[i].type.charAt(0).toUpperCase() + accounts[i].type.slice(1);
+            option.textContent = accounts[i].name + ' (' + displayType + ')';
+            select.appendChild(option);
         }
+        
+        // Restore value if it still exists
+        if (currentValue) select.value = currentValue;
     }
 
     function openPaymentModal() {
-        document.getElementById('payment-date').value = getToday();
+        var dateEl = document.getElementById('payment-date');
+        var fy = getFinancialYearDates();
+        dateEl.min = fy.start;
+        dateEl.max = fy.end;
+        var today = getToday();
+        dateEl.value = (today >= fy.start && today <= fy.end ? today : fy.start);
+        
         document.getElementById('payment-amount').value = '';
         document.getElementById('payment-reference').value = '';
         document.getElementById('payment-notes').value = '';

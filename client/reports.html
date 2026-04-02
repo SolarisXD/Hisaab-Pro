@@ -1,185 +1,285 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports — Hisaab Pro</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/print.css">
-    <link rel="stylesheet" href="css/reports.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Reports & Insights | Hisaab Pro</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="js/tailwind-config.js"></script>
+    <link href="css/style.css" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(252, 249, 248, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(196, 198, 205, 0.1);
+        }
+        #export-modal.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
 </head>
-<body>
-    <div class="app-layout">
-        <div id="sidebar-overlay" class="sidebar-overlay"></div>
-        <aside id="sidebar" class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <div class="logo-icon-wrapper-sm">
-                        <i data-lucide="book-open"></i>
-                    </div>
-                    <div><h1>Hisaab Pro</h1><small id="sidebar-shop-name">Business Ledger</small></div>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-fixed-dim selection:text-primary-container">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-surface-container-low border-r border-outline-variant/10 flex flex-col z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+        <div class="p-6">
+            <h1 class="font-headline font-extrabold text-2xl tracking-tighter text-primary">Hisaab Pro</h1>
+            <p id="sidebar-shop-name" class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-semibold mt-1">Enterprise Ledger</p>
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
+            <a href="dashboard.html" data-page="dashboard" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-sm font-medium">Dashboard</span>
+            </a>
+            <a href="sales.html" data-page="sales" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">receipt_long</span>
+                <span class="text-sm font-medium">Sales</span>
+            </a>
+            <a href="purchases.html" data-page="purchases" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">shopping_cart</span>
+                <span class="text-sm font-medium">Purchases</span>
+            </a>
+            <a href="payments.html" data-page="payments" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">payments</span>
+                <span class="text-sm font-medium">Payments</span>
+            </a>
+            <a href="accounts.html" data-page="accounts" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">account_balance</span>
+                <span class="text-sm font-medium">Accounts</span>
+            </a>
+            <a href="staff.html" data-page="staff" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">group</span>
+                <span class="text-sm font-medium">Staff</span>
+            </a>
+            <a href="reports.html" data-page="reports" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-all sidebar-active">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">assessment</span>
+                <span class="text-sm font-bold">Reports</span>
+            </a>
+            <a href="settings.html" data-page="settings" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-sm font-medium">Settings</span>
+            </a>
+        </nav>
+
+        <div class="p-6 mt-auto border-t border-outline-variant/10">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">A</div>
+                <div class="overflow-hidden">
+                    <p id="footer-shop-name" class="text-xs font-bold text-primary truncate">Loading...</p>
+                    <p class="text-[10px] text-on-surface-variant font-medium">Administrator</p>
                 </div>
             </div>
-            <nav class="sidebar-nav">
-                <div class="nav-section-title">Main</div>
-                <a href="/dashboard.html" class="nav-link" data-page="dashboard">
-                    <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
-                </a>
-                
-                <a href="sales.html" class="nav-link" data-page="sales">
-                    <span class="nav-icon"><i data-lucide="shopping-cart"></i></span> Sales
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="sales.html?view=list" class="nav-sub-link">Show Sales</a>
-                    <a href="sales.html?view=add" class="nav-sub-link">Add Sale</a>
+            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-error/5 text-error text-xs font-bold hover:bg-error/10 transition-colors">
+                <span class="material-symbols-outlined text-sm">logout</span> Sign Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="md:ml-64 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant/5 px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button id="sidebar-toggle" class="md:hidden p-2 hover:bg-surface-container-low rounded-xl transition-colors">
+                    <span class="material-symbols-outlined text-primary">menu</span>
+                </button>
+                <div class="flex flex-col">
+                    <h2 class="font-headline text-2xl font-black text-primary tracking-tight">Intelligence Hub</h2>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Financial Asset Visualization</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button id="btn-export-options" class="hidden flex items-center gap-2 px-4 py-2 text-xs font-bold text-primary border border-primary/20 rounded-xl hover:bg-primary/5 transition-all">
+                    <span class="material-symbols-outlined text-sm">ios_share</span> Export Options
+                </button>
+                <button id="btn-print-report" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    <span class="material-symbols-outlined text-lg">download</span> Save as PDF
+                </button>
+            </div>
+        </header>
+
+        <!-- Sidebar Sub-Nav & Main Content -->
+        <div class="flex-1 flex overflow-hidden">
+            <!-- Sidebar Nav -->
+            <nav class="w-72 bg-surface-container-low border-r border-outline-variant/5 p-6 flex flex-col gap-6 overflow-y-auto no-scrollbar hidden lg:flex">
+                <div class="space-y-4">
+                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/50 px-2">Operational</h3>
+                    <div class="space-y-1">
+                        <button onclick="switchReport('daily-sales')" class="report-nav-tab w-full flex items-center justify-between p-3.5 rounded-2xl text-xs font-bold transition-all hover:bg-surface-container-high group" data-type="daily-sales">
+                            <span>Daily Sales Recap</span>
+                            <span class="material-symbols-outlined text-sm opacity-20 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                        </button>
+                        <button onclick="switchReport('amount-receivable')" class="report-nav-tab w-full flex items-center justify-between p-3.5 rounded-2xl text-xs font-bold transition-all hover:bg-surface-container-high group" data-type="amount-receivable">
+                            <span>Receivables Summary</span>
+                            <span class="material-symbols-outlined text-sm opacity-20 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                        </button>
+                    </div>
                 </div>
 
-                <a href="purchases.html" class="nav-link" data-page="purchases">
-                    <span class="nav-icon"><i data-lucide="shopping-bag"></i></span> Purchases
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="purchases.html?view=list" class="nav-sub-link">Show Purchases</a>
-                    <a href="purchases.html?view=add" class="nav-sub-link">Add Purchase</a>
+                <div class="space-y-4">
+                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/50 px-2">Fiscal Statements</h3>
+                    <div class="space-y-1">
+                        <button onclick="switchReport('monthly')" class="report-nav-tab w-full flex items-center justify-between p-3.5 rounded-2xl text-xs font-bold transition-all hover:bg-surface-container-high group" data-type="monthly">
+                            <span>Monthly Audit</span>
+                            <span class="material-symbols-outlined text-sm opacity-20 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                        </button>
+                        <button onclick="switchReport('account-ledger')" class="report-nav-tab w-full flex items-center justify-between p-3.5 rounded-2xl text-xs font-bold transition-all hover:bg-surface-container-high group" data-type="account-ledger">
+                            <span>Account Ledger</span>
+                            <span class="material-symbols-outlined text-sm opacity-20 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                        </button>
+                        <button onclick="switchReport('balance-sheet')" class="report-nav-tab w-full flex items-center justify-between p-3.5 rounded-2xl text-xs font-bold transition-all hover:bg-surface-container-high group" data-type="balance-sheet">
+                            <span>Balance Sheet</span>
+                            <span class="material-symbols-outlined text-sm opacity-20 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                        </button>
+                    </div>
                 </div>
 
-                <a href="/payments.html" class="nav-link" data-page="payments">
-                    <span class="nav-icon"><i data-lucide="indian-rupee"></i></span> Payments
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="payments.html?view=list" class="nav-sub-link">Show Payments</a>
-                    <a href="payments.html?view=add" class="nav-sub-link">Add Payment</a>
-                </div>
-
-                <a href="/accounts.html" class="nav-link" data-page="accounts">
-                    <span class="nav-icon"><i data-lucide="users"></i></span> Accounts
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="accounts.html?view=list" class="nav-sub-link">Show Accounts</a>
-                    <a href="accounts.html?view=types" class="nav-sub-link">Account Types</a>
-                </div>
-
-                <div class="nav-section-title">Analysis</div>
-                <a href="/reports.html" class="nav-link" data-page="reports">
-                    <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span> Reports
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="reports.html?type=daily-sales" class="nav-sub-link">Daily Sales</a>
-                    <a href="reports.html?type=amount-receivable" class="nav-sub-link">Amount Receivable</a>
-                    <a href="reports.html?type=monthly" class="nav-sub-link">Monthly Report</a>
-                    <a href="reports.html?type=account-ledger" class="nav-sub-link">Account Ledger</a>
-                    <a href="reports.html?type=debtor-aging" class="nav-sub-link">Debtor Aging</a>
-                    <a href="reports.html?type=creditor-schedule" class="nav-sub-link">Creditor Schedule</a>
-                    <a href="reports.html?type=balance-sheet" class="nav-sub-link">Balance Sheet</a>
-                </div>
-
-                <div class="nav-section-title">System</div>
-                <a href="/settings.html" class="nav-link" data-page="settings">
-                    <span class="nav-icon"><i data-lucide="settings"></i></span> Settings
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="settings.html?view=shop" class="nav-sub-link">Shop Information</a>
-                    <a href="settings.html?view=fy" class="nav-sub-link">Financial Year</a>
-                    <a href="settings.html?view=book" class="nav-sub-link">Book Reference</a>
-                    <a href="settings.html?view=security" class="nav-sub-link">Security & Backups</a>
+                <div class="space-y-4">
+                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/50 px-2">Aging Models</h3>
+                    <div class="space-y-1">
+                        <button onclick="switchReport('debtor-aging')" class="report-nav-tab w-full flex items-center justify-between p-3.5 rounded-2xl text-xs font-bold transition-all hover:bg-surface-container-high group" data-type="debtor-aging">
+                            <span>Debtor Aging</span>
+                            <span class="material-symbols-outlined text-sm opacity-20 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                        </button>
+                        <button onclick="switchReport('creditor-schedule')" class="report-nav-tab w-full flex items-center justify-between p-3.5 rounded-2xl text-xs font-bold transition-all hover:bg-surface-container-high group" data-type="creditor-schedule">
+                            <span>Creditor Schedule</span>
+                            <span class="material-symbols-outlined text-sm opacity-20 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                        </button>
+                    </div>
                 </div>
             </nav>
-            <div class="sidebar-footer">
-                <div class="shop-info">
-                    <div class="shop-name" id="footer-shop-name">Loading...</div>
-                    <div class="user-role">Administrator</div>
-                </div>
-                <button class="btn-sidebar-action" onclick="logout()" title="Logout">
-                    <i data-lucide="log-out"></i>
-                </button>
-                <button class="btn-sidebar-action danger" onclick="exitApp()" title="Exit Application">
-                    <i data-lucide="power"></i>
-                </button>
-            </div>
-        </aside>
 
-        <main class="main-content">
-            <header class="top-header">
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <button id="sidebar-toggle" class="sidebar-toggle"><i data-lucide="menu"></i></button>
-                    <h2 class="page-title">Reports</h2>
-                </div>
-                <div class="header-actions">
-                    <button class="btn btn-outline" id="btn-print" onclick="window.print()"><i data-lucide="printer"></i> Print</button>
-                </div>
-            </header>
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto no-scrollbar bg-surface/30 backdrop-blur-sm p-8 space-y-8">
+                <!-- Data Selection Header -->
+                <div class="glass-panel p-8 rounded-[2.5rem] border border-outline-variant/10 shadow-sm space-y-8">
+                    <input type="hidden" id="report-type" value="daily-sales">
+                    
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                            <span class="material-symbols-outlined">tune</span>
+                        </div>
+                        <div>
+                            <h3 class="font-headline text-2xl font-black text-primary tracking-tight">Configuration Parameters</h3>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Optimize Data Extraction Filters</p>
+                        </div>
+                    </div>
 
-            <div class="page-content">
-                <div class="reports-container">
-                    <!-- Main Report Area -->
-                    <div class="reports-main">
-                        <div class="report-config-panel">
-                            <div class="toolbar">
-                                <div class="filter-group">
-                                    <input type="hidden" id="report-type" value="daily-sales">
-                                    <select class="form-control" id="report-account" style="width:220px; min-height:38px; display:none;">
-                                        <option value="">Select Account...</option>
-                                    </select>
-                                    <input type="date" class="form-control" id="report-date" style="width:160px; min-height:38px;">
-                                    <div id="range-filters" style="display:none; gap:10px; align-items:center;">
-                                        <input type="date" class="form-control" id="report-date-from" style="width:150px; min-height:38px;">
-                                        <span>to</span>
-                                        <input type="date" class="form-control" id="report-date-to" style="width:150px; min-height:38px;">
-                                    </div>
-                                    <input type="month" class="form-control" id="report-month" style="width:160px; min-height:38px; display:none;">
-                                    <button class="btn btn-primary" id="btn-generate">Generate Report</button>
-                                </div>
+                    <div id="filter-wrapper" class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                        <div id="single-date-group" class="hidden space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Target Date</label>
+                            <input type="date" id="report-date" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-sm font-bold transition-all">
+                        </div>
+
+                        <div id="month-group" class="hidden space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Fiscal Month</label>
+                            <input type="month" id="report-month" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-sm font-bold transition-all">
+                        </div>
+
+                        <div id="as-of-date-group" class="hidden space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">As of Date</label>
+                            <input type="date" id="report-as-of-date" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-sm font-bold transition-all">
+                        </div>
+
+                        <div id="account-select-group" class="hidden space-y-2 md:col-span-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Entity Account</label>
+                            <select id="report-account" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all">
+                                <option value="">Global Overview...</option>
+                            </select>
+                        </div>
+
+                        <div id="date-range-group" class="hidden md:col-span-2 grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Start Interval</label>
+                                <input type="date" id="report-date-from" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-sm font-bold transition-all">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">End Interval</label>
+                                <input type="date" id="report-date-to" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-sm font-bold transition-all">
                             </div>
                         </div>
 
-                        <!-- Report Results -->
-                        <div class="panel" id="report-panel" style="display:none;">
-                            <div class="panel-header" style="justify-content: space-between;">
-                                <h3 id="report-title">Report</h3>
-                                <button class="btn btn-outline btn-sm" id="btn-export-options"><i data-lucide="download"></i> Download / Export</button>
+                        <button id="btn-generate" class="py-3.5 px-8 bg-primary text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Extract Data</button>
+                    </div>
+                </div>
+
+                <!-- Report Visualization -->
+                <div class="bg-surface-container-lowest rounded-[3rem] border border-outline-variant/10 shadow-sm relative min-h-[600px] overflow-hidden">
+                    <div id="report-initial-state" class="flex flex-col items-center justify-center py-60 space-y-6 opacity-30">
+                        <span class="material-symbols-outlined text-8xl animate-pulse text-primary">analytics</span>
+                        <div class="text-center">
+                            <p class="text-xs font-black uppercase tracking-[0.3em] text-primary">Extraction Pending</p>
+                            <p class="text-[10px] font-bold text-on-surface-variant mt-2">Initialize configuration to visualize ledger dynamics</p>
+                        </div>
+                    </div>
+
+                    <div id="report-panel" class="hidden">
+                        <div class="p-12 border-b border-outline-variant/5 flex justify-between items-end">
+                            <div class="space-y-2">
+                                <h2 id="report-results-title" class="font-headline text-4xl font-black text-primary tracking-tighter">Report Statement</h2>
+                                <p id="report-results-subtitle" class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Verified Ledger Record</p>
                             </div>
-                            <div class="panel-body" id="report-content"></div>
+                            <div class="text-right">
+                                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40">Generated On</p>
+                                <p class="text-xs font-bold text-primary" id="report-timestamp">--/--/----</p>
+                            </div>
+                        </div>
+                        <div id="report-content" class="p-12 prose prose-slate max-w-none">
+                            <!-- Injected by JS -->
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
-    <!-- Export Modal -->
-    <div class="modal-overlay" id="export-modal">
-        <div class="modal" style="max-width: 400px;">
-            <div class="modal-header">
-                <h3>Export Options</h3>
-                <button class="modal-close" onclick="closeExportModal()">✕</button>
-            </div>
-            <div class="modal-body" style="text-align: center; padding: 32px 24px;">
-                <p style="margin-bottom: 24px; color: var(--color-text-secondary);">Choose your preferred format for the generated report.</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <button class="btn btn-primary" id="btn-export-pdf" style="flex-direction: column; height: auto; padding: 20px; gap: 12px;">
-                        <i data-lucide="file-text" style="width: 32px; height: 32px;"></i>
-                        <span>Professional PDF</span>
-                    </button>
-                    <button class="btn btn-secondary" id="btn-export-excel" style="flex-direction: column; height: auto; padding: 20px; gap: 12px;">
-                        <i data-lucide="file-spreadsheet" style="width: 32px; height: 32px;"></i>
-                        <span>Excel / CSV</span>
-                    </button>
+    <!-- Modal: Export Configurations -->
+    <div id="export-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-lg">
+            <div class="p-8 pb-4 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-secondary text-white flex items-center justify-center transition-all">
+                        <span class="material-symbols-outlined">ios_share</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline text-2xl font-black text-secondary tracking-tight">Export Protocols</h3>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Serialized Data Transmission</p>
+                    </div>
                 </div>
+                <button onclick="this.closest('.modal-overlay').classList.add('hidden')" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-8 space-y-4">
+                <button id="btn-export-pdf" class="w-full flex items-center gap-4 p-5 rounded-3xl bg-surface-container-low hover:bg-surface-container-high border border-outline-variant/5 transition-all text-left">
+                    <div class="w-10 h-10 rounded-xl bg-red-500/10 text-red-600 flex items-center justify-center"><span class="material-symbols-outlined">picture_as_pdf</span></div>
+                    <div><p class="text-sm font-bold text-primary">Standard PDF Document</p><p class="text-[10px] text-on-surface-variant opacity-60">Serialized for audit persistence</p></div>
+                </button>
+                <button id="btn-export-excel" class="w-full flex items-center gap-4 p-5 rounded-3xl bg-surface-container-low hover:bg-surface-container-high border border-outline-variant/5 transition-all text-left">
+                    <div class="w-10 h-10 rounded-xl bg-green-500/10 text-green-600 flex items-center justify-center"><span class="material-symbols-outlined">table_view</span></div>
+                    <div><p class="text-sm font-bold text-primary">Raw CSV Dataset</p><p class="text-[10px] text-on-surface-variant opacity-60">Tabular format for external analysis</p></div>
+                </button>
             </div>
         </div>
     </div>
 
     <script src="js/api.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/shortcuts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="js/pdf.js"></script>
     <script src="js/reports.js"></script>
-    <script>lucide.createIcons();</script>
 </body>
 </html>

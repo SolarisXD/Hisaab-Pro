@@ -1,282 +1,341 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accounts — Hisaab Pro</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/components.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Accounts & Ledgers | Hisaab Pro</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="js/tailwind-config.js"></script>
+    <link href="css/style.css" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .glass-panel {
+            background: rgba(252, 249, 248, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(196, 198, 205, 0.1);
+        }
+    </style>
 </head>
-<body>
-    <div class="app-layout">
-        <div id="sidebar-overlay" class="sidebar-overlay"></div>
-        <aside id="sidebar" class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <div class="logo-icon-wrapper-sm">
-                        <i data-lucide="book-open"></i>
-                    </div>
-                    <div><h1>Hisaab Pro</h1><small id="sidebar-shop-name">Business Ledger</small></div>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-fixed-dim selection:text-primary-container">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-surface-container-low border-r border-outline-variant/10 flex flex-col z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+        <div class="p-6">
+            <h1 class="font-headline font-extrabold text-2xl tracking-tighter text-primary">Hisaab Pro</h1>
+            <p id="sidebar-shop-name" class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-semibold mt-1">Enterprise Ledger</p>
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
+            <a href="dashboard.html" data-page="dashboard" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-sm font-medium">Dashboard</span>
+            </a>
+            <a href="sales.html" data-page="sales" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">receipt_long</span>
+                <span class="text-sm font-medium">Sales</span>
+            </a>
+            <a href="purchases.html" data-page="purchases" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">shopping_cart</span>
+                <span class="text-sm font-medium">Purchases</span>
+            </a>
+            <a href="payments.html" data-page="payments" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">payments</span>
+                <span class="text-sm font-medium">Payments</span>
+            </a>
+            <a href="accounts.html" data-page="accounts" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg transition-all sidebar-active">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+                <span class="text-sm font-bold">Accounts</span>
+            </a>
+            <a href="staff.html" data-page="staff" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">group</span>
+                <span class="text-sm font-medium">Staff</span>
+            </a>
+            <a href="reports.html" data-page="reports" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">assessment</span>
+                <span class="text-sm font-medium">Reports</span>
+            </a>
+            <a href="settings.html" data-page="settings" class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-[#e4e2e1]/50 rounded-lg transition-all group">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-sm font-medium">Settings</span>
+            </a>
+        </nav>
+
+        <div class="p-6 mt-auto border-t border-outline-variant/10">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">A</div>
+                <div class="overflow-hidden">
+                    <p id="footer-shop-name" class="text-xs font-bold text-primary truncate">Loading...</p>
+                    <p class="text-[10px] text-on-surface-variant font-medium">Administrator</p>
                 </div>
             </div>
-            <nav class="sidebar-nav">
-                <div class="nav-section-title">Main</div>
-                <a href="/dashboard.html" class="nav-link" data-page="dashboard">
-                    <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
-                </a>
-                
-                <a href="sales.html" class="nav-link" data-page="sales">
-                    <span class="nav-icon"><i data-lucide="shopping-cart"></i></span> Sales
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="sales.html?view=list" class="nav-sub-link">Show Sales</a>
-                    <a href="sales.html?view=add" class="nav-sub-link">Add Sale</a>
-                </div>
+            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-error/5 text-error text-xs font-bold hover:bg-error/10 transition-colors">
+                <span class="material-symbols-outlined text-sm">logout</span> Sign Out
+            </button>
+        </div>
+    </aside>
 
-                <a href="purchases.html" class="nav-link" data-page="purchases">
-                    <span class="nav-icon"><i data-lucide="shopping-bag"></i></span> Purchases
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="purchases.html?view=list" class="nav-sub-link">Show Purchases</a>
-                    <a href="purchases.html?view=add" class="nav-sub-link">Add Purchase</a>
-                </div>
-
-                <a href="/payments.html" class="nav-link" data-page="payments">
-                    <span class="nav-icon"><i data-lucide="indian-rupee"></i></span> Payments
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="payments.html?view=list" class="nav-sub-link">Show Payments</a>
-                    <a href="payments.html?view=add" class="nav-sub-link">Add Payment</a>
-                </div>
-
-                <a href="/accounts.html" class="nav-link" data-page="accounts">
-                    <span class="nav-icon"><i data-lucide="users"></i></span> Accounts
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="accounts.html?view=list" class="nav-sub-link">Show Accounts</a>
-                    <a href="accounts.html?view=types" class="nav-sub-link">Account Groups</a>
-                </div>
-
-                <div class="nav-section-title">Analysis</div>
-                <a href="/reports.html" class="nav-link" data-page="reports">
-                    <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span> Reports
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="reports.html?type=daily-sales" class="nav-sub-link">Daily Sales</a>
-                    <a href="reports.html?type=amount-receivable" class="nav-sub-link">Amount Receivable</a>
-                    <a href="reports.html?type=monthly" class="nav-sub-link">Monthly Report</a>
-                    <a href="reports.html?type=account-ledger" class="nav-sub-link">Account Ledger</a>
-                    <a href="reports.html?type=debtor-aging" class="nav-sub-link">Debtor Aging</a>
-                    <a href="reports.html?type=creditor-schedule" class="nav-sub-link">Creditor Schedule</a>
-                    <a href="reports.html?type=balance-sheet" class="nav-sub-link">Balance Sheet</a>
-                </div>
-
-                <div class="nav-section-title">System</div>
-                <a href="/settings.html" class="nav-link" data-page="settings">
-                    <span class="nav-icon"><i data-lucide="settings"></i></span> Settings
-                </a>
-                <div class="nav-sub-menu">
-                    <a href="settings.html?view=shop" class="nav-sub-link">Shop Information</a>
-                    <a href="settings.html?view=fy" class="nav-sub-link">Financial Year</a>
-                    <a href="settings.html?view=book" class="nav-sub-link">Book Reference</a>
-                    <a href="settings.html?view=security" class="nav-sub-link">Security & Backups</a>
-                </div>
-            </nav>
-            <div class="sidebar-footer">
-                <div class="shop-info">
-                    <div class="shop-name" id="footer-shop-name">Loading...</div>
-                    <div class="user-role">Administrator</div>
-                </div>
-                <button class="btn-sidebar-action" onclick="logout()" title="Logout">
-                    <i data-lucide="log-out"></i>
+    <!-- Main Content -->
+    <main class="md:ml-64 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant/5 px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button id="sidebar-toggle" class="md:hidden p-2 hover:bg-surface-container-low rounded-xl transition-colors">
+                    <span class="material-symbols-outlined text-primary">menu</span>
                 </button>
-                <button class="btn-sidebar-action danger" onclick="exitApp()" title="Exit Application">
-                    <i data-lucide="power"></i>
+                <div class="flex flex-col">
+                    <h2 class="font-headline text-2xl font-black text-primary tracking-tight">Accounts & Ledger</h2>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Entity Portfolio Management</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div id="account-list-actions" class="flex items-center gap-3">
+                    <button id="btn-print-accounts" class="p-2.5 bg-surface-container-high text-primary rounded-xl hover:bg-surface-container-highest transition-all">
+                        <span class="material-symbols-outlined">print</span>
+                    </button>
+                    <button id="btn-new-account" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                        <span class="material-symbols-outlined text-lg">person_add</span> Initialize Entity
+                    </button>
+                </div>
+                <div id="account-types-actions" class="hidden">
+                    <button id="btn-new-type" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                        <span class="material-symbols-outlined text-lg">add_circle</span> New Account Group
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="p-8 space-y-8 flex-1">
+            <!-- Summary Stats -->
+            <div id="accounts-summary" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Stats cards remain the same -->
+                <div class="glass-panel p-6 rounded-3xl space-y-4">
+                    <div class="flex justify-between items-center text-on-surface-variant/50">
+                        <span class="text-[10px] font-black uppercase tracking-widest">Total Entities</span>
+                        <span class="material-symbols-outlined text-lg">groups</span>
+                    </div>
+                    <p id="summary-accounts-count" class="text-3xl font-black text-primary tracking-tighter">0</p>
+                </div>
+                <div class="glass-panel p-6 rounded-3xl space-y-4">
+                    <div class="flex justify-between items-center text-on-surface-variant/50">
+                        <span class="text-[10px] font-black uppercase tracking-widest">Net Receivable</span>
+                        <span class="material-symbols-outlined text-lg">add_circle</span>
+                    </div>
+                    <p id="summary-total-receivable" class="text-3xl font-black text-green-600 tracking-tighter">₹0.00</p>
+                </div>
+                <div class="glass-panel p-6 rounded-3xl space-y-4">
+                    <div class="flex justify-between items-center text-on-surface-variant/50">
+                        <span class="text-[10px] font-black uppercase tracking-widest">Net Payable</span>
+                        <span class="material-symbols-outlined text-lg">remove_circle</span>
+                    </div>
+                    <p id="summary-total-payable" class="text-3xl font-black text-red-600 tracking-tighter">₹0.00</p>
+                </div>
+                <div class="glass-panel p-6 rounded-3xl shadow-xl shadow-primary/5 border-primary/10 bg-primary/5 space-y-4">
+                    <div class="flex justify-between items-center text-primary/50">
+                        <span class="text-[10px] font-black uppercase tracking-widest">Global Balance</span>
+                        <span class="material-symbols-outlined text-lg">account_balance</span>
+                    </div>
+                    <p id="summary-net-balance" class="text-3xl font-black text-primary tracking-tighter">₹0.00</p>
+                </div>
+            </div>
+
+            <!-- Toolbar & Tabs -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="flex bg-surface-container-low p-1.5 rounded-2xl w-fit">
+                    <button class="px-6 py-2.5 rounded-xl text-xs font-bold transition-all tab-active" id="btn-tab-list" onclick="showListView()">Entity Directory</button>
+                    <button class="px-6 py-2.5 rounded-xl text-xs font-bold text-on-surface-variant hover:text-primary transition-all" id="btn-tab-types" onclick="showTypesView()">Entity Classification</button>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="relative group min-w-[320px]">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 group-focus-within:text-primary transition-colors text-lg">search</span>
+                        <input type="text" id="search-input" placeholder="Search by name, contact, or ID..." class="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-xl text-sm font-semibold transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <!-- View: Accounts List -->
+            <div id="accounts-list-view" class="space-y-6">
+                <!-- Dynamic tabs for account types -->
+                <div id="dynamic-type-tabs" class="flex flex-wrap gap-2">
+                    <!-- Injected by JS -->
+                </div>
+
+                <div class="bg-surface-container-lowest rounded-[2rem] overflow-hidden border border-outline-variant/10 shadow-sm relative min-h-[400px]">
+                    <div id="accounts-list" class="divide-y divide-outline-variant/5">
+                        <!-- Dynamic Content -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- View: Account Types (Classification) -->
+            <div id="account-types-view" class="hidden">
+                <div class="bg-surface-container-lowest rounded-[2rem] overflow-hidden border border-outline-variant/10 shadow-sm relative min-h-[400px]">
+                    <div id="account-types-list" class="divide-y divide-outline-variant/5">
+                        <!-- Dynamic Content -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- View: Ledger Panel -->
+            <div id="ledger-panel" class="hidden space-y-8">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button onclick="backToList()" class="p-2.5 bg-surface-container-high text-primary rounded-xl hover:bg-surface-container-highest transition-all">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                        </button>
+                        <div>
+                            <h3 id="ledger-account-name" class="font-headline text-2xl font-black text-primary tracking-tight italic">Account Ledger</h3>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Transactional History</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="flex gap-2 mr-2">
+                            <input type="date" id="ledger-date-from" title="From Date" class="bg-surface-container-high border-0 focus:ring-0 rounded-xl px-3 py-2 text-[10px] font-bold text-primary shadow-sm" onchange="if(window.viewingAccountId) viewLedger(window.viewingAccountId)">
+                            <input type="date" id="ledger-date-to" title="To Date" class="bg-surface-container-high border-0 focus:ring-0 rounded-xl px-3 py-2 text-[10px] font-bold text-primary shadow-sm" onchange="if(window.viewingAccountId) viewLedger(window.viewingAccountId)">
+                        </div>
+                        <button onclick="editCurrentAccount()" class="p-2.5 bg-surface-container-high text-primary rounded-xl hover:bg-surface-container-highest transition-all">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        <button onclick="printLedger()" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                            <span class="material-symbols-outlined text-lg">print</span> Print Ledger
+                        </button>
+                    </div>
+                </div>
+
+                <div id="ledger-stats" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Stats cards like Opening/Closing balance -->
+                </div>
+
+                <div id="ledger-content" class="bg-surface-container-lowest rounded-[2rem] overflow-hidden border border-outline-variant/10 shadow-sm">
+                    <!-- Ledger table injected here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: New/Edit Account -->
+    <div id="account-modal" class="modal-overlay hidden opacity-0 translate-y-full transition-all duration-300">
+        <div class="modal-content max-w-2xl">
+            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined">person_add</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline text-2xl font-black text-primary tracking-tight" id="account-modal-title">Initialize Entity</h3>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Synchronize Identity Portfolio</p>
+                    </div>
+                </div>
+                <button onclick="closeAccountModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-        </aside>
 
-        <main class="main-content">
-            <header class="top-header">
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <button id="sidebar-toggle" class="sidebar-toggle"><i data-lucide="menu"></i></button>
-                    <h2 class="page-title">Accounts</h2>
-                </div>
-                <div class="header-actions" id="account-list-actions">
-                    <button class="btn btn-outline" id="btn-print-accounts"><i data-lucide="printer"></i> Print List</button>
-                    <button class="btn btn-primary" id="btn-new-account">+ New Account</button>
-                </div>
-                <div class="header-actions" id="account-types-actions" style="display:none;">
-                    <button class="btn btn-primary" id="btn-new-type">+ New Group</button>
-                </div>
-            </header>
-
-            <div class="page-content">
-                <div id="accounts-list-view">
-                    <!-- Tabs -->
-                    <div class="tabs">
-                        <button class="tab active" onclick="filterAccounts(this, '')">All</button>
-                        <div id="dynamic-type-tabs" style="display:contents;">
-                            <!-- Dynamic tabs will be rendered here -->
+            <div class="p-8">
+                <form id="account-form" onsubmit="return false;" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Legal Trade Name</label>
+                            <input type="text" id="account-name" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="Enter full name..." required>
                         </div>
-                    </div>
-
-                    <!-- Search -->
-                    <div class="panel">
-                        <div class="panel-body">
-                            <div class="search-box" style="max-width:100%;">
-                                <span class="search-icon"><i data-lucide="search"></i></span>
-                                <input type="text" id="search-input" placeholder="Search accounts by name or phone...">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Accounts List -->
-                    <div class="panel" id="accounts-list-panel">
-                        <div class="panel-body" id="accounts-list">
-                            <div class="loading-overlay"><div class="spinner lg"></div></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="account-types-view" style="display:none;">
-                    <div class="panel">
-                        <div class="panel-body" id="account-types-list">
-                            <div class="loading-overlay"><div class="spinner lg"></div></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Ledger View (Initially Hidden) -->
-                <div id="ledger-panel" style="display:none;">
-                    <div class="panel" style="margin-bottom:20px;">
-                        <div class="panel-body" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-                            <div style="display:flex; align-items:center; gap:12px;">
-                                <button class="btn btn-outline btn-sm" onclick="backToList()">
-                                    <i data-lucide="arrow-left"></i> Back
-                                </button>
-                                <h3 id="ledger-account-name" style="margin:0;">Account Ledger</h3>
-                            </div>
-                            <div style="display:flex; gap:10px;">
-                                <button class="btn btn-primary" id="btn-edit-ledger-account" onclick="editCurrentAccount()">
-                                    <i data-lucide="edit"></i> Edit (Alt+E)
-                                </button>
-                                <button class="btn btn-outline" onclick="printLedger()">
-                                    <i data-lucide="printer"></i> Print
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="ledger-stats"></div>
-                    
-                    <div class="panel">
-                        <div class="panel-body" id="ledger-content">
-                            <!-- Ledger table will be rendered here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- New Account Modal -->
-    <div class="modal-overlay" id="account-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 id="account-modal-title">New Account</h3>
-                <button class="modal-close" onclick="closeAccountModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <form id="account-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Name <span class="required">*</span></label>
-                            <input type="text" class="form-control" id="account-name" required placeholder="Account name">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Group <span class="required">*</span></label>
-                            <select class="form-control" id="account-type" required>
-                                <option value="customer">Customer (Debtor)</option>
-                                <option value="supplier">Supplier (Creditor)</option>
-                                <option value="cash">Cash</option>
-                                <option value="bank">Bank</option>
-                                <option value="expense">Expense</option>
-                                <option value="revenue">Revenue</option>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Entity Classification</label>
+                            <select id="account-type" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+                                <option value="">Select classification...</option>
                             </select>
                         </div>
                     </div>
-                    <!-- Removed redundant Account Group field as per user request -->
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" id="account-phone" placeholder="10-digit number">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Contact Reference (Mobile)</label>
+                            <input type="text" id="account-phone" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="+91 00000 00000">
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Opening Balance (₹)</label>
-                            <input type="number" class="form-control" id="account-balance" step="0.01" value="0" placeholder="0.00">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Opening Monetary Balance (₹)</label>
+                            <input type="number" id="account-balance" step="0.01" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-base font-black text-primary tracking-tight transition-all" placeholder="0.00">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Address</label>
-                        <input type="text" class="form-control" id="account-address" placeholder="Address">
+
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Official Address / Logistics Detail</label>
+                        <textarea id="account-address" rows="3" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-xs font-bold transition-all resize-none" placeholder="Provide full business location detail..."></textarea>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Notes</label>
-                        <textarea class="form-control" id="account-notes" rows="2" placeholder="Optional notes"></textarea>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Additional Notes</label>
+                        <input type="text" id="account-notes" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-xs font-bold transition-all" placeholder="Optional notes...">
+                    </div>
+
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" id="btn-delete-account" class="hidden py-4 px-6 bg-error/10 text-error font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-error/20 transition-all">Deactivate</button>
+                        <button type="button" onclick="closeAccountModal()" class="flex-1 py-4 bg-surface-container-high text-primary font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-surface-container-highest transition-all">Abort</button>
+                        <button type="button" id="btn-save-account" class="flex-[2] py-4 bg-primary text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 hover:translate-y-[-2px] active:translate-y-[0] transition-all">Synchronize Portfolio</button>
                     </div>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeAccountModal()">Cancel</button>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn btn-danger" id="btn-delete-account" style="display:none;"><i data-lucide="trash-2"></i> Delete (Del/F8)</button>
-                    <button class="btn btn-primary" id="btn-save-account">Save Account (F2)</button>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- New Account Group Modal -->
-    <div class="modal-overlay" id="type-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 id="type-modal-title">New Account Group</h3>
-                <button class="modal-close" onclick="closeTypeModal()">✕</button>
+    <!-- Modal: Account Type (Classification) -->
+    <div id="type-modal" class="modal-overlay hidden opacity-0 translate-y-full transition-all duration-300">
+        <div class="modal-content max-w-md">
+            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
+                <div>
+                    <h3 class="font-headline text-2xl font-black text-primary tracking-tight" id="type-modal-title">Define Classification</h3>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Entity Categorization Logic</p>
+                </div>
+                <button onclick="closeTypeModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
             </div>
-            <div class="modal-body">
-                <form id="type-form">
-                    <div class="form-group">
-                        <label class="form-label">Group Name <span class="required">*</span></label>
-                        <input type="text" class="form-control" id="type-name" required placeholder="e.g. Fixed Asset, Loan">
+            <div class="p-8">
+                <form id="type-form" onsubmit="return false;" class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">Classification Identity</label>
+                        <input type="text" id="type-name" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Icon (Lucide name)</label>
-                        <input type="text" class="form-control" id="type-icon" placeholder="user, bank, box, etc." value="user">
-                        <small style="opacity:0.6;">Check lucide.dev for icon names</small>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">Material Symbol (Icon)</label>
+                        <input type="text" id="type-icon" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold" placeholder="person, storefront, etc." value="person">
+                    </div>
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" id="btn-delete-type" class="hidden py-4 px-6 bg-error/10 text-error font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-error/20 transition-all">Purge</button>
+                        <button type="button" id="btn-save-type" class="flex-1 py-4 bg-primary text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 transition-all">Seal Group</button>
                     </div>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeTypeModal()">Cancel</button>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn btn-danger" id="btn-delete-type" style="display:none;"><i data-lucide="trash-2"></i> Delete</button>
-                    <button class="btn btn-primary" id="btn-save-type">Save Group</button>
-                </div>
             </div>
         </div>
     </div>
 
-    <style>
-        .invoice-link { color: var(--color-primary); font-weight: 600; cursor: pointer; text-decoration: underline; }
-        .invoice-link:hover { opacity: 0.8; }
-    </style>
+    <!-- Modal: Invoice View (used by ledger) -->
+    <div id="invoice-view-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-4xl">
+            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
+                <h3 class="font-headline text-2xl font-black text-primary tracking-tight">Invoice Breakdown</h3>
+                <button onclick="closeInvoiceModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="invoice-view-content" class="p-8">
+                <!-- Content injected by JS -->
+            </div>
+            <div class="p-8 pt-0 flex gap-3">
+                <button id="btn-print-viewed-invoice" class="flex-1 py-4 bg-primary text-white font-bold text-xs uppercase tracking-widest rounded-2xl shadow-lg">Print Document</button>
+                <button onclick="closeInvoiceModal()" class="flex-1 py-4 bg-surface-container-high text-primary font-bold text-xs uppercase tracking-widest rounded-2xl">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/api.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/shortcuts.js"></script>
@@ -284,25 +343,5 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="js/pdf.js"></script>
     <script src="js/accounts.js"></script>
-    <script>lucide.createIcons();</script>
-
-    <!-- Invoice View Modal -->
-    <div class="modal-overlay" id="invoice-view-modal">
-        <div class="modal modal-lg">
-            <div class="modal-header">
-                <h3>Invoice Details</h3>
-                <button class="modal-close" onclick="closeInvoiceModal()">✕</button>
-            </div>
-            <div class="modal-body" id="invoice-view-content">
-                <!-- Invoice details will be rendered here -->
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeInvoiceModal()">Close</button>
-                <button class="btn btn-primary" id="btn-print-viewed-invoice">
-                    <i data-lucide="printer"></i> Print Invoice
-                </button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>

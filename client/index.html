@@ -1,80 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <meta name="description" content="Hisaab Pro — Secure Business Ledger System">
     <title>Login — Hisaab Pro</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/components.css">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="js/tailwind-config.js"></script>
+    <link href="css/style.css" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-mesh {
+            background-color: #fcf9f8;
+            background-image: radial-gradient(at 0% 0%, #f6f3f2 0, transparent 50%), radial-gradient(at 100% 100%, #e4e2e1 0, transparent 50%);
+        }
+    </style>
 </head>
-<body>
-    <div class="login-page">
-        <!-- Animated Background Mesh -->
-        <div class="bg-blobs">
-            <div class="blob blob-1"></div>
-            <div class="blob blob-2"></div>
-            <div class="blob blob-3"></div>
+<body class="bg-mesh font-body text-on-surface min-h-screen flex items-center justify-center p-6">
+    <main class="w-full max-w-[440px] flex flex-col items-center">
+        <!-- Brand Identity -->
+        <div class="mb-12 text-center">
+            <h1 class="font-headline text-4xl font-extrabold tracking-tighter text-primary mb-2">Hisaab Pro</h1>
+            <p class="text-on-surface-variant font-medium tracking-wide text-xs uppercase opacity-80">The Professional Business Ledger</p>
         </div>
 
-        <div class="login-container">
-            <div class="login-card">
-                <div class="logo-section">
-                    <div class="logo-icon-wrapper-premium">
-                        <i data-lucide="book-open"></i>
+        <!-- Login Card -->
+        <div class="w-full bg-surface-container-lowest rounded-xl p-8 shadow-[0_12px_40px_rgba(27,28,28,0.06)] relative overflow-hidden">
+            <!-- Subtle Tonal Accent -->
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-primary-container"></div>
+            
+            <div class="mb-8">
+                <h2 class="font-headline text-2xl font-bold text-primary tracking-tight">Access Ledger</h2>
+                <p class="text-on-surface-variant text-sm mt-1">Authenticate to manage your firm's assets.</p>
+            </div>
+
+            <style>
+                #login-error { display: none; }
+                #login-error.show { display: block; }
+            </style>
+            <div id="login-error" class="mb-4 text-xs text-error font-bold"></div>
+
+            <form id="login-form" class="space-y-6" autocomplete="off">
+                <!-- Username -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-on-surface-variant tracking-wider uppercase" for="username">Username</label>
+                    <div class="relative group">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors">person</span>
+                        <input class="w-full pl-10 pr-4 py-3 bg-transparent border border-outline-variant/30 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-fixed-dim/30 focus:border-surface-tint transition-all text-sm placeholder:text-outline-variant" id="username" name="username" placeholder="Enter your identification" type="text" required autofocus/>
                     </div>
-                    <h1>Hisaab Pro</h1>
-                    <p>The Professional Business Ledger</p>
                 </div>
 
-                <div id="login-error" class="login-error"></div>
-
-                <form id="login-form" autocomplete="off">
-                    <div class="form-group">
-                        <input type="text" id="username" name="username" class="form-control" placeholder="Enter username" required autofocus>
-                        <label class="form-label" for="username">Username</label>
+                <!-- Password -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="block text-xs font-semibold text-on-surface-variant tracking-wider uppercase" for="password">Password</label>
+                        <a class="text-[10px] font-bold text-primary-container hover:underline uppercase tracking-tighter" href="#">Forgot?</a>
                     </div>
-
-                    <div class="form-group">
-                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
-                        <label class="form-label" for="password">Password</label>
+                    <div class="relative group">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors">lock</span>
+                        <input class="w-full pl-10 pr-4 py-3 bg-transparent border border-outline-variant/30 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-fixed-dim/30 focus:border-surface-tint transition-all text-sm placeholder:text-outline-variant" id="password" name="password" placeholder="••••••••" type="password" required/>
                     </div>
+                </div>
 
-                    <div class="form-group" id="fy-group" style="display: none;">
-                        <select id="fy-select" name="fy-select" class="form-control" required>
+                <!-- Financial Year -->
+                <div id="fy-group" class="space-y-2" style="display: none;">
+                    <label class="block text-xs font-semibold text-on-surface-variant tracking-wider uppercase" for="fy-select">Financial Year</label>
+                    <div class="relative group">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-primary transition-colors">calendar_today</span>
+                        <select class="w-full pl-10 pr-4 py-3 bg-transparent border border-outline-variant/30 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-fixed-dim/30 focus:border-surface-tint transition-all text-sm appearance-none text-on-surface" id="fy-select" name="fy-select">
                             <option value="">Loading...</option>
                         </select>
-                        <label class="form-label" for="fy-select">Financial Year</label>
+                        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">expand_more</span>
                     </div>
-
-                    <button type="submit" id="login-btn" class="btn btn-primary btn-block btn-lg btn-glow">
-                        <span>Sign In</span>
-                        <i data-lucide="arrow-right"></i>
-                    </button>
-                </form>
-
-                <div id="signup-link-container" class="signup-footer" style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--color-border-light); display: none;">
-                    <p style="color: var(--color-text-secondary); margin-bottom: 8px; font-size: 14px;">Ready to professionalize your business?</p>
-                    <a href="/signup.html" class="btn btn-outline btn-block">
-                        Start Your New Journey <i data-lucide="sparkles" style="width: 14px; height: 14px; margin-left: 4px;"></i>
-                    </a>
                 </div>
 
-                <div style="text-align: center; margin-top: 32px; color: var(--color-text-muted); font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
-                    <span>All data is encrypted and stored locally</span>
-                </div>
+                <!-- Primary Action -->
+                <button id="login-btn" class="w-full py-4 bg-gradient-to-b from-primary to-primary-container text-on-primary font-headline font-bold rounded-md shadow-lg shadow-primary/10 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2" type="submit">
+                    <span>Sign In</span>
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+            </form>
+
+            <!-- Secondary Path -->
+            <div id="signup-link-container" class="mt-10 pt-8 border-t border-outline-variant/10 text-center" style="display: none;">
+                <p class="text-on-surface-variant text-[13px] mb-3">Ready to professionalize your business?</p>
+                <a class="inline-flex items-center px-6 py-2 bg-secondary-container text-on-secondary-container text-sm font-semibold rounded-full hover:bg-secondary-container/80 transition-colors" href="/signup.html">
+                    Start Your New Journey
+                </a>
             </div>
         </div>
-    </div>
+
+        <!-- Security Footer -->
+        <footer class="mt-8 flex items-center gap-2 opacity-60">
+            <span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">lock</span>
+            <span class="text-[11px] font-medium tracking-tight uppercase">All data is encrypted and stored locally</span>
+        </footer>
+    </main>
+
+    <!-- Visual Background Element -->
+    <div class="fixed top-20 -right-20 w-96 h-96 bg-primary-fixed-dim/10 rounded-full blur-[120px] -z-10"></div>
+    <div class="fixed bottom-10 -left-20 w-80 h-80 bg-secondary-fixed/20 rounded-full blur-[100px] -z-10"></div>
 
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
-    <script>lucide.createIcons();</script>
 </body>
 </html>

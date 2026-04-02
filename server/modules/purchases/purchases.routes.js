@@ -7,6 +7,7 @@
 const express = require('express');
 const router = express.Router();
 const purchasesService = require('./purchases.service');
+const { isDateInActiveFY } = require('../../shared/utils');
 
 // List purchases
 router.get('/', (req, res) => {
@@ -34,6 +35,10 @@ router.get('/:id', (req, res) => {
 // Create purchase
 router.post('/', (req, res) => {
     try {
+        const reqFy = req.headers['x-financial-year'];
+        if (!isDateInActiveFY(req.body.date, reqFy)) {
+            return res.status(400).json({ message: 'Transaction date cannot be outside the active financial year' });
+        }
         const isDecoy = req.session.user && req.session.user.is_decoy;
         const result = purchasesService.createPurchase(req.body, isDecoy);
         res.status(201).json(result);

@@ -1,161 +1,190 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Registration — Hisaab Pro</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/components.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Business Registration | Hisaab Pro</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#001919",
+              "primary-container": "#002f2f",
+              "on-primary": "#ffffff",
+              "surface": "#fcf9f8",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f6f3f2",
+              "surface-container": "#f0eded",
+              "on-surface": "#1b1c1c",
+              "on-surface-variant": "#44474c",
+              "outline-variant": "#c4c6cd",
+              "error": "#ba1a1a",
+              "secondary-container": "#d2e4fb",
+              "on-secondary-container": "#556679",
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "2xl": "1rem", "3xl": "1.5rem"},
+          },
+        },
+      }
+    </script>
+    <link href="css/style.css" rel="stylesheet"/>
     <style>
-        .signup-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
-        }
-        .signup-card {
-            width: 100%;
-            max-width: 600px;
-            background: white;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-xl);
-            padding: 40px;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
         .step { display: none; }
         .step.active { display: block; }
-        .step-header { margin-bottom: 32px; text-align: center; }
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 32px;
-        }
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--color-border);
-        }
-        .dot.active {
-            background: var(--color-primary);
-            width: 24px;
-            border-radius: 4px;
+        .bg-mesh {
+            background-color: #fcf9f8;
+            background-image: radial-gradient(at 0% 0%, #f6f3f2 0, transparent 50%), radial-gradient(at 100% 100%, #e4e2e1 0, transparent 50%);
         }
     </style>
 </head>
-<body>
-    <div class="signup-container">
-        <div class="signup-card">
-            <div class="step-indicator">
-                <div class="dot active"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
+<body class="bg-mesh font-body text-on-surface min-h-screen flex items-center justify-center p-6 selection:bg-primary/10">
+    <main class="w-full max-w-[560px]">
+        <!-- Brand Identity -->
+        <div class="mb-10 text-center">
+            <h1 class="font-headline text-3xl font-extrabold tracking-tighter text-primary mb-1">Hisaab Pro</h1>
+            <p class="text-on-surface-variant font-bold tracking-[0.2em] text-[10px] uppercase opacity-60">System Configuration</p>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-3xl p-10 shadow-[0_20px_60px_rgba(0,0,0,0.04)] border border-outline-variant/10 relative overflow-hidden">
+             <!-- Subtle Tonal Accent -->
+             <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary to-primary-container"></div>
+
+            <!-- Step Indicator -->
+            <div class="flex justify-center gap-2 mb-10">
+                <div class="step-dot w-8 h-1.5 rounded-full bg-primary transition-all duration-300"></div>
+                <div class="step-dot w-2 h-1.5 rounded-full bg-outline-variant/30 transition-all duration-300"></div>
+                <div class="step-dot w-2 h-1.5 rounded-full bg-outline-variant/30 transition-all duration-300"></div>
             </div>
 
-            <form id="signup-form">
+            <form id="signup-form" autocomplete="off">
                 <!-- Step 1: Business Details -->
-                <div class="step active" id="step-1">
-                    <div class="step-header">
-                        <h2>Business Registration</h2>
-                        <p style="color: var(--color-text-secondary);">Tell us about your shop or business</p>
+                <div class="step active space-y-8" id="step-1">
+                    <div class="space-y-1">
+                        <h2 class="font-headline text-2xl font-black text-primary tracking-tight">Venture Establishment</h2>
+                        <p class="text-on-surface-variant text-sm opacity-70">Initialize your professional entity in the ledger.</p>
                     </div>
-                    <div class="form-group">
-                        <label>Business Name</label>
-                        <input type="text" id="shop-name" class="form-control" placeholder="e.g. Rajasthan Sanitary" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Business Address</label>
-                        <textarea id="shop-address" class="form-control" rows="3" placeholder="Full business address" required></textarea>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>Phone Number</label>
-                            <input type="text" id="shop-phone" class="form-control" placeholder="10-digit mobile" required>
+
+                    <div class="space-y-6">
+                        <div class="space-y-2">
+                             <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Legal Trade Name</label>
+                             <input id="shop-name" class="w-full bg-surface-container-low border-0 border-b border-outline-variant/30 focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-primary font-bold transition-all" type="text" placeholder="e.g. Northern Trading Co." required/>
                         </div>
-                        <div class="form-group">
-                            <label>GSTIN (Optional)</label>
-                            <input type="text" id="shop-gstin" class="form-control" placeholder="GST Number">
+                        <div class="space-y-2">
+                             <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Official Address</label>
+                             <textarea id="shop-address" rows="3" class="w-full bg-surface-container-low border-0 border-b border-outline-variant/30 focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-primary font-medium transition-all resize-none" placeholder="Primary business location..." required></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Contact Reference</label>
+                                <input id="shop-phone" class="w-full bg-surface-container-low border-0 border-b border-outline-variant/30 focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-primary font-bold" type="text" placeholder="+91 0000000000" required/>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">GSTIN (Archival)</label>
+                                <input id="shop-gstin" class="w-full bg-surface-container-low border-0 border-b border-outline-variant/30 focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-primary font-bold" type="text" placeholder="Optional"/>
+                            </div>
                         </div>
                     </div>
-                    <div style="margin-top: 32px;">
-                        <button type="button" class="btn btn-primary btn-block" onclick="nextStep(2)">
-                            Next: Financial Year <i data-lucide="arrow-right"></i>
+
+                    <button type="button" onclick="nextStep(2)" class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-primary/20 flex items-center justify-center gap-2 hover:translate-y-[-2px] active:translate-y-[0] transition-all mt-4">
+                        Proceed to Financial Year Config
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </button>
+                </div>
+
+                <!-- Step 2: Financial Year -->
+                <div class="step space-y-8" id="step-2">
+                    <div class="space-y-1">
+                        <h2 class="font-headline text-2xl font-black text-primary tracking-tight">Financial Year Design</h2>
+                        <p class="text-on-surface-variant text-sm opacity-70">Define the core accounting window for your venture.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="space-y-2">
+                             <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Financial Year Label</label>
+                             <input id="fy-name" class="w-full bg-surface-container-low border-0 border-b border-outline-variant/30 focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-primary font-bold" type="text" placeholder="e.g. FY 2025-26" required/>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Inception Date</label>
+                                <input id="fy-start" class="w-full bg-surface-container-low border-0 border-b border-outline-variant/30 focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-xs font-bold" type="date" required/>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Termination Date</label>
+                                <input id="fy-end" class="w-full bg-surface-container-low border-0 border-b border-outline-variant/30 focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-xs font-bold" type="date" required/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 mt-4">
+                        <button type="button" onclick="nextStep(1)" class="flex-1 py-4 bg-surface-container-high text-primary font-bold text-xs rounded-2xl hover:bg-surface-container-highest transition-colors uppercase tracking-widest">Back</button>
+                        <button type="button" onclick="nextStep(3)" class="flex-[2] py-4 bg-primary text-white rounded-2xl font-bold text-xs uppercase tracking-[0.15em] shadow-xl shadow-primary/20 flex items-center justify-center gap-2 transition-all">
+                            Next: Administrator
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Step 2: Financial Year -->
-                <div class="step" id="step-2">
-                    <div class="step-header">
-                        <h2>First Financial Year</h2>
-                        <p style="color: var(--color-text-secondary);">Set up your current accounting period</p>
-                    </div>
-                    <div class="form-group">
-                        <label>Financial Year Name</label>
-                        <input type="text" id="fy-name" class="form-control" placeholder="e.g. FY 2026-27" required>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>Start Date</label>
-                            <input type="date" id="fy-start" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>End Date</label>
-                            <input type="date" id="fy-end" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="grid-2" style="margin-top: 32px; gap: 12px;">
-                        <button type="button" class="btn btn-outline" onclick="nextStep(1)">Back</button>
-                        <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next: Administrator <i data-lucide="arrow-right"></i></button>
-                    </div>
-                </div>
-
                 <!-- Step 3: Admin Account -->
-                <div class="step" id="step-3">
-                    <div class="step-header">
-                        <h2>Owner Account</h2>
-                        <p style="color: var(--color-text-secondary);">Setup the primary administrator account</p>
+                <div class="step space-y-8" id="step-3">
+                    <div class="space-y-1">
+                        <h2 class="font-headline text-2xl font-black text-primary tracking-tight">Root Authority Identity</h2>
+                        <p class="text-on-surface-variant text-sm opacity-70">Initialize the primary administrative protocols.</p>
                     </div>
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="admin-username" class="form-control" placeholder="e.g. admin" required>
+
+                    <div class="space-y-6">
+                        <div class="space-y-2">
+                             <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Administrative Alias</label>
+                             <input id="admin-username" class="w-full bg-surface-container-low border-0 border-b border-outline-variant/30 focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-primary font-bold" type="text" placeholder="e.g. admin" required/>
+                        </div>
+                        <div class="space-y-2">
+                             <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Security Pin</label>
+                             <input id="admin-password" class="w-full bg-surface-container-low border-0 border-b border-outline-variant/30 focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-primary font-bold" type="password" placeholder="Minimum 6 characters" required/>
+                        </div>
+                        <div class="space-y-2">
+                             <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Verify Security Pin</label>
+                             <input id="confirm-password" class="w-full bg-surface-container-low border-0 border-b border-outline-variant/30 focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-primary font-bold" type="password" placeholder="Repeat security pin" required/>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="admin-password" class="form-control" placeholder="Minimum 6 characters" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm Password</label>
-                        <input type="password" id="confirm-password" class="form-control" placeholder="Repeat password" required>
-                    </div>
-                    <div class="grid-2" style="margin-top: 32px; gap: 12px;">
-                        <button type="button" class="btn btn-outline" onclick="nextStep(2)">Back</button>
-                        <button type="submit" class="btn btn-primary">Complete Setup <i data-lucide="check"></i></button>
+
+                    <div class="flex gap-3 mt-4">
+                        <button type="button" onclick="nextStep(2)" class="flex-1 py-4 bg-surface-container-high text-primary font-bold text-xs rounded-2xl hover:bg-surface-container-highest transition-colors uppercase tracking-widest">Back</button>
+                        <button type="submit" class="flex-[2] py-4 bg-green-600 text-white rounded-2xl font-bold text-xs uppercase tracking-[0.15em] shadow-xl shadow-green-600/20 flex items-center justify-center gap-2 hover:bg-green-700 transition-all">
+                            Complete Registry
+                            <span class="material-symbols-outlined text-sm">verified_user</span>
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
-    </div>
+
+        <p class="text-center mt-8 text-on-surface-variant/50 text-[10px] font-bold uppercase tracking-widest">
+            Hisaab Pro Archival Protocols Protected by Local Encryption
+        </p>
+    </main>
 
     <script src="js/api.js"></script>
     <script src="js/utils.js"></script>
     <script>
-        lucide.createIcons();
-        
         function nextStep(step) {
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
             document.getElementById('step-' + step).classList.add('active');
             
-            const dots = document.querySelectorAll('.dot');
+            const dots = document.querySelectorAll('.step-dot');
             dots.forEach((d, i) => {
-                d.classList.toggle('active', i === (step - 1));
+                const isActive = i === (step - 1);
+                d.className = `step-dot transition-all duration-300 rounded-full h-1.5 ${isActive ? 'w-8 bg-primary' : 'w-2 bg-outline-variant/30'}`;
             });
         }
 
@@ -166,12 +195,12 @@
             const confirm = document.getElementById('confirm-password').value;
             
             if (password !== confirm) {
-                showToast('Passwords do not match', 'error');
+                showToast('Verification pin mismatch', 'warning');
                 return;
             }
 
             if (password.length < 6) {
-                showToast('Password must be at least 6 characters', 'error');
+                showToast('Pin must be at least 6 characters', 'warning');
                 return;
             }
 
@@ -193,13 +222,20 @@
                 }
             };
 
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">sync</span> Processing...';
+            btn.disabled = true;
+
             api.post('/auth/signup', data)
                 .then(res => {
-                    showToast('Setup complete! Redirecting to login...', 'success');
+                    showToast('Registry established! Redirecting to entry point...', 'success');
                     setTimeout(() => window.location.href = '/index.html', 2000);
                 })
                 .catch(err => {
                     showToast(err.message, 'error');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 });
         });
     </script>

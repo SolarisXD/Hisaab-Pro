@@ -101,6 +101,34 @@ function getCurrentMonth() {
 }
 
 /**
+ * Get financial year dates (April 1 to March 31)
+ * Defaults to current financial year based on today's date
+ */
+function getFinancialYearDates() {
+    var cachedStart = localStorage.getItem('hisaab_active_fy_start');
+    var cachedEnd = localStorage.getItem('hisaab_active_fy_end');
+    if (cachedStart && cachedEnd) {
+        return { start: cachedStart, end: cachedEnd };
+    }
+
+    var today = new Date();
+    var month = today.getMonth(); // 0 = Jan, 2 = Mar, 3 = Apr
+    var year = today.getFullYear();
+    
+    // If we are in Jan-Mar, the financial year started last year
+    var startYear = month < 3 ? year - 1 : year;
+    var endYear = startYear + 1;
+    
+    var startStr = startYear + '-04-01';
+    var endStr = endYear + '-03-31';
+    
+    return {
+        start: startStr,
+        end: endStr
+    };
+}
+
+/**
  * Debounce function
  */
 function debounce(fn, delay) {
@@ -132,18 +160,20 @@ function showToast(message, type) {
     toast.className = 'toast ' + type;
 
     var icons = { 
-        success: '<i data-lucide="check-circle-2"></i>', 
-        error: '<i data-lucide="alert-circle"></i>', 
-        warning: '<i data-lucide="alert-triangle"></i>', 
-        info: '<i data-lucide="info"></i>' 
+        success: 'check_circle', 
+        error: 'error', 
+        warning: 'warning', 
+        info: 'info' 
     };
-    toast.innerHTML = '<span>' + (icons[type] || '') + '</span> ' + message;
+    
+    var iconName = icons[type] || 'info';
+    toast.innerHTML = `
+        <span class="material-symbols-outlined text-lg">${iconName}</span>
+        <span class="flex-1">${message}</span>
+    `;
 
     container.appendChild(toast);
     
-    // Initialize icons in toast
-    if (window.lucide) lucide.createIcons();
-
     // Auto-dismiss after 4 seconds
     setTimeout(function() {
         toast.style.animation = 'fadeOut 0.3s ease forwards';
@@ -158,18 +188,20 @@ function showToast(message, type) {
  */
 function getStatusBadge(status) {
     var classes = {
-        paid: 'badge-success',
-        partial: 'badge-warning',
-        pending: 'badge-danger'
+        paid: 'bg-primary text-white shadow-sm',
+        partial: 'bg-primary-container/20 text-primary',
+        pending: 'bg-error/10 text-error',
+        received: 'bg-primary/10 text-primary'
     };
     var labels = {
-        paid: 'Paid',
-        partial: 'Partial',
-        pending: 'Pending'
+        paid: 'PAID',
+        partial: 'PARTIAL',
+        pending: 'PENDING',
+        received: 'RECEIVED'
     };
-    var cls = classes[status] || 'badge-info';
-    var label = labels[status] || status;
-    return '<span class="badge ' + cls + '">' + label + '</span>';
+    var cls = classes[status] || 'bg-outline-variant/20 text-on-surface-variant';
+    var label = labels[status] || status.toUpperCase();
+    return '<span class="px-3 py-1 text-[10px] font-bold rounded-full ' + cls + '">' + label + '</span>';
 }
 
 /**
@@ -214,15 +246,20 @@ function setActiveNav(page) {
     if (!page) {
         var path = window.location.pathname;
         page = path.split('/').pop().replace('.html', '');
-        if (!page || page === 'index') page = 'dashboard';
+        if (!page || page === 'index' || page === '') page = 'dashboard';
     }
+    
     var links = document.querySelectorAll('.nav-link');
-    for (var i = 0; i < links.length; i++) {
-        links[i].classList.remove('active');
-        if (links[i].getAttribute('data-page') === page) {
-            links[i].classList.add('active');
+    links.forEach(function(link) {
+        var dataPage = link.getAttribute('data-page');
+        if (dataPage === page) {
+            link.classList.add('sidebar-active');
+            link.classList.remove('text-slate-600', 'dark:text-slate-400');
+        } else {
+            link.classList.remove('sidebar-active');
+            link.classList.add('text-slate-600', 'dark:text-slate-400');
         }
-    }
+    });
 }
 
 /**
@@ -249,6 +286,21 @@ function loadCommonUI() {
                         document.title = shopName + ' — Hisaab Pro';
                     }
                 }
+            }
+        }).catch(function() {});
+    }
+    
+    // Cache financial year bounds for strict validations
+    if (typeof api !== 'undefined' && api.getPublicFinancialYears) {
+        api.getPublicFinancialYears().then(function(fys) {
+            var currentSessionDb = localStorage.getItem('hisaab_active_fy') || 'hisaab.db';
+            var activeFy = fys.find(function(y) { return y.db_filename === currentSessionDb; });
+            if (activeFy && activeFy.start_date && activeFy.end_date) {
+                localStorage.setItem('hisaab_active_fy_start', activeFy.start_date);
+                localStorage.setItem('hisaab_active_fy_end', activeFy.end_date);
+            } else {
+                localStorage.removeItem('hisaab_active_fy_start');
+                localStorage.removeItem('hisaab_active_fy_end');
             }
         }).catch(function() {});
     }
@@ -301,35 +353,51 @@ function showConfirm(options) {
 
     return new Promise(function(resolve) {
         var overlay = document.createElement('div');
-        overlay.className = 'modal-overlay active';
-        overlay.style.zIndex = '3000'; // Above everything
+        overlay.className = 'modal-overlay';
+        overlay.style.zIndex = '3000';
 
-        var modalHtml = 
-            '<div class="modal" style="max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);">' +
-                '<div class="modal-header">' +
-                    '<h3>' + escapeHtml(title) + '</h3>' +
-                    '<button class="modal-close">✕</button>' +
-                '</div>' +
-                '<div class="modal-body" style="padding: 24px; text-align: center;">' +
-                    '<p style="font-size: 16px; color: var(--color-text-secondary); line-height: 1.5;">' + escapeHtml(message) + '</p>' +
-                '</div>' +
-                '<div class="modal-footer" style="padding: 16px 24px; background: var(--color-bg);">' +
-                    '<button class="btn btn-outline btn-cancel" style="min-width: 100px;">' + escapeHtml(cancelText) + '</button>' +
-                    '<button class="btn btn-' + intent + ' btn-confirm" style="min-width: 120px;">' + escapeHtml(confirmText) + '</button>' +
-                '</div>' +
-            '</div>';
+        var intentColors = {
+            primary: 'bg-primary text-white shadow-primary/20',
+            danger: 'bg-error text-white shadow-error/20',
+            success: 'bg-green-600 text-white shadow-green-600/20',
+            warning: 'bg-tertiary-fixed-dim text-tertiary shadow-tertiary/10'
+        };
+        var btnCls = intentColors[intent] || intentColors.primary;
+
+        var modalHtml = `
+            <div class="modal-content">
+                <div class="p-8 pb-0 flex justify-between items-center">
+                    <h3 class="font-headline text-2xl font-black text-primary tracking-tight">${escapeHtml(title)}</h3>
+                    <button class="modal-close w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="p-8 py-10 text-center">
+                    <p class="text-on-surface-variant text-base font-medium opacity-80 leading-relaxed">${escapeHtml(message)}</p>
+                </div>
+                <div class="p-8 pt-0 flex gap-3">
+                    <button class="btn-cancel flex-1 py-4 bg-surface-container-high text-primary font-bold text-xs rounded-2xl hover:bg-surface-container-highest transition-all uppercase tracking-widest">${escapeHtml(cancelText)}</button>
+                    <button class="btn-confirm flex-[2] py-4 ${btnCls} font-bold text-xs rounded-2xl shadow-lg transition-all uppercase tracking-widest">${escapeHtml(confirmText)}</button>
+                </div>
+            </div>`;
 
         overlay.innerHTML = modalHtml;
         document.body.appendChild(overlay);
+
+        // Trigger animation
+        setTimeout(() => overlay.classList.add('active'), 10);
 
         var btnConfirm = overlay.querySelector('.btn-confirm');
         var btnCancel = overlay.querySelector('.btn-cancel');
         var btnClose = overlay.querySelector('.modal-close');
 
         function cleanup(result) {
-            overlay.remove();
+            overlay.classList.remove('active');
             window.removeEventListener('keydown', handleKey);
-            resolve(result);
+            setTimeout(() => {
+                if (overlay.parentNode) overlay.remove();
+                resolve(result);
+            }, 300);
         }
 
         function handleKey(e) {
@@ -337,7 +405,7 @@ function showConfirm(options) {
                 e.preventDefault();
                 cleanup(false);
             }
-            if (e.key === 'Enter' || e.key === 'F2') {
+            if (e.key === 'Enter') {
                 e.preventDefault();
                 cleanup(true);
             }
@@ -349,11 +417,7 @@ function showConfirm(options) {
         overlay.onclick = function(e) { if (e.target === overlay) cleanup(false); };
 
         window.addEventListener('keydown', handleKey);
-        
-        // Auto-focus confirm button for better UX
-        setTimeout(function() { btnConfirm.focus(); }, 100);
-
-        if (window.lucide) lucide.createIcons();
+        setTimeout(function() { btnConfirm.focus(); }, 150);
     });
 }
 
@@ -460,41 +524,36 @@ function exitApp() {
 function renderTable(data, columns, options) {
     options = options || {};
     if (!data || data.length === 0) {
-        return '<div class="empty-state"><div class="empty-icon"><i data-lucide="monitor-off"></i></div><p>No records found</p></div>';
+        return '<div class="flex flex-col items-center justify-center py-12 text-on-surface-variant opacity-50"><span class="material-symbols-outlined text-4xl mb-2">monitoring</span><p class="text-xs font-bold uppercase tracking-widest">No records found</p></div>';
     }
 
-    var clickableClass = options.onRowClick ? ' table-clickable' : '';
-    var html = '<div class="table-wrapper"><table class="table' + clickableClass + '"><thead><tr>';
+    var clickableClass = options.onRowClick ? ' cursor-pointer' : '';
+    var html = '<div class="overflow-x-auto no-scrollbar"><table class="w-full text-left border-collapse"><thead><tr class="border-b border-outline-variant/5">';
     for (var c = 0; c < columns.length; c++) {
-        var align = columns[c].align ? ' class="' + columns[c].align + '"' : '';
-        html += '<th' + align + '>' + columns[c].label + '</th>';
+        var align = columns[c].align === 'text-right' ? ' text-right' : '';
+        html += '<th class="px-8 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest' + align + '">' + columns[c].label + '</th>';
     }
-    html += '</tr></thead><tbody>';
+    html += '</tr></thead><tbody class="divide-y divide-outline-variant/5">';
 
     for (var r = 0; r < data.length; r++) {
         var rowAttr = '';
         if (options.onRowClick) {
-            // Store index or ID to retrieve when clicked
             var rowId = data[r].id || r;
             rowAttr = ' onclick="' + options.onRowClick + '(' + rowId + ')"';
         }
         
-        html += '<tr' + rowAttr + '>';
+        html += '<tr class="hover:bg-surface-container-low/50 transition-colors' + clickableClass + '"' + rowAttr + '>';
         for (var c2 = 0; c2 < columns.length; c2++) {
-            var align2 = columns[c2].align ? ' class="' + columns[c2].align + '"' : '';
-            var value = columns[c2].render ? columns[c2].render(data[r]) : escapeHtml(String(data[r][columns[c2].key] || ''));
-            html += '<td' + align2 + '>' + value + '</td>';
+            var align2 = columns[c2].align === 'text-right' ? ' text-right' : '';
+            var valRaw = columns[c2].render ? columns[c2].render(data[r]) : escapeHtml(String(data[r][columns[c2].key] || ''));
+            
+            // Apply padding and base font
+            html += '<td class="px-8 py-5 text-sm' + align2 + '">' + valRaw + '</td>';
         }
         html += '</tr>';
     }
 
     html += '</tbody></table></div>';
-    
-    // Auto-init icons after render if Lucide is available
-    setTimeout(function() {
-        if (window.lucide) lucide.createIcons();
-    }, 0);
-
     return html;
 }
 

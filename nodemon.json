@@ -1,0 +1,3 @@
+{
+  "ignore": ["config.json", "backups/*", "data/*", "*.db"]
+}

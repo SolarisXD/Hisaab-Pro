@@ -9,7 +9,7 @@
     var currentView = 'list';
     var editingAccountId = null;
     var editingTypeId = null;
-    var viewingAccountId = null;
+    window.viewingAccountId = null; // Expose for HTML events
     var allAccountTypes = [];
     var currentAccountsData = [];
 
@@ -21,6 +21,13 @@
         var params = new URLSearchParams(window.location.search);
         currentView = params.get('view') || 'list';
         
+        // Init ledger dates
+        var ledgerDateFrom = document.getElementById('ledger-date-from');
+        var ledgerDateTo = document.getElementById('ledger-date-to');
+        var fy = getFinancialYearDates();
+        if (ledgerDateFrom) ledgerDateFrom.value = fy.start;
+        if (ledgerDateTo) ledgerDateTo.value = fy.end;
+
         loadInitialData();
     });
 
@@ -37,46 +44,57 @@
                 } else {
                     showListView();
                 }
-                updateSidebarActiveState();
             })
             .catch(function(err) {
                 showToast('Failed to load account types: ' + err.message, 'error');
             });
     }
-
-    function updateSidebarActiveState() {
-        var subLinks = document.querySelectorAll('.nav-sub-link');
-        subLinks.forEach(link => {
-            var href = link.getAttribute('href');
-            if (href.includes('view=' + currentView)) {
-                link.classList.add('active');
-            } else {
-                link.classList.remove('active');
-            }
-        });
+    
+    function updateTabStyles() {
+        var btnList = document.getElementById('btn-tab-list');
+        var btnTypes = document.getElementById('btn-tab-types');
+        
+        if (btnList && btnTypes) {
+            btnList.classList.toggle('tab-active', currentView === 'list');
+            btnList.classList.toggle('text-on-surface-variant', currentView !== 'list');
+            
+            btnTypes.classList.toggle('tab-active', currentView === 'types');
+            btnTypes.classList.toggle('text-on-surface-variant', currentView !== 'types');
+        }
     }
+
 
     // --- Navigation & View Switching ---
 
-    function showListView() {
+    window.showListView = function() {
         currentView = 'list';
-        document.getElementById('accounts-list-view').style.display = 'block';
-        document.getElementById('account-types-view').style.display = 'none';
-        document.getElementById('ledger-panel').style.display = 'none';
-        document.getElementById('account-list-actions').style.display = 'flex';
-        document.getElementById('account-types-actions').style.display = 'none';
+        document.getElementById('accounts-list-view').classList.remove('hidden');
+        document.getElementById('account-types-view').classList.add('hidden');
+        document.getElementById('ledger-panel').classList.add('hidden');
+        
+        document.getElementById('account-list-actions').classList.remove('hidden');
+        document.getElementById('account-list-actions').classList.add('flex');
+        document.getElementById('account-types-actions').classList.add('hidden');
+        document.getElementById('account-types-actions').classList.remove('flex');
+        
+        updateTabStyles();
         loadAccounts();
-    }
+    };
 
-    function showTypesView() {
+    window.showTypesView = function() {
         currentView = 'types';
-        document.getElementById('accounts-list-view').style.display = 'none';
-        document.getElementById('account-types-view').style.display = 'block';
-        document.getElementById('ledger-panel').style.display = 'none';
-        document.getElementById('account-list-actions').style.display = 'none';
-        document.getElementById('account-types-actions').style.display = 'flex';
+        document.getElementById('accounts-list-view').classList.add('hidden');
+        document.getElementById('account-types-view').classList.remove('hidden');
+        document.getElementById('ledger-panel').classList.add('hidden');
+        
+        document.getElementById('account-list-actions').classList.add('hidden');
+        document.getElementById('account-list-actions').classList.remove('flex');
+        document.getElementById('account-types-actions').classList.remove('hidden');
+        document.getElementById('account-types-actions').classList.add('flex');
+        
+        updateTabStyles();
         loadAccountTypes();
-    }
+    };
 
     // --- Account Types Management ---
 
@@ -91,8 +109,7 @@
                 renderAccountTypes(types);
             })
             .catch(function(err) {
-                container.innerHTML = '<div class="error-state"><i data-lucide="alert-circle"></i><p>' + escapeHtml(err.message) + '</p></div>';
-                lucide.createIcons();
+                container.innerHTML = '<div class="error-state text-error p-8 text-center font-bold">' + escapeHtml(err.message) + '</div>';
             });
     }
 
@@ -100,20 +117,27 @@
         var container = document.getElementById('account-types-list');
         var html = renderTable(types, [
             { label: 'Name', key: 'name', render: function(row) {
-                var icon = row.icon || 'user';
-                return '<span style="font-weight:600;"><i data-lucide="' + icon + '" style="width:14px; height:14px; vertical-align:middle; margin-right:8px;"></i>' + escapeHtml(row.name) + '</span>';
+                var icon = sanitizeIcon(row.icon || 'person');
+                return '<div class="flex items-center gap-3">' +
+                            '<div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">' +
+                                '<span class="material-symbols-outlined text-primary text-lg">' + icon + '</span>' +
+                            '</div>' +
+                            '<span class="font-bold text-primary">' + escapeHtml(row.name) + '</span>' +
+                       '</div>';
             }},
-            { label: 'Slug', key: 'slug', render: function(row) { return '<code>' + row.slug + '</code>'; } },
+            { label: 'Slug', key: 'slug', render: function(row) { return '<code class="bg-surface-container-high px-2 py-0.5 rounded text-xs">' + row.slug + '</code>'; } },
+            { label: 'Usage', key: 'usage_count', align: 'text-center', render: function(row) {
+                return '<span class="font-bold text-primary">' + (row.usage_count || 0) + ' Accounts</span>';
+            }},
             { label: 'System', key: 'is_system', render: function(row) { 
-                return row.is_system ? '<span class="badge badge-primary">System</span>' : '<span class="badge">Custom</span>';
+                return row.is_system ? '<span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded uppercase">System</span>' : '<span class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant text-[10px] font-bold rounded uppercase">Custom</span>';
             }},
             { label: 'Status', key: 'is_active', render: function(row) {
-                return row.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>';
+                return row.is_active ? '<span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase">Active</span>' : '<span class="px-2 py-0.5 bg-error/10 text-error text-[10px] font-bold rounded uppercase">Inactive</span>';
             }}
         ], { onRowClick: 'editType' });
         
         container.innerHTML = html;
-        lucide.createIcons();
     }
 
     window.editType = function(id) {
@@ -125,16 +149,64 @@
         editingTypeId = type ? type.id : null;
         document.getElementById('type-modal-title').textContent = type ? 'Edit Account Group' : 'New Account Group';
         document.getElementById('type-name').value = type ? type.name : '';
-        document.getElementById('type-icon').value = type ? (type.icon || 'user') : 'user';
+        document.getElementById('type-icon').value = type ? (type.icon || 'person') : 'person';
         
         document.getElementById('btn-delete-type').style.display = (type && !type.is_system) ? 'flex' : 'none';
-        document.getElementById('type-modal').classList.add('active');
+        
+        var modal = document.getElementById('type-modal');
+        modal.classList.remove('hidden');
+        setTimeout(function() {
+            modal.classList.remove('translate-y-full', 'opacity-0');
+            modal.classList.add('active'); // CSS should handle backdrop/display
+        }, 10);
     }
 
     window.closeTypeModal = function() {
-        document.getElementById('type-modal').classList.remove('active');
+        var modal = document.getElementById('type-modal');
+        modal.classList.remove('active');
+        modal.classList.add('translate-y-full', 'opacity-0');
+        setTimeout(function() { modal.classList.add('hidden'); }, 300);
         editingTypeId = null;
     };
+
+    function sanitizeIcon(icon) {
+        if (!icon) return 'person';
+        var slug = icon.toLowerCase().trim();
+        
+        // Strip Font Awesome prefixes if present
+        slug = slug.replace(/^fa-(.*)$/, '$1');
+        slug = slug.replace(/^(fa|fas|far|fab|fal|fad|fat|fass)\s+(.*)$/, '$2');
+        
+        var map = {
+            'user': 'person',
+            'user-o': 'person_outline',
+            'user-circle': 'account_circle',
+            'users': 'groups',
+            'store': 'storefront',
+            'factory': 'domain',
+            'home': 'home',
+            'credit-card': 'payments',
+            'pie-chart': 'analytics',
+            'alert-circle': 'error',
+            'shopping-cart': 'shopping_cart',
+            'briefcase': 'work',
+            'book-open': 'menu_book',
+            'bank': 'account_balance',
+            'university': 'account_balance',
+            'landmark': 'account_balance',
+            'banknote': 'payments',
+            'cash': 'payments',
+            'money': 'payments',
+            'arrow-up-right': 'trending_up',
+            'arrow-down-left': 'trending_down',
+            'dollar-sign': 'attach_money',
+            'dmark': 'bookmark_manager',
+            'trash-2': 'delete',
+            'edit': 'edit',
+            'plus': 'add'
+        };
+        return map[slug] || slug;
+    }
 
     document.getElementById('btn-new-type').addEventListener('click', function() { openTypeModal(); });
     document.getElementById('btn-save-type').addEventListener('click', saveType);
@@ -189,10 +261,14 @@
     // --- Accounts Management ---
 
     window.filterAccounts = function(btn, type) {
-        currentType = type;
-        var tabs = document.querySelectorAll('.tab');
-        for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
-        btn.classList.add('active');
+        currentType = type === 'all' ? '' : type;
+        var tabs = document.querySelectorAll('.category-tab');
+        tabs.forEach(function(t) {
+            t.classList.remove('tab-active', 'font-black');
+            t.classList.add('text-on-surface-variant', 'font-bold', 'opacity-60');
+        });
+        btn.classList.add('tab-active', 'font-black');
+        btn.classList.remove('text-on-surface-variant', 'font-bold', 'opacity-60');
         loadAccounts();
     };
 
@@ -208,50 +284,83 @@
                 });
                 currentAccountsData = accounts;
                 renderAccounts(accounts);
+                updateSummaryStats(accounts);
             })
             .catch(function(err) {
-                container.innerHTML = '<div class="error-state"><i data-lucide="alert-circle"></i><p>' + escapeHtml(err.message) + '</p></div>';
+                container.innerHTML = '<div class="error-state p-8 text-center text-error font-bold">' + escapeHtml(err.message) + '</div>';
                 showToast('Failed to load accounts: ' + err.message, 'error');
-                lucide.createIcons();
             });
+    }
+
+    function updateSummaryStats(accounts) {
+        var count = accounts.length;
+        var receivable = 0;
+        var payable = 0;
+
+        accounts.forEach(function(acc) {
+            var Bal = parseFloat(acc.current_balance) || 0;
+            if (acc.type === 'customer' || acc.type === 'expense' || acc.type === 'cash' || acc.type === 'bank') {
+                // Asset convention: + is DR (Receivable)
+                if (Bal > 0) receivable += Bal;
+                else payable += Math.abs(Bal);
+            } else {
+                // Liability convention: + is CR (Payable)
+                if (Bal > 0) payable += Bal;
+                else receivable += Math.abs(Bal);
+            }
+        });
+
+        document.getElementById('summary-accounts-count').textContent = count;
+        document.getElementById('summary-total-receivable').textContent = formatINR(receivable);
+        document.getElementById('summary-total-payable').textContent = formatINR(payable);
+        document.getElementById('summary-net-balance').textContent = formatINR(receivable - payable);
     }
 
     function renderAccounts(accounts) {
         var container = document.getElementById('accounts-list');
         
-        var typeIcons = {};
-        allAccountTypes.forEach(t => {
-            typeIcons[t.slug] = '<i data-lucide="' + (t.icon || 'user') + '" style="width:14px; height:14px; vertical-align:middle; margin-right:4px;"></i>';
-        });
-
         var html = renderTable(accounts, [
-            { label: 'Name', key: 'name', render: function(row) {
-                return '<span style="font-weight:600;">' + (typeIcons[row.type] || '') + ' ' + escapeHtml(row.name) + '</span>';
+            { label: 'Account Name', key: 'name', render: function(row) {
+                var typeObj = allAccountTypes.find(function(t) { return t.slug === row.type; });
+                var icon = sanitizeIcon(typeObj ? (typeObj.icon || 'person') : 'person');
+                return '<div class="flex items-center gap-4">' +
+                            '<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">' +
+                                '<span class="material-symbols-outlined text-lg">' + icon + '</span>' +
+                            '</div>' +
+                            '<div>' +
+                                '<p class="text-sm font-bold text-primary">' + escapeHtml(row.name) + '</p>' +
+                                '<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter font-bold opacity-60">' + escapeHtml(row.type) + '</p>' +
+                            '</div>' +
+                       '</div>';
             }},
-            { label: 'Group', key: 'type', render: function(row) {
-                return '<span class="badge badge-primary" style="text-transform:capitalize;">' + row.type + '</span>';
+            { label: 'Phone', key: 'phone', render: function(row) { return '<span class="text-xs font-medium text-slate-600">' + escapeHtml(row.phone || '—') + '</span>'; } },
+            { label: 'Current Balance', key: 'current_balance', align: 'text-right', render: function(row) {
+                var balanceStr = formatBalance(row.current_balance, row.type);
+                var color = row.current_balance < 0 ? 'text-green-600' : (row.current_balance > 0 ? 'text-error' : 'text-on-surface-variant');
+                return '<span class="text-sm font-extrabold ' + color + '">' + balanceStr + '</span>';
             }},
-            { label: 'Phone', key: 'phone', render: function(row) { return escapeHtml(row.phone || '—'); } },
-            { label: 'Balance', key: 'current_balance', align: 'text-right', render: function(row) {
-                var cls = row.current_balance > 0 ? 'negative' : (row.current_balance < 0 ? 'positive' : '');
-                return '<span class="amount ' + cls + '">' + formatBalance(row.current_balance, row.type) + '</span>';
+            { label: 'Actions', key: 'id', align: 'text-right', render: function(row) {
+                return '<button class="px-4 py-1.5 text-[10px] font-bold text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-all uppercase tracking-wider">Ledger</button>';
             }}
         ], { onRowClick: 'viewLedger' });
         
         container.innerHTML = html;
-        lucide.createIcons();
     }
 
     function renderTypeTabs() {
         var container = document.getElementById('dynamic-type-tabs');
         if (!container) return;
         
-        var html = '';
-        allAccountTypes.filter(t => t.is_active).forEach(t => {
-            html += '<button class="tab" onclick="filterAccounts(this, \'' + t.slug + '\')"><i data-lucide="' + (t.icon || 'user') + '" style="width:14px; height:14px;"></i> ' + escapeHtml(t.name) + 's</button>';
+        var html = '<button class="category-tab px-4 py-1.5 text-xs font-black uppercase tracking-widest transition-all rounded-xl tab-active" onclick="filterAccounts(this, \'all\')">All Entities</button>';
+        
+        allAccountTypes.filter(function(t) { return t.is_active; }).forEach(function(t) {
+            var icon = sanitizeIcon(t.icon || 'person');
+            html += '<button class="category-tab px-4 py-1.5 text-xs font-bold text-on-surface-variant opacity-60 hover:opacity-100 uppercase tracking-widest transition-all hover:bg-surface-container-high rounded-xl flex items-center gap-2 whitespace-nowrap" onclick="filterAccounts(this, \'' + t.slug + '\')">' +
+                        '<span class="material-symbols-outlined text-sm">' + icon + '</span>' +
+                        escapeHtml(t.name) + 
+                    '</button>';
         });
         container.innerHTML = html;
-        lucide.createIcons();
     }
 
     function updateAccountTypeDropdown() {
@@ -275,64 +384,85 @@
     // --- Ledger View ---
 
     window.viewLedger = function(id) {
-        viewingAccountId = id;
+        window.viewingAccountId = id;
         document.getElementById('accounts-list-view').style.display = 'none';
         document.getElementById('ledger-panel').style.display = 'block';
         document.getElementById('account-list-actions').style.display = 'none';
         
         document.getElementById('ledger-content').innerHTML = '<div class="loading-overlay"><div class="spinner lg"></div></div>';
         
-        api.get('/reports/account-ledger', { account_id: id })
+        var dateFrom = document.getElementById('ledger-date-from') ? document.getElementById('ledger-date-from').value : '';
+        var dateTo = document.getElementById('ledger-date-to') ? document.getElementById('ledger-date-to').value : '';
+
+        api.get('/reports/account-ledger', { account_id: id, date_from: dateFrom, date_to: dateTo })
             .then(function(data) {
                 renderLedger(data);
             })
             .catch(function(err) {
-                document.getElementById('ledger-content').innerHTML = '<div class="error-state"><i data-lucide="alert-circle"></i><p>' + escapeHtml(err.message) + '</p></div>';
+                document.getElementById('ledger-content').innerHTML = '<div class="error-state p-8 text-center text-error font-bold">' + escapeHtml(err.message) + '</div>';
                 showToast('Failed to load ledger: ' + err.message, 'error');
             });
     };
 
     function renderLedger(data) {
-        document.getElementById('ledger-account-name').textContent = 'Ledger — ' + data.account.name;
+        document.getElementById('ledger-account-name').textContent = data.account.name;
         
-        var statsHtml = '<div class="stats-row" style="margin-bottom:20px;">';
-        statsHtml += '<div class="stat-card primary"><div class="stat-label">Opening Balance</div><div class="stat-value">' + formatBalance(data.opening_balance, data.account.type) + '</div></div>';
-        statsHtml += '<div class="stat-card" style="background:var(--color-surface); border:1px solid var(--color-border);"><div class="stat-label">Closing Balance</div><div class="stat-value" style="color:var(--color-primary);">' + formatBalance(data.closing_balance, data.account.type) + '</div></div>';
-        statsHtml += '</div>';
+        var statsHtml = '';
+        statsHtml += '<div class="p-6 bg-surface-container-low rounded-xl flex items-center justify-between">' +
+                        '<div>' +
+                            '<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Opening Balance</p>' +
+                            '<p class="text-2xl font-extrabold text-primary tracking-tight">' + formatBalance(data.opening_balance, data.account.type) + '</p>' +
+                        '</div>' +
+                        '<div class="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center">' +
+                            '<span class="material-symbols-outlined text-primary">first_page</span>' +
+                        '</div>' +
+                     '</div>';
+        statsHtml += '<div class="p-6 bg-primary rounded-xl flex items-center justify-between text-white">' +
+                        '<div>' +
+                            '<p class="text-xs font-bold opacity-70 uppercase tracking-widest mb-1">Closing Balance</p>' +
+                            '<p class="text-2xl font-extrabold tracking-tight">' + formatBalance(data.closing_balance, data.account.type) + '</p>' +
+                        '</div>' +
+                        '<div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">' +
+                            '<span class="material-symbols-outlined">last_page</span>' +
+                        '</div>' +
+                     '</div>';
         document.getElementById('ledger-stats').innerHTML = statsHtml;
 
         if (data.transactions && data.transactions.length > 0) {
             document.getElementById('ledger-content').innerHTML = renderTable(data.transactions, [
-                { label: 'Date', key: 'date', render: function(row) { return formatDate(row.date); } },
-                { label: 'Ref No', key: 'ref_no', render: function(row) { return escapeHtml(row.ref_no || '—'); } },
-                { label: 'Description', key: 'description', render: function(row) { 
+                { label: 'Date', key: 'date', render: function(row) { return '<span class="text-xs font-bold text-on-surface-variant">' + formatDate(row.date) + '</span>'; } },
+                { label: 'Ref / Description', key: 'description', render: function(row) { 
                     var desc = escapeHtml(row.description || 'Entry');
                     if (row.linked_invoice) {
-                        desc += ' <a class="invoice-link" onclick="event.stopPropagation(); viewInvoice(' + row.linked_sale_id + ')"> (Inv: ' + escapeHtml(row.linked_invoice) + ')</a>';
+                        desc = '<span class="text-primary font-bold cursor-pointer hover:underline" onclick="event.stopPropagation(); viewInvoice(' + row.linked_sale_id + ')">' + escapeHtml(row.linked_invoice) + '</span> ' + desc;
                     }
-                    if (row.payment_mode) {
-                        desc += ' <small style="opacity:0.6;">[' + escapeHtml(row.payment_mode.toUpperCase()) + ']</small>';
-                    }
-                    return desc;
+                    var subText = row.ref_no || (row.payment_mode ? row.payment_mode.toUpperCase() : '');
+                    return '<div>' +
+                                '<p class="text-sm font-medium">' + desc + '</p>' +
+                                (subText ? '<p class="text-[10px] text-on-surface-variant font-bold opacity-60 uppercase">' + escapeHtml(subText) + '</p>' : '') +
+                           '</div>';
                 }},
                 { label: 'Debit', key: 'amount', align: 'text-right', render: function(row) { 
-                    return row.type === 'debit' ? '<span class="amount negative">' + formatINR(row.amount) + '</span>' : '—'; 
+                    return row.type === 'debit' ? '<span class="text-sm font-extrabold text-error">' + formatINR(row.amount) + '</span>' : '—'; 
                 }},
                 { label: 'Credit', key: 'amount', align: 'text-right', render: function(row) { 
-                    return row.type === 'credit' ? '<span class="amount positive">' + formatINR(row.amount) + '</span>' : '—'; 
+                    return row.type === 'credit' ? '<span class="text-sm font-extrabold text-green-600">' + formatINR(row.amount) + '</span>' : '—'; 
                 }},
-                { label: 'Balance', key: 'running_balance', align: 'text-right', render: function(row) { 
-                    return '<strong>' + formatBalance(row.running_balance, data.account.type) + '</strong>'; 
+                { label: 'Running Balance', key: 'running_balance', align: 'text-right', render: function(row) { 
+                    var balanceStr = formatBalance(row.running_balance, data.account.type);
+                    return '<span class="text-sm font-extrabold text-primary">' + balanceStr + '</span>'; 
                 }}
             ]);
         } else {
-            document.getElementById('ledger-content').innerHTML = '<div class="empty-state"><p>No transactions found</p></div>';
+            document.getElementById('ledger-content').innerHTML = '<div class="py-20 flex flex-col items-center justify-center text-on-surface-variant">' +
+                                                                    '<span class="material-symbols-outlined text-4xl opacity-20 mb-2">history</span>' +
+                                                                    '<p class="text-sm font-medium opacity-50">No transactions found</p>' +
+                                                                 '</div>';
         }
-        lucide.createIcons();
     }
 
     window.backToList = function() {
-        viewingAccountId = null;
+        window.viewingAccountId = null;
         document.getElementById('ledger-panel').style.display = 'none';
         if (currentView === 'types') {
             showTypesView();
@@ -357,29 +487,53 @@
     function renderInvoiceModal(sale) {
         var content = document.getElementById('invoice-view-content');
         var html = `
-            <div class="stats-row" style="margin-bottom:20px;">
-                <div class="stat-card primary"><div class="stat-label">Invoice No</div><div class="stat-value">${escapeHtml(sale.invoice_no)}</div></div>
-                <div class="stat-card"><div class="stat-label">Date</div><div class="stat-value">${formatDate(sale.date)}</div></div>
-                <div class="stat-card"><div class="stat-label">Ref No</div><div class="stat-value">${escapeHtml(sale.ref_no || '—')}</div></div>
-            </div>
-            <div class="panel" style="margin-bottom:15px;">
-                <div class="panel-body">
-                    <p><strong>Customer:</strong> ${escapeHtml(sale.customer_name || 'Walk-in')}</p>
-                    <p><strong>Total Amount:</strong> <span class="amount">${formatINR(sale.total)}</span></p>
-                    <p><strong>Amount Paid:</strong> <span class="amount">${formatINR(sale.amount_paid)}</span></p>
-                    <p><strong>Status:</strong> ${getStatusBadge(sale.status)}</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="p-4 bg-surface-container-low rounded-xl">
+                    <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Invoice No</p>
+                    <p class="text-lg font-extrabold text-primary tracking-tight">${escapeHtml(sale.invoice_no)}</p>
+                </div>
+                <div class="p-4 bg-surface-container-low rounded-xl">
+                    <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Date</p>
+                    <p class="text-lg font-extrabold text-primary tracking-tight">${formatDate(sale.date)}</p>
+                </div>
+                <div class="p-4 bg-surface-container-low rounded-xl">
+                    <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Ref No</p>
+                    <p class="text-lg font-extrabold text-primary tracking-tight">${escapeHtml(sale.ref_no || '—')}</p>
                 </div>
             </div>
-            <p><strong>Notes:</strong> ${escapeHtml(sale.notes || '—')}</p>
+            <div class="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <p class="text-sm font-bold text-on-surface-variant">Customer: <span class="text-primary">${escapeHtml(sale.customer_name || 'Walk-in')}</span></p>
+                    <div>${getStatusBadge(sale.status)}</div>
+                </div>
+                <div class="flex justify-between items-end border-t border-outline-variant/10 pt-4">
+                    <div>
+                        <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest leading-none">Total Amount</p>
+                        <p class="text-2xl font-black text-primary">${formatINR(sale.total)}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest leading-none">Paid Amount</p>
+                        <p class="text-xl font-bold text-green-600">${formatINR(sale.amount_paid)}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-l-4 border-primary/20 bg-primary/5 rounded-r-xl">
+                <p class="text-xs font-bold text-primary uppercase tracking-widest mb-1">Notes</p>
+                <p class="text-sm text-on-surface-variant leading-relaxed">${escapeHtml(sale.notes || 'No notes available.')}</p>
+            </div>
         `;
         content.innerHTML = html;
         document.getElementById('btn-print-viewed-invoice').onclick = function() { pdf.generateInvoice(sale); };
-        document.getElementById('invoice-view-modal').classList.add('active');
-        lucide.createIcons();
+        
+        var modal = document.getElementById('invoice-view-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.add('opacity-100'), 10);
     }
 
     window.closeInvoiceModal = function() {
-        document.getElementById('invoice-view-modal').classList.remove('active');
+        var modal = document.getElementById('invoice-view-modal');
+        modal.classList.remove('opacity-100');
+        setTimeout(() => modal.classList.add('hidden'), 300);
     };
 
     // --- Account Modal CRUD ---
@@ -403,11 +557,20 @@
         }
         document.getElementById('account-address').value = account ? (account.address || '') : '';
         document.getElementById('account-notes').value = account ? (account.notes || '') : '';
-        document.getElementById('account-modal').classList.add('active');
+        
+        var modal = document.getElementById('account-modal');
+        modal.classList.remove('hidden');
+        setTimeout(function() {
+            modal.classList.remove('translate-y-full', 'opacity-0');
+            modal.classList.add('opacity-100');
+        }, 10);
     }
 
     window.closeAccountModal = function() {
-        document.getElementById('account-modal').classList.remove('active');
+        var modal = document.getElementById('account-modal');
+        modal.classList.remove('opacity-100');
+        modal.classList.add('translate-y-full', 'opacity-0');
+        setTimeout(function() { modal.classList.add('hidden'); }, 300);
         editingAccountId = null;
     };
 
@@ -437,8 +600,8 @@
             .then(function() {
                 showToast(editingAccountId ? 'Account updated!' : 'Account created!', 'success');
                 closeAccountModal();
-                if (viewingAccountId) {
-                    viewLedger(viewingAccountId);
+                if (window.viewingAccountId) {
+                    viewLedger(window.viewingAccountId);
                 } else {
                     loadAccounts();
                 }
@@ -459,8 +622,8 @@
     };
 
     window.editCurrentAccount = function() {
-        if (!viewingAccountId) return;
-        editAccount(viewingAccountId);
+        if (!window.viewingAccountId) return;
+        editAccount(window.viewingAccountId);
     };
 
     function deleteAccount(id) {
@@ -474,7 +637,7 @@
             api.delete('/accounts/' + id)
                 .then(function() {
                     showToast('Account deactivated', 'success');
-                    if (viewingAccountId === id) {
+                    if (window.viewingAccountId === id) {
                         backToList();
                     } else {
                         loadAccounts();
@@ -489,7 +652,7 @@
     // --- Export & Printing ---
 
     window.printLedger = function() {
-        if (!viewingAccountId) return;
+        if (!window.viewingAccountId) return;
         var fullTitle = document.getElementById('ledger-account-name').textContent;
         var accountName = fullTitle.replace('Ledger — ', '').trim();
         var filename = pdf.getSafeFilename(accountName, 'Ledger');
@@ -504,9 +667,9 @@
         var title = currentType ? (currentType.toUpperCase() + 's List') : 'Accounts Report';
         var columns = [
             { label: 'Name', key: 'name' },
-            { label: 'Group', key: 'type', render: (row) => row.type.toUpperCase() },
+            { label: 'Group', key: 'type', render: function(row) { return row.type.toUpperCase(); } },
             { label: 'Phone', key: 'phone' },
-            { label: 'Balance', key: 'current_balance', align: 'text-right', render: (row) => formatBalance(row.current_balance, row.type) }
+            { label: 'Balance', key: 'current_balance', align: 'text-right', render: function(row) { return formatBalance(row.current_balance, row.type); } }
         ];
         var filename = pdf.getSafeFilename(currentType ? currentType.toUpperCase() : 'Accounts', 'List');
         pdf.generateTablePDF(currentAccountsData, columns, title, filename);

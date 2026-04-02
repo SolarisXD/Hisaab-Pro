@@ -98,20 +98,35 @@ function initializeSchema(db, filename) {
         } catch (inner) {}
     }
 
+    try { db.exec("ALTER TABLE accounts ADD COLUMN is_deleted INTEGER NOT NULL DEFAULT 0"); } catch (e) {}
+    try { db.exec("ALTER TABLE sales ADD COLUMN images TEXT DEFAULT '[]'"); } catch (e) {}
+    try { db.exec("ALTER TABLE purchases ADD COLUMN images TEXT DEFAULT '[]'"); } catch (e) {}
+    try { db.exec("ALTER TABLE purchases ADD COLUMN subtotal REAL DEFAULT 0"); } catch (e) {}
+    try { db.exec("ALTER TABLE purchases ADD COLUMN tax_percent REAL DEFAULT 0"); } catch (e) {}
+    try { db.exec("ALTER TABLE purchases ADD COLUMN tax_amount REAL DEFAULT 0"); } catch (e) {}
+    
+    console.log(`[DB] Schema check completed for ${filename}`);
+
     // Seed initial account types if empty
     try {
         const count = db.prepare("SELECT COUNT(*) as count FROM account_types").get().count;
         if (count === 0) {
             const seedTypes = [
-                ['Customer', 'customer', 'user', 1],
+                ['Customer', 'customer', 'person', 1],
                 ['Supplier', 'supplier', 'factory', 1],
-                ['Cash', 'cash', 'banknote', 1],
-                ['Bank', 'bank', 'landmark', 1],
-                ['Expense', 'expense', 'arrow-up-right', 1],
-                ['Revenue', 'revenue', 'arrow-down-left', 1]
+                ['Cash', 'cash', 'payments', 1],
+                ['Bank', 'bank', 'account_balance', 1],
+                ['Expense', 'expense', 'trending_up', 1],
+                ['Revenue', 'revenue', 'trending_down', 1]
             ];
             const stmt = db.prepare("INSERT INTO account_types (name, slug, icon, is_system) VALUES (?, ?, ?, ?)");
             seedTypes.forEach(t => stmt.run(t));
+        }
+        
+        // Add Staff account type if missing
+        const staffCount = db.prepare("SELECT COUNT(*) as count FROM account_types WHERE slug = 'staff'").get().count;
+        if (staffCount === 0) {
+            db.prepare("INSERT INTO account_types (name, slug, icon, is_system) VALUES ('Staff/Employee', 'staff', 'account_circle', 1)").run();
         }
     } catch (e) { }
 }

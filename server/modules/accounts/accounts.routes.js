@@ -27,7 +27,7 @@ router.use(requireAuth);
  */
 router.get('/types', function(req, res) {
     try {
-        var types = accountTypesService.listAccountTypes(req.query.include_inactive === 'true');
+        var types = accountTypesService.listAccountTypes(req.query.include_inactive === 'true', req.session.user.is_decoy);
         res.json(types);
     } catch (err) {
         res.status(500).json({ error: err.message });

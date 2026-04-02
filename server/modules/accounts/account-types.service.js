@@ -12,13 +12,13 @@ var logger = require('../../shared/logger');
 /**
  * List all account types
  */
-function listAccountTypes(includeInactive) {
-    var sql = 'SELECT * FROM account_types';
+function listAccountTypes(includeInactive, isDecoy) {
+    var sql = 'SELECT at.*, (SELECT COUNT(*) FROM accounts a WHERE a.type = at.slug AND a.is_active = 1 AND a.is_decoy = ?) as usage_count FROM account_types at';
     if (!includeInactive) {
         sql += ' WHERE is_active = 1';
     }
     sql += ' ORDER BY is_system DESC, name ASC';
-    return db.prepare(sql).all();
+    return db.prepare(sql).all(isDecoy ? 1 : 0);
 }
 
 /**

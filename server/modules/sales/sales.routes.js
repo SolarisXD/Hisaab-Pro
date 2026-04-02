@@ -16,6 +16,7 @@ var router = express.Router();
 var salesService = require('./sales.service');
 var { requireAuth } = require('../auth/auth.middleware');
 var { logActivity } = require('../auth/auth.service');
+var { isDateInActiveFY } = require('../../shared/utils');
 
 // All sales routes require authentication
 router.use(requireAuth);
@@ -99,6 +100,10 @@ router.get('/:id', function(req, res) {
  */
 router.post('/', function(req, res) {
     try {
+        var reqFy = req.headers['x-financial-year'];
+        if (!isDateInActiveFY(req.body.date, reqFy)) {
+            return res.status(400).json({ error: 'Transaction date cannot be outside the active financial year' });
+        }
         var sale = salesService.createSale(req.body, req.session.user.is_decoy);
         logActivity(req.session.user.id, 'create_sale', 'sale', sale.id, null, req.ip);
         res.status(201).json(sale);
@@ -112,6 +117,10 @@ router.post('/', function(req, res) {
  */
 router.put('/:id', function(req, res) {
     try {
+        var reqFy = req.headers['x-financial-year'];
+        if (!isDateInActiveFY(req.body.date, reqFy)) {
+            return res.status(400).json({ error: 'Transaction date cannot be outside the active financial year' });
+        }
         var sale = salesService.updateSale(parseInt(req.params.id), req.body, req.session.user.is_decoy);
         logActivity(req.session.user.id, 'edit_sale', 'sale', sale.id, null, req.ip);
         res.json(sale);

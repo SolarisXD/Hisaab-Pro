@@ -80,17 +80,30 @@
         }
 
         var html = renderTable(transactions, [
+            { label: 'Transaction Details', key: 'account_name', render: function(row) { 
+                var icon = row.type === 'credit' ? 'add_circle' : 'do_not_disturb_on';
+                var iconColor = row.type === 'credit' ? 'text-primary' : 'text-error';
+                var bgColor = row.type === 'credit' ? 'bg-primary/10' : 'bg-error/10';
+                
+                return '<div class="flex items-center gap-4">' +
+                            '<div class="w-10 h-10 rounded ' + bgColor + ' flex items-center justify-center">' +
+                                '<span class="material-symbols-outlined ' + iconColor + '">' + icon + '</span>' +
+                            '</div>' +
+                            '<div>' +
+                                '<p class="text-sm font-bold">' + escapeHtml(row.account_name || '—') + '</p>' +
+                                '<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">' + escapeHtml(row.description || 'No description') + '</p>' +
+                            '</div>' +
+                       '</div>';
+            }},
+            { label: 'Status', key: 'type', render: function(row) {
+                return getStatusBadge(row.type === 'credit' ? 'received' : 'paid');
+            }},
             { label: 'Date', key: 'date', render: function(row) { return formatDate(row.date); } },
-            { label: 'Account', key: 'account_name', render: function(row) { return escapeHtml(row.account_name || '—'); } },
-            { label: 'Type', key: 'type', render: function(row) {
-                return row.type === 'credit'
-                    ? '<span class="badge badge-success">Credit</span>'
-                    : '<span class="badge badge-danger">Debit</span>';
-            }},
             { label: 'Amount', key: 'amount', align: 'text-right', render: function(row) {
-                return '<span class="amount">' + formatINR(row.amount) + '</span>';
-            }},
-            { label: 'Description', key: 'description', render: function(row) { return escapeHtml(row.description || ''); } }
+                var color = row.type === 'credit' ? 'text-primary' : 'text-error';
+                var prefix = row.type === 'credit' ? '' : '- ';
+                return '<span class="font-bold ' + color + '">' + prefix + formatINR(row.amount) + '</span>';
+            }}
         ]);
 
         container.innerHTML = html;
