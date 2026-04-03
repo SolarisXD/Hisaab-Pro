@@ -180,12 +180,26 @@
         document.getElementById('purchase-images-data').value = JSON.stringify(existingImages);
         renderImagePreviews(existingImages, 'purchase');
 
+        var btnDownload = document.getElementById('btn-download-purchase');
         var btnDelete = document.getElementById('btn-delete-purchase');
+        
         if (purchase) {
-            btnDelete.style.display = 'flex';
-            btnDelete.onclick = function() { deletePurchase(purchase.id); };
+            if (btnDelete) {
+                btnDelete.style.display = 'flex';
+                btnDelete.onclick = function() { deletePurchase(purchase.id); };
+            }
+            
+            if (btnDownload) {
+                btnDownload.style.display = 'flex';
+                btnDownload.onclick = function() {
+                    showPrintFormatSelector(function(anonymous) {
+                        if (anonymous !== null) pdf.generateInvoice(purchase, { anonymous: anonymous, type: 'purchase' });
+                    });
+                };
+            }
         } else {
-            btnDelete.style.display = 'none';
+            if (btnDelete) btnDelete.style.display = 'none';
+            if (btnDownload) btnDownload.style.display = 'none';
         }
 
         document.getElementById('purchase-modal').classList.add('active');
@@ -367,7 +381,7 @@
 
     function printPurchasesList() {
         if (!currentPurchasesData || currentPurchasesData.length === 0) {
-            showToast('No purchases data to print', 'warning');
+            showToast('No purchases data to export', 'warning');
             return;
         }
 
@@ -381,6 +395,8 @@
         ];
 
         var filename = pdf.getSafeFilename('Purchases', 'Report');
-        pdf.generateTablePDF(currentPurchasesData, columns, 'Purchases Report', filename);
+        showPrintFormatSelector(function(anonymous) {
+            if (anonymous !== null) pdf.generateTablePDF(currentPurchasesData, columns, 'Purchases Report', filename, { anonymous: anonymous });
+        });
     }
 })();

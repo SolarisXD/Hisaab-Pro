@@ -147,7 +147,9 @@
             var title = (document.getElementById('report-results-title').textContent || 'Report').trim();
             var cleanTitle = title.replace(/[^a-z0-9 ]/gi, '').replace(/\s+/g, ' ');
             var filename = pdf.getSafeFilename(cleanTitle, 'Report');
-            pdf.generateReportPDF(document.getElementById('report-content'), title, filename);
+            showPrintFormatSelector(function(anonymous) {
+                if (anonymous !== null) pdf.generateReportPDF(document.getElementById('report-content'), title, filename, { anonymous: anonymous });
+            });
         });
     }
 
@@ -157,8 +159,12 @@
             var title = (document.getElementById('report-results-title').textContent || 'Report').trim();
             var cleanTitle = title.replace(/[^a-z0-9 ]/gi, '').replace(/\s+/g, ' ');
             var filename = pdf.getSafeFilename(cleanTitle, 'Report');
-            pdf.generateReportPDF(document.getElementById('report-content'), title, filename);
-            closeExportModal();
+            showPrintFormatSelector(function(anonymous) {
+                if (anonymous !== null) {
+                    pdf.generateReportPDF(document.getElementById('report-content'), title, filename, { anonymous: anonymous });
+                    closeExportModal();
+                }
+            });
         });
     }
 

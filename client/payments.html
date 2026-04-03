@@ -100,8 +100,8 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <button id="btn-print-list" class="p-2.5 bg-surface-container-high text-primary rounded-xl hover:bg-surface-container-highest transition-all">
-                    <span class="material-symbols-outlined">print</span>
+                <button id="btn-print-list" title="Save List (PDF)" class="p-2.5 bg-surface-container-high text-primary rounded-xl hover:bg-surface-container-highest transition-all">
+                    <span class="material-symbols-outlined">save</span>
                 </button>
                 <button id="btn-new-payment" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
                     <span class="material-symbols-outlined text-lg">add_circle</span> Record Flow
@@ -188,54 +188,54 @@
     </main>
 
     <!-- Modal: New Payment -->
-    <div id="payment-modal" class="modal-overlay hidden">
+    <div id="payment-modal" class="modal-overlay">
         <div class="modal-content max-w-xl">
-            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
+            <div class="px-6 py-4 flex justify-between items-center bg-surface-container-low/50">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
-                        <span class="material-symbols-outlined">payments</span>
+                    <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-xl">payments</span>
                     </div>
                     <div>
-                        <h3 class="font-headline text-2xl font-black text-primary tracking-tight">Record Financial Flow</h3>
-                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Synchronize Ledger Transaction</p>
+                        <h3 class="font-headline text-xl font-black text-primary tracking-tight">Record Financial Flow</h3>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Synchronize Ledger Transaction</p>
                     </div>
                 </div>
-                <button onclick="closePaymentModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
-                    <span class="material-symbols-outlined">close</span>
+                <button onclick="closePaymentModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined text-lg">close</span>
                 </button>
             </div>
 
-            <div class="p-8">
-                <form id="payment-form" onsubmit="return false;" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Flow Direction</label>
-                            <select id="payment-type" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+            <div class="px-6 py-5">
+                <form id="payment-form" onsubmit="return false;" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Flow Direction</label>
+                            <select id="payment-type" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" required>
                                 <option value="in">Inflow (Payment Received)</option>
                                 <option value="out">Outflow (Payment Made)</option>
                             </select>
                         </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Fiscal Date</label>
-                            <input type="date" id="payment-date" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Fiscal Date</label>
+                            <input type="date" id="payment-date" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" required>
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Counterparty Account</label>
-                        <select id="payment-account" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+                    <div class="space-y-1.5">
+                        <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Counterparty Account</label>
+                        <select id="payment-account" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" required>
                             <option value="">Select counterparty account...</option>
                         </select>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-primary/5 p-8 rounded-3xl border border-primary/10">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Monetary Volume (₹)</label>
-                            <input type="number" id="payment-amount" step="0.01" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-2xl font-black text-primary tracking-tight transition-all" placeholder="0.00" required>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-primary/5 p-5 rounded-2xl border border-primary/10">
+                        <div class="space-y-1">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-primary/60 ml-1">Monetary Volume (₹)</label>
+                            <input type="number" id="payment-amount" step="0.01" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-xl font-black text-primary tracking-tight transition-all" placeholder="0.00" required>
                         </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Transfer Protocol</label>
-                            <select id="payment-mode" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-sm font-bold text-primary">
+                        <div class="space-y-1">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-primary/60 ml-1">Transfer Protocol</label>
+                            <select id="payment-mode" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-sm font-bold text-primary">
                                 <option value="cash">Physical Cash</option>
                                 <option value="bank_transfer">Direct Deposit</option>
                                 <option value="upi">UPI / Digital</option>
@@ -244,20 +244,20 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Protocol Identifier (Ref)</label>
-                            <input type="text" id="payment-reference" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="ID or sequence no.">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Protocol Identifier (Ref)</label>
+                            <input type="text" id="payment-reference" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" placeholder="ID or sequence no.">
                         </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Internal Annotation</label>
-                            <input type="text" id="payment-notes" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="Optional context...">
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Internal Annotation</label>
+                            <input type="text" id="payment-notes" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" placeholder="Optional context...">
                         </div>
                     </div>
 
-                    <div class="flex gap-3 pt-4">
-                        <button type="button" onclick="closePaymentModal()" class="flex-1 py-4 bg-surface-container-high text-primary font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-surface-container-highest transition-all">Abort</button>
-                        <button type="button" id="btn-save-payment" class="flex-[2] py-4 bg-primary text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all">Authorize Release</button>
+                    <div class="flex gap-3 pt-2">
+                        <button type="button" onclick="closePaymentModal()" class="flex-1 py-3 bg-surface-container-high text-primary font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl hover:bg-surface-container-highest transition-all">Abort</button>
+                        <button type="button" id="btn-save-payment" class="flex-[2] py-3 bg-primary text-white font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl shadow-xl shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all">Authorize Release</button>
                     </div>
                 </form>
             </div>

@@ -100,8 +100,8 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <button id="btn-print-list" class="p-2.5 bg-surface-container-high text-primary rounded-xl hover:bg-surface-container-highest transition-all">
-                    <span class="material-symbols-outlined">print</span>
+                <button id="btn-print-list" title="Save List (PDF)" class="p-2.5 bg-surface-container-high text-primary rounded-xl hover:bg-surface-container-highest transition-all">
+                    <span class="material-symbols-outlined">save</span>
                 </button>
                 <button id="btn-new-purchase" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
                     <span class="material-symbols-outlined text-lg">add_shopping_cart</span> New Purchase
@@ -153,51 +153,51 @@
     </main>
 
     <!-- Modal: New/Edit Purchase -->
-    <div id="purchase-modal" class="modal-overlay hidden">
+    <div id="purchase-modal" class="modal-overlay">
         <div class="modal-content max-w-4xl">
-            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
+            <div class="px-6 py-4 flex justify-between items-center bg-surface-container-low/50">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
-                        <span class="material-symbols-outlined">shopping_cart</span>
+                    <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-xl">shopping_cart</span>
                     </div>
                     <div>
-                        <h3 class="font-headline text-2xl font-black text-primary tracking-tight" id="purchase-modal-title">New Purchase Entry</h3>
-                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Procurement Logistics Portal</p>
+                        <h3 class="font-headline text-xl font-black text-primary tracking-tight" id="purchase-modal-title">New Purchase Entry</h3>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Procurement Logistics Portal</p>
                     </div>
                 </div>
-                <button onclick="closePurchaseModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
-                    <span class="material-symbols-outlined">close</span>
+                <button onclick="closePurchaseModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined text-lg">close</span>
                 </button>
             </div>
 
-            <div class="p-8">
-                <form id="purchase-form" onsubmit="return false;" class="space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Supplier Bill/Invoice No</label>
-                            <input type="text" id="purchase-invoice-no" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="Enter bill no..." required>
+            <div class="px-6 py-5">
+                <form id="purchase-form" onsubmit="return false;" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Supplier Bill/Invoice No</label>
+                            <input type="text" id="purchase-invoice-no" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" placeholder="Enter bill no..." required>
                         </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Acquisition Date</label>
-                            <input type="date" id="purchase-date" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Acquisition Date</label>
+                            <input type="date" id="purchase-date" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" required>
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Supply Partner (Supplier)</label>
-                        <select id="purchase-supplier" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+                    <div class="space-y-1.5">
+                        <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Supply Partner (Supplier)</label>
+                        <select id="purchase-supplier" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" required>
                             <option value="">Select supplier account...</option>
                         </select>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-primary/5 p-8 rounded-3xl border border-primary/10">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Net Valuation (₹)</label>
-                            <input type="number" id="purchase-subtotal" step="0.01" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-2xl font-black text-primary tracking-tight transition-all" placeholder="0.00" required>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-primary/5 p-5 rounded-2xl border border-primary/10">
+                        <div class="space-y-1">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-primary/60 ml-1">Net Valuation (₹)</label>
+                            <input type="number" id="purchase-subtotal" step="0.01" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-xl font-black text-primary tracking-tight transition-all" placeholder="0.00" required>
                         </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Taxation (%)</label>
-                            <select id="purchase-tax-percent" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-4 rounded-xl text-base font-bold text-primary">
+                        <div class="space-y-1">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-primary/60 ml-1">Taxation (%)</label>
+                            <select id="purchase-tax-percent" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-sm font-bold text-primary">
                                 <option value="0">Zero Rated (0%)</option>
                                 <option value="5">GST 5%</option>
                                 <option value="12">GST 12%</option>
@@ -205,38 +205,39 @@
                                 <option value="28">GST 28%</option>
                             </select>
                         </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Aggregate Total (₹)</label>
-                            <input type="number" id="purchase-total" step="0.01" class="w-full bg-surface-container-high/40 border-0 px-4 py-4 rounded-xl text-2xl font-black text-primary tracking-tight cursor-not-allowed" readonly placeholder="0.00">
+                        <div class="space-y-1">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-primary/60 ml-1">Total (₹)</label>
+                            <input type="number" id="purchase-total" step="0.01" class="w-full bg-surface-container-high/40 border-0 px-4 py-3 rounded-xl text-xl font-black text-primary tracking-tight cursor-not-allowed" readonly placeholder="0.00">
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-green-600/60 ml-1">Monetary Discharge (Amount Paid)</label>
-                            <input type="number" id="purchase-amount-paid" step="0.01" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="0.00">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-green-600/60 ml-1">Amount Paid (₹)</label>
+                            <input type="number" id="purchase-amount-paid" step="0.01" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" placeholder="0.00">
                         </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Internal Notation</label>
-                            <input type="text" id="purchase-notes" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="Optional context...">
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Internal Notation</label>
+                            <input type="text" id="purchase-notes" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" placeholder="Optional context...">
                         </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Visual Evidence (Bill Images)</label>
-                        <div class="relative group border-2 border-dashed border-outline-variant/20 rounded-[2rem] p-8 text-center hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer">
+                    <div class="space-y-3">
+                        <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Visual Evidence (Bill Images)</label>
+                        <div class="relative group border-2 border-dashed border-outline-variant/20 rounded-2xl p-5 text-center hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer">
                             <input type="file" id="purchase-images" multiple accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
-                            <span class="material-symbols-outlined text-4xl text-on-surface-variant/20 group-hover:text-primary transition-colors">cloud_upload</span>
-                            <p id="purchase-images-label" class="mt-2 text-xs font-bold text-on-surface-variant">Drop images here or <span class="text-primary">browse files</span><span class="file-count hidden ml-2 px-2 py-0.5 bg-primary text-white rounded-full">0</span></p>
+                            <span class="material-symbols-outlined text-2xl text-on-surface-variant/20 group-hover:text-primary transition-colors">cloud_upload</span>
+                            <p id="purchase-images-label" class="mt-1 text-[10px] font-bold text-on-surface-variant">Drop images here or <span class="text-primary">browse files</span><span class="file-count hidden ml-2 px-2 py-0.5 bg-primary text-white rounded-full">0</span></p>
                         </div>
                         <input type="hidden" id="purchase-images-data" value="[]">
-                        <div id="purchase-images-preview" class="flex flex-wrap gap-4"></div>
+                        <div id="purchase-images-preview" class="flex flex-wrap gap-3"></div>
                     </div>
 
-                    <div class="flex gap-3 pt-4">
-                        <button type="button" id="btn-delete-purchase" class="hidden py-4 px-6 bg-error/10 text-error font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-error/20 transition-all">Revoke</button>
-                        <button type="button" onclick="closePurchaseModal()" class="flex-1 py-4 bg-surface-container-high text-primary font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-surface-container-highest transition-all">Abort</button>
-                        <button type="button" id="btn-save-purchase" class="flex-[2] py-4 bg-primary text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all">Authorize Acquisition</button>
+                    <div class="flex gap-3 pt-2">
+                        <button type="button" id="btn-delete-purchase" class="hidden py-3 px-5 bg-error/10 text-error font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl hover:bg-error/20 transition-all">Revoke</button>
+                        <button type="button" id="btn-download-purchase" class="hidden py-3 px-5 bg-surface-container-high text-primary font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl hover:bg-surface-container-highest transition-all">Print</button>
+                        <button type="button" onclick="closePurchaseModal()" class="flex-1 py-3 bg-surface-container-high text-primary font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl hover:bg-surface-container-highest transition-all">Abort</button>
+                        <button type="button" id="btn-save-purchase" class="flex-[2] py-3 bg-primary text-white font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl shadow-xl shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all">Authorize Acquisition</button>
                     </div>
                 </form>
             </div>

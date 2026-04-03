@@ -9,6 +9,7 @@
 var { db } = require('../../db/database');
 var logger = require('../../shared/logger');
 var accountsService = require('../accounts/accounts.service');
+var fyValidator = require('../../shared/fy-validator');
 
 /**
  * List purchases
@@ -67,6 +68,9 @@ function getPurchaseById(id, isDecoy) {
  * Create purchase
  */
 function createPurchase(data, isDecoy) {
+    // 0. Hard Financial Year Validation
+    if (!isDecoy) fyValidator.validateTransactionDate(data.date);
+
     var total = parseFloat(data.total) || 0;
     var amountPaid = parseFloat(data.amount_paid) || 0;
     var subtotal = parseFloat(data.subtotal) || total;

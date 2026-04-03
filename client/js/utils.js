@@ -558,6 +558,80 @@ function renderTable(data, columns, options) {
 }
 
 /**
+ * Show a format selector for printing (Standard vs Anonymous)
+ * @param {Function} onSelect - Callback function(anonymous: boolean)
+ */
+function showPrintFormatSelector(onSelect) {
+    if (typeof onSelect !== 'function') return;
+
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '4000';
+
+    var modalHtml = `
+        <div class="modal-content max-w-md">
+            <div class="p-8 pb-4 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-4xl">save</span>
+                </div>
+                <h3 class="font-headline text-2xl font-black text-primary tracking-tight">Select Save Format</h3>
+                <p class="text-on-surface-variant text-[10px] font-black opacity-60 mt-1 uppercase tracking-widest leading-none">Document visibility preference</p>
+            </div>
+            
+            <div class="p-8 space-y-4">
+                <button class="btn-standard w-full group flex items-center justify-between p-5 bg-surface-container-low border border-outline-variant/10 rounded-2xl hover:bg-surface-container-high transition-all text-left">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm">
+                            <span class="material-symbols-outlined">description</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-primary">Standard Format</p>
+                            <p class="text-[10px] text-on-surface-variant font-medium">Includes firm name, address, and GSTIN</p>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                </button>
+
+                <button class="btn-anonymous w-full group flex items-center justify-between p-5 bg-primary/5 border border-primary/10 rounded-2xl hover:bg-primary/10 transition-all text-left">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                            <span class="material-symbols-outlined">visibility_off</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-primary">Anonymous Format</p>
+                            <p class="text-[10px] text-on-surface-variant font-medium">Full privacy. No firm details included.</p>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+                </button>
+            </div>
+
+            <div class="px-8 pb-8">
+                <button class="btn-close w-full py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 hover:text-on-surface-variant transition-colors">Abort Export</button>
+            </div>
+        </div>`;
+
+    overlay.innerHTML = modalHtml;
+    document.body.appendChild(overlay);
+
+    // Trigger animation
+    setTimeout(function() { overlay.classList.add('active'); }, 10);
+
+    function cleanup(anon) {
+        overlay.classList.remove('active');
+        setTimeout(function() {
+            if (overlay.parentNode) overlay.remove();
+            if (anon !== null) onSelect(anon);
+        }, 300);
+    }
+
+    overlay.querySelector('.btn-standard').onclick = function() { cleanup(false); };
+    overlay.querySelector('.btn-anonymous').onclick = function() { cleanup(true); };
+    overlay.querySelector('.btn-close').onclick = function() { cleanup(null); };
+    overlay.onclick = function(e) { if (e.target === overlay) cleanup(null); };
+}
+
+/**
  * Download data as CSV
  */
 function downloadCSV(data, filename) {

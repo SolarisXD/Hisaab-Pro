@@ -53,7 +53,7 @@ var shortcuts = {
         // Alt + F3 - Quick Add Dropdown
         if (e.altKey && key === 'F3') {
             e.preventDefault();
-            this.toggleQuickAdd();
+            this.toggleQuickAdd(e);
         }
 
         // Alt + F1 - Go to Accounts
@@ -157,7 +157,7 @@ var shortcuts = {
         }
     },
     
-    toggleQuickAdd: function() {
+    toggleQuickAdd: function(e) {
         var dropdown = document.getElementById('quick-add-dropdown');
         if (!dropdown) {
             // Inject dropdown HTML globally
@@ -184,7 +184,7 @@ var shortcuts = {
         if (dropdown.style.display === 'none') {
             dropdown.style.display = 'block';
             // Stop propagation so the click listener doesn't immediately close it
-            event.stopPropagation();
+            if (e) e.stopPropagation();
         } else {
             dropdown.style.display = 'none';
         }
@@ -232,8 +232,8 @@ window.calculator = {
         display.onkeydown = function(e) {
             if (e.key === 'Enter') {
                 try {
-                    // safe eval replacement
-                    display.value = new Function('return ' + display.value.replace(/[^-()\\d/*+.]/g, ''))();
+                    // Safe eval replacement (Allowing digits, parentheses, and operators)
+                    display.value = new Function('return ' + display.value.replace(/[^-()0-9/*+.]/g, ''))();
                 } catch(err) {
                     display.value = 'Error';
                 }
@@ -256,7 +256,7 @@ window.calculator = {
                btn.onclick = () => display.value = '';
             } else if (b === '=') {
                btn.onclick = () => {
-                   try { display.value = new Function('return ' + display.value.replace(/[^-()\\d/*+.]/g, ''))(); } 
+                   try { display.value = new Function('return ' + display.value.replace(/[^-()0-9/*+.]/g, ''))(); } 
                    catch(err) { display.value = 'Error'; }
                };
             } else {

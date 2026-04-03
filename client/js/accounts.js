@@ -523,7 +523,11 @@
             </div>
         `;
         content.innerHTML = html;
-        document.getElementById('btn-print-viewed-invoice').onclick = function() { pdf.generateInvoice(sale); };
+        document.getElementById('btn-print-viewed-invoice').onclick = function() { 
+            showPrintFormatSelector(function(anonymous) {
+                if (anonymous !== null) pdf.generateInvoice(sale, { anonymous: anonymous });
+            });
+        };
         
         var modal = document.getElementById('invoice-view-modal');
         modal.classList.remove('hidden');
@@ -656,12 +660,14 @@
         var fullTitle = document.getElementById('ledger-account-name').textContent;
         var accountName = fullTitle.replace('Ledger — ', '').trim();
         var filename = pdf.getSafeFilename(accountName, 'Ledger');
-        pdf.generateReportPDF(document.getElementById('ledger-panel'), fullTitle, filename);
+        showPrintFormatSelector(function(anonymous) {
+            if (anonymous !== null) pdf.generateReportPDF(document.getElementById('ledger-panel'), fullTitle, filename, { anonymous: anonymous });
+        });
     };
 
     function printAccountsList() {
         if (!currentAccountsData || currentAccountsData.length === 0) {
-            showToast('No accounts data to print', 'warning');
+            showToast('No accounts data to export', 'warning');
             return;
         }
         var title = currentType ? (currentType.toUpperCase() + 's List') : 'Accounts Report';
@@ -672,7 +678,9 @@
             { label: 'Balance', key: 'current_balance', align: 'text-right', render: function(row) { return formatBalance(row.current_balance, row.type); } }
         ];
         var filename = pdf.getSafeFilename(currentType ? currentType.toUpperCase() : 'Accounts', 'List');
-        pdf.generateTablePDF(currentAccountsData, columns, title, filename);
+        showPrintFormatSelector(function(anonymous) {
+            if (anonymous !== null) pdf.generateTablePDF(currentAccountsData, columns, title, filename, { anonymous: anonymous });
+        });
     }
 
     if (document.getElementById('btn-print-accounts')) {

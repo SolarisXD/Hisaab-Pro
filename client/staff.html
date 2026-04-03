@@ -164,65 +164,65 @@
     </main>
 
     <!-- Modal: New/Edit Staff -->
-    <div id="staff-modal" class="modal-overlay hidden">
+    <div id="staff-modal" class="modal-overlay">
         <div class="modal-content max-w-2xl">
-            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
+            <div class="px-6 py-4 flex justify-between items-center bg-surface-container-low/50">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
-                        <span class="material-symbols-outlined">person_add</span>
+                    <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-xl">person_add</span>
                     </div>
                     <div>
-                        <h3 class="font-headline text-2xl font-black text-primary tracking-tight" id="staff-modal-title">Establish Personnel Record</h3>
-                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">HR Logistics Protocol</p>
+                        <h3 class="font-headline text-xl font-black text-primary tracking-tight" id="staff-modal-title">Establish Personnel Record</h3>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">HR Logistics Protocol</p>
                     </div>
                 </div>
-                <button onclick="closeStaffModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
-                    <span class="material-symbols-outlined">close</span>
+                <button onclick="closeStaffModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined text-lg">close</span>
                 </button>
             </div>
 
-            <div class="p-8">
-                <form id="staff-form" onsubmit="return false;" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Legal Full Name</label>
-                            <input type="text" id="staff-name" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="Enter full name..." required>
+            <div class="px-6 py-5">
+                <form id="staff-form" onsubmit="return false;" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Legal Full Name</label>
+                            <input type="text" id="staff-name" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" placeholder="Enter full name..." required>
                         </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Functional Designation</label>
-                            <input type="text" id="staff-role" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="e.g. Senior Manager" required>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-primary/5 p-8 rounded-3xl border border-primary/10">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Mobile Contact No</label>
-                            <input type="text" id="staff-phone" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="+91 00000 00000">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Fixed Monthly Remuneration (₹)</label>
-                            <input type="number" id="staff-salary" step="0.01" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-lg font-black text-primary tracking-tight transition-all" placeholder="0.00" required>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Opening Balance (₹)</label>
-                            <input type="number" id="staff-opening-balance" step="0.01" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-lg font-black text-primary tracking-tight transition-all" placeholder="0.00" value="0">
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Functional Designation</label>
+                            <input type="text" id="staff-role" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" placeholder="e.g. Senior Manager" required>
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Official Address</label>
-                        <textarea id="staff-address" rows="3" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-xs font-bold transition-all resize-none" placeholder="Provide residential details..."></textarea>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-primary/5 p-5 rounded-2xl border border-primary/10">
+                        <div class="space-y-1">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-primary/60 ml-1">Mobile Contact</label>
+                            <input type="text" id="staff-phone" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" placeholder="+91...">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-primary/60 ml-1">Salary (₹)</label>
+                            <input type="number" id="staff-salary" step="0.01" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-lg font-black text-primary tracking-tight transition-all" placeholder="0.00" required>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-primary/60 ml-1">Op. Balance (₹)</label>
+                            <input type="number" id="staff-opening-balance" step="0.01" class="w-full bg-white border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-lg font-black text-primary tracking-tight transition-all" placeholder="0.00" value="0">
+                        </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Commencement Date</label>
-                        <input type="date" id="staff-join-date" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+                    <div class="space-y-1.5">
+                        <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Official Address</label>
+                        <textarea id="staff-address" rows="2" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2 rounded-xl text-xs font-bold transition-all resize-none" placeholder="Provide residential details..."></textarea>
                     </div>
 
-                    <div class="flex gap-3 pt-4">
-                        <button type="button" id="btn-delete-staff" class="hidden py-4 px-6 bg-error/10 text-error font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-error/20 transition-all">Revoke</button>
-                        <button type="button" onclick="closeStaffModal()" class="flex-1 py-4 bg-surface-container-high text-primary font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-surface-container-highest transition-all">Abort</button>
-                        <button type="button" id="btn-save-staff" class="flex-[2] py-4 bg-primary text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all">Authorize Entry</button>
+                    <div class="space-y-1.5">
+                        <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Commencement Date</label>
+                        <input type="date" id="staff-join-date" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" required>
+                    </div>
+
+                    <div class="flex gap-3 pt-2">
+                        <button type="button" id="btn-delete-staff" class="hidden py-3 px-5 bg-error/10 text-error font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl hover:bg-error/20 transition-all">Revoke</button>
+                        <button type="button" onclick="closeStaffModal()" class="flex-1 py-3 bg-surface-container-high text-primary font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl hover:bg-surface-container-highest transition-all">Abort</button>
+                        <button type="button" id="btn-save-staff" class="flex-[2] py-3 bg-primary text-white font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl shadow-xl shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all">Authorize Entry</button>
                     </div>
                 </form>
             </div>
@@ -230,39 +230,39 @@
     </div>
 
     <!-- Modal: Attendance & Payroll Integration -->
-    <div id="attendance-modal" class="modal-overlay hidden">
+    <div id="attendance-modal" class="modal-overlay">
         <div class="modal-content max-w-4xl bg-surface-container-lowest">
-            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
+            <div class="px-6 py-4 flex justify-between items-center bg-surface-container-low/50">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
-                        <span class="material-symbols-outlined">rule</span>
+                    <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-xl">rule</span>
                     </div>
                     <div>
-                        <h3 class="font-headline text-2xl font-black text-primary tracking-tight" id="att-staff-name">Personnel Name</h3>
-                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Individual Performance Audit</p>
+                        <h3 class="font-headline text-xl font-black text-primary tracking-tight" id="att-staff-name">Personnel Name</h3>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Individual Performance Audit</p>
                     </div>
                 </div>
-                <button onclick="closeAttendanceModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors">
-                    <span class="material-symbols-outlined">close</span>
+                <button onclick="closeAttendanceModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined text-lg">close</span>
                 </button>
             </div>
 
-            <div class="p-8">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="px-6 py-5">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <!-- Left: Stats & Entry -->
-                    <div class="lg:col-span-4 space-y-6">
-                        <div class="grid grid-cols-1 gap-4">
-                            <div class="glass-panel p-4 rounded-2xl border-primary/5">
-                                <p class="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1">Monthly Salary</p>
-                                <p id="att-monthly-salary" class="text-xl font-black text-primary">₹0.00</p>
+                    <div class="lg:col-span-4 space-y-4">
+                        <div class="grid grid-cols-3 lg:grid-cols-1 gap-3">
+                            <div class="glass-panel p-3 rounded-xl border-primary/5">
+                                <p class="text-[7px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1">Salary</p>
+                                <p id="att-monthly-salary" class="text-sm font-black text-primary">₹0</p>
                             </div>
-                            <div class="glass-panel p-4 rounded-2xl border-primary/5">
-                                <p class="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1">Daily Wage</p>
-                                <p id="att-daily-wage" class="text-xl font-black text-primary">₹0.00</p>
+                            <div class="glass-panel p-3 rounded-xl border-primary/5">
+                                <p class="text-[7px] font-black uppercase tracking-widest text-on-surface-variant/50 mb-1">Daily</p>
+                                <p id="att-daily-wage" class="text-sm font-black text-primary">₹0</p>
                             </div>
-                            <div class="glass-panel p-4 rounded-2xl border-primary/5 bg-primary/5">
-                                <p class="text-[8px] font-black uppercase tracking-widest text-primary/50 mb-1">Account Balance</p>
-                                <p id="att-account-balance" class="text-xl font-black text-primary">₹0.00</p>
+                            <div class="glass-panel p-3 rounded-xl border-primary/5 bg-primary/5">
+                                <p class="text-[7px] font-black uppercase tracking-widest text-primary/50 mb-1">Balance</p>
+                                <p id="att-account-balance" class="text-sm font-black text-primary">₹0</p>
                             </div>
                         </div>
 

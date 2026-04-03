@@ -236,7 +236,7 @@
 
     function printPaymentsList() {
         if (!currentPaymentsData || currentPaymentsData.length === 0) {
-            showToast('No payments data to print', 'warning');
+            showToast('No payments data to export', 'warning');
             return;
         }
 

@@ -12,6 +12,7 @@ var { db } = require('../../db/database');
 var config = require('../../config');
 var logger = require('../../shared/logger');
 var accountsService = require('../accounts/accounts.service');
+var fyValidator = require('../../shared/fy-validator');
 
 /**
  * Generate next invoice number: INV-XX
@@ -140,6 +141,9 @@ function getSaleById(id, isDecoy) {
  * Create a new sale with line items
  */
 function createSale(data, isDecoy) {
+    // 0. Hard Financial Year Validation
+    if (!isDecoy) fyValidator.validateTransactionDate(data.date);
+
     var invoiceNo = data.invoice_no || generateInvoiceNumber(isDecoy);
     var taxPercent = data.tax_percent !== undefined ? data.tax_percent : config.tax_rate;
 
@@ -272,6 +276,9 @@ function createSale(data, isDecoy) {
  * Update a sale
  */
 function updateSale(id, data, isDecoy) {
+    // 0. Hard Financial Year Validation
+    if (!isDecoy && data.date) fyValidator.validateTransactionDate(data.date);
+
     var existing = getSaleById(id, isDecoy);
     if (!existing) throw new Error('Sale not found');
 

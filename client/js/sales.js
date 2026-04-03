@@ -199,7 +199,11 @@
         
         if (sale) {
             btnDownload.style.display = 'flex';
-            btnDownload.onclick = function() { pdf.generateInvoice(sale); };
+            btnDownload.onclick = function() { 
+                showPrintFormatSelector(function(anonymous) {
+                    if (anonymous !== null) pdf.generateInvoice(sale, { anonymous: anonymous, type: 'sale' });
+                });
+            };
             
             btnDelete.style.display = 'flex';
             btnDelete.onclick = function() { deleteSale(sale.id); };
@@ -386,7 +390,9 @@
     window.downloadInvoice = function(id) {
         api.get('/sales/' + id)
             .then(function(sale) {
-                pdf.generateInvoice(sale);
+                showPrintFormatSelector(function(anonymous) {
+                    if (anonymous !== null) pdf.generateInvoice(sale, { anonymous: anonymous });
+                });
             })
             .catch(function(err) {
                 showToast('Error loading invoice: ' + err.message, 'error');
@@ -412,9 +418,11 @@
         });
     };
 
+    function hideSalesFilter() { document.getElementById('filter-panel').classList.add('hidden'); }
+    
     function printSalesList() {
         if (!currentSalesData || currentSalesData.length === 0) {
-            showToast('No sales data to print', 'warning');
+            showToast('No sales data to export', 'warning');
             return;
         }
 
@@ -428,6 +436,8 @@
         ];
 
         var filename = pdf.getSafeFilename('Sales', 'Report');
-        pdf.generateTablePDF(currentSalesData, columns, 'Sales Report', filename);
+        showPrintFormatSelector(function(anonymous) {
+            if (anonymous !== null) pdf.generateTablePDF(currentSalesData, columns, 'Sales Report', filename, { anonymous: anonymous });
+        });
     }
 })();

@@ -206,7 +206,7 @@
                             <span class="material-symbols-outlined">edit</span>
                         </button>
                         <button onclick="printLedger()" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                            <span class="material-symbols-outlined text-lg">print</span> Print Ledger
+                            <span class="material-symbols-outlined text-lg">save</span> Save Ledger (PDF)
                         </button>
                     </div>
                 </div>
@@ -223,63 +223,63 @@
     </main>
 
     <!-- Modal: New/Edit Account -->
-    <div id="account-modal" class="modal-overlay hidden opacity-0 translate-y-full transition-all duration-300">
+    <div id="account-modal" class="modal-overlay opacity-0 translate-y-full transition-all duration-300">
         <div class="modal-content max-w-2xl">
-            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
+            <div class="px-6 py-4 flex justify-between items-center bg-surface-container-low/50">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
-                        <span class="material-symbols-outlined">person_add</span>
+                    <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-xl">person_add</span>
                     </div>
                     <div>
-                        <h3 class="font-headline text-2xl font-black text-primary tracking-tight" id="account-modal-title">Initialize Entity</h3>
-                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Synchronize Identity Portfolio</p>
+                        <h3 class="font-headline text-xl font-black text-primary tracking-tight" id="account-modal-title">Initialize Entity</h3>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Synchronize Identity Portfolio</p>
                     </div>
                 </div>
-                <button onclick="closeAccountModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
-                    <span class="material-symbols-outlined">close</span>
+                <button onclick="closeAccountModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined text-lg">close</span>
                 </button>
             </div>
 
-            <div class="p-8">
-                <form id="account-form" onsubmit="return false;" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Legal Trade Name</label>
-                            <input type="text" id="account-name" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="Enter full name..." required>
+            <div class="px-6 py-5">
+                <form id="account-form" onsubmit="return false;" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Legal Trade Name</label>
+                            <input type="text" id="account-name" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" placeholder="Enter full name..." required>
                         </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Entity Classification</label>
-                            <select id="account-type" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" required>
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Entity Classification</label>
+                            <select id="account-type" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" required>
                                 <option value="">Select classification...</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Contact Reference (Mobile)</label>
-                            <input type="text" id="account-phone" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-sm font-bold transition-all" placeholder="+91 00000 00000">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Contact Reference (Mobile)</label>
+                            <input type="text" id="account-phone" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all" placeholder="+91 00000 00000">
                         </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Opening Monetary Balance (₹)</label>
-                            <input type="number" id="account-balance" step="0.01" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3.5 rounded-xl text-base font-black text-primary tracking-tight transition-all" placeholder="0.00">
+                        <div class="space-y-1.5">
+                            <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Opening Monetary Balance (₹)</label>
+                            <input type="number" id="account-balance" step="0.01" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2.5 rounded-xl text-base font-black text-primary tracking-tight transition-all" placeholder="0.00">
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Official Address / Logistics Detail</label>
-                        <textarea id="account-address" rows="3" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-xs font-bold transition-all resize-none" placeholder="Provide full business location detail..."></textarea>
+                    <div class="space-y-1.5">
+                        <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Official Address / Logistics Detail</label>
+                        <textarea id="account-address" rows="2" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2 rounded-xl text-xs font-bold transition-all resize-none" placeholder="Provide full business location detail..."></textarea>
                     </div>
                     
-                    <div class="space-y-2">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Additional Notes</label>
-                        <input type="text" id="account-notes" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-3 rounded-xl text-xs font-bold transition-all" placeholder="Optional notes...">
+                    <div class="space-y-1.5">
+                        <label class="block text-[9px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1">Additional Notes</label>
+                        <input type="text" id="account-notes" class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 px-4 py-2 rounded-xl text-xs font-bold transition-all" placeholder="Optional notes...">
                     </div>
 
-                    <div class="flex gap-3 pt-4">
-                        <button type="button" id="btn-delete-account" class="hidden py-4 px-6 bg-error/10 text-error font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-error/20 transition-all">Deactivate</button>
-                        <button type="button" onclick="closeAccountModal()" class="flex-1 py-4 bg-surface-container-high text-primary font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:bg-surface-container-highest transition-all">Abort</button>
-                        <button type="button" id="btn-save-account" class="flex-[2] py-4 bg-primary text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 hover:translate-y-[-2px] active:translate-y-[0] transition-all">Synchronize Portfolio</button>
+                    <div class="flex gap-3 pt-2">
+                        <button type="button" id="btn-delete-account" class="hidden py-3 px-5 bg-error/10 text-error font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl hover:bg-error/20 transition-all">Deactivate</button>
+                        <button type="button" onclick="closeAccountModal()" class="flex-1 py-3 bg-surface-container-high text-primary font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl hover:bg-surface-container-highest transition-all">Abort</button>
+                        <button type="button" id="btn-save-account" class="flex-[2] py-3 bg-primary text-white font-bold text-[9px] uppercase tracking-[0.2em] rounded-xl shadow-xl shadow-primary/20 hover:translate-y-[-2px] active:translate-y-[0] transition-all">Synchronize Portfolio</button>
                     </div>
                 </form>
             </div>
@@ -287,7 +287,7 @@
     </div>
 
     <!-- Modal: Account Type (Classification) -->
-    <div id="type-modal" class="modal-overlay hidden opacity-0 translate-y-full transition-all duration-300">
+    <div id="type-modal" class="modal-overlay opacity-0 translate-y-full transition-all duration-300">
         <div class="modal-content max-w-md">
             <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low/50">
                 <div>

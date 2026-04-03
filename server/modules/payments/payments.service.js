@@ -10,6 +10,7 @@
 var { db } = require('../../db/database');
 var logger = require('../../shared/logger');
 var accountsService = require('../accounts/accounts.service');
+var fyValidator = require('../../shared/fy-validator');
 
 /**
  * List payments with optional filters
@@ -80,6 +81,9 @@ function getPaymentById(id, isDecoy) {
  * mode: 'cash' | 'bank_transfer' | 'upi' | 'cheque'
  */
 function createPayment(data, isDecoy) {
+    // 0. Hard Financial Year Validation
+    if (!isDecoy) fyValidator.validateTransactionDate(data.date);
+
     if (!data.account_id) throw new Error('Account is required');
     if (!data.amount || data.amount <= 0) throw new Error('Valid amount is required');
     if (!data.type || (data.type !== 'in' && data.type !== 'out')) throw new Error('Type must be "in" or "out"');
@@ -167,6 +171,9 @@ function createPayment(data, isDecoy) {
  * Update a payment
  */
 function updatePayment(id, data, isDecoy) {
+    // 0. Hard Financial Year Validation
+    if (!isDecoy && data.date) fyValidator.validateTransactionDate(data.date);
+
     var existing = getPaymentById(id, isDecoy);
     if (!existing) throw new Error('Payment not found');
 
