@@ -123,6 +123,12 @@
                         <span>Vault & Backups</span>
                     </div>
                 </a>
+                <a href="settings.html?view=shortcuts" class="tab flex items-center justify-between p-4 rounded-2xl text-xs font-bold transition-all hover:bg-surface-container-high group" data-view="shortcuts">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-lg">keyboard</span>
+                        <span>Keyboard Shortcuts</span>
+                    </div>
+                </a>
             </nav>
 
             <!-- Settings Workspace -->
@@ -243,14 +249,14 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div class="glass-panel p-10 rounded-[3rem] border border-outline-variant/10 space-y-6">
                                     <h4 class="text-[10px] font-black uppercase tracking-widest text-primary/50">Sequence Protocol</h4>
-                                    <div class="grid grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div class="space-y-2">
-                                            <label class="block text-[10px] font-black uppercase tracking-widest opacity-40">Alpha Prefix</label>
-                                            <input type="text" id="book-prefix" class="w-full bg-surface-container-low border-0 px-4 py-3 rounded-xl text-xs font-bold" placeholder="e.g. HP-">
+                                            <label class="block text-[10px] font-black uppercase tracking-widest opacity-40">Initial Book No.</label>
+                                            <input type="number" id="book-start-no" class="w-full bg-surface-container-low border-0 px-4 py-3 rounded-xl text-xs font-bold" placeholder="1">
                                         </div>
                                         <div class="space-y-2">
-                                            <label class="block text-[10px] font-black uppercase tracking-widest opacity-40">Initial No.</label>
-                                            <input type="number" id="book-start-no" class="w-full bg-surface-container-low border-0 px-4 py-3 rounded-xl text-xs font-bold" placeholder="1001">
+                                            <label class="block text-[10px] font-black uppercase tracking-widest opacity-40">Initial Page No.</label>
+                                            <input type="number" id="bill-start-no" class="w-full bg-surface-container-low border-0 px-4 py-3 rounded-xl text-xs font-bold" placeholder="1">
                                         </div>
                                     </div>
                                     <button id="btn-save-book-settings" class="w-full py-4 bg-primary text-white font-bold text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-lg transition-all">Authorize Sequence</button>
@@ -309,6 +315,37 @@
                         </div>
                     </div>
 
+                    <!-- Section: Keyboard Shortcuts -->
+                    <div id="section-shortcuts" class="settings-section hidden space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div class="flex items-center gap-6">
+                            <div class="w-16 h-16 rounded-[2rem] bg-primary/5 text-primary flex items-center justify-center border border-primary/10">
+                                <span class="material-symbols-outlined text-3xl">keyboard</span>
+                            </div>
+                            <div>
+                                <h3 class="font-headline text-3xl font-black text-primary tracking-tight">Keyboard Shortcuts</h3>
+                                <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Accelerate Workflow with Hotkeys</p>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-10 rounded-[3rem] border border-outline-variant/10">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-primary/50 mb-6">Available Shortcuts</h4>
+                            <div class="space-y-3" id="shortcuts-list">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-10 rounded-[3rem] border border-outline-variant/10">
+                            <h4 class="text-[10px] font-black uppercase tracking-widest text-primary/50 mb-4">Calculator</h4>
+                            <div class="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl">
+                                <div>
+                                    <p class="text-xs font-bold">Quick Calculator</p>
+                                    <p class="text-[10px] text-on-surface-variant opacity-50">Press F10 to toggle calculator</p>
+                                </div>
+                                <button onclick="if(window.calculator && window.calculator.toggle)window.calculator.toggle()" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl">Test Calculator</button>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -316,6 +353,7 @@
 
     <script src="js/api.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/shortcuts.js"></script>
     <script src="js/settings.js"></script>
 </body>
 </html>

@@ -72,7 +72,7 @@
     if (reportMonth) reportMonth.value = getCurrentMonth();
     if (reportAsOfDate) reportAsOfDate.value = today;
     if (reportDateFrom) reportDateFrom.value = fy.start;
-    if (reportDateTo) reportDateTo.value = fy.end;
+    if (reportDateTo) reportDateTo.value = today;
 
     // Load accounts for ledger
     api.get('/accounts').then(function(accounts) {
@@ -132,12 +132,13 @@
     if (btnExportOptions) {
         btnExportOptions.addEventListener('click', function() {
             exportModal.classList.remove('hidden');
-            setTimeout(() => exportModal.classList.add('opacity-100'), 10);
+            setTimeout(() => exportModal.classList.add('active'), 10);
         });
     }
 
     window.closeExportModal = function() {
-        exportModal.classList.remove('opacity-100');
+        if (!exportModal) return;
+        exportModal.classList.remove('active');
         setTimeout(() => exportModal.classList.add('hidden'), 300);
     };
 
@@ -175,17 +176,26 @@
         } catch(e) {}
         
         var container = document.getElementById('gallery-container');
+        var modal = document.getElementById('gallery-modal');
+        
+        if (!container || !modal) {
+            console.error('Gallery elements missing');
+            return;
+        }
+
         container.innerHTML = '';
         urls.forEach(function(url) {
-            container.innerHTML += '<a href="' + url + '" target="_blank"><img src="' + url + '" style="max-width: 100%; border-radius: 4px; border: 1px solid var(--color-border);"/></a>';
+            container.innerHTML += '<a href="' + url + '" target="_blank" class="block overflow-hidden rounded-xl border border-outline-variant/10 hover:border-primary/50 transition-all"><img src="' + url + '" class="w-full h-auto object-cover"/></a>';
         });
-        document.getElementById('gallery-modal').classList.remove('hidden');
-        setTimeout(() => document.getElementById('gallery-modal').classList.add('opacity-100'), 10);
+        
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.add('active'), 10);
     };
 
     window.closeGalleryModal = function() {
         var modal = document.getElementById('gallery-modal');
-        modal.classList.remove('opacity-100');
+        if (!modal) return;
+        modal.classList.remove('active');
         setTimeout(() => modal.classList.add('hidden'), 300);
     };
 
@@ -224,9 +234,15 @@
         } else if (type === 'monthly') {
             params.month = reportMonth.value;
         } else if (type === 'account-ledger') {
-            params.accountId = reportAccount.value;
-            params.from = reportDateFrom.value;
-            params.to = reportDateTo.value;
+            if (!reportAccount.value) {
+                showToast('Please select an account', 'warning');
+                btnGenerate.disabled = false;
+                btnGenerate.textContent = 'Extract Data';
+                return;
+            }
+            params.account_id = reportAccount.value;
+            params.date_from = reportDateFrom.value;
+            params.date_to = reportDateTo.value;
         } else if (['debtor-aging', 'creditor-schedule', 'balance-sheet', 'amount-receivable'].includes(type)) {
             params.date = reportAsOfDate.value;
         }

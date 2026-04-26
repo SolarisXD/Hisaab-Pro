@@ -14,8 +14,8 @@ const LOG_LEVELS = {
     ERROR: 3
 };
 
-// Set minimum log level (change for production)
-let currentLevel = LOG_LEVELS.DEBUG;
+// Set minimum log level (INFO for production; change to DEBUG for development)
+let currentLevel = LOG_LEVELS.INFO;
 
 function getTimestamp() {
     return new Date().toLocaleString('en-IN', {

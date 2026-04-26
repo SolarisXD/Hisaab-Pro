@@ -19,7 +19,6 @@ function getDashboardData(isDecoy) {
     var today = localISOTime;
 
     // Get first day of current month
-    var now = new Date();
     var monthStart = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2) + '-01';
 
     // Today's sales

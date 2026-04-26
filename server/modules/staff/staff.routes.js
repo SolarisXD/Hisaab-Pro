@@ -5,6 +5,8 @@ var router = express.Router();
 var staffService = require('./staff.service');
 var { requireAuth } = require('../auth/auth.middleware');
 var { logActivity } = require('../auth/auth.service');
+var { validate, staffSchema, attendanceSchema } = require('../../shared/validation');
+var { isDateInActiveFY } = require('../../shared/utils');
 
 router.use(requireAuth);
 
@@ -14,18 +16,18 @@ router.get('/', function(req, res) {
         var staffList = staffService.listStaff(req.session.user.is_decoy);
         res.json(staffList);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to list staff' });
     }
 });
 
 // Create a new staff member
-router.post('/', function(req, res) {
+router.post('/', validate(staffSchema), function(req, res) {
     try {
         var staff = staffService.createStaff(req.body, req.session.user.is_decoy);
         logActivity(req.session.user.id, 'create_staff', 'account', staff.id, null, req.ip);
         res.status(201).json(staff);
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: err.message || 'Failed to create staff member' });
     }
 });
 
@@ -37,18 +39,18 @@ router.get('/:id/attendance', function(req, res) {
         var attendance = staffService.getAttendance(parseInt(req.params.id), parseInt(year), parseInt(month), req.session.user.is_decoy);
         res.json(attendance);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to retrieve attendance' });
     }
 });
 
 // Mark attendance
-router.post('/:id/attendance', function(req, res) {
+router.post('/:id/attendance', validate(attendanceSchema), function(req, res) {
     try {
         var result = staffService.markAttendance(parseInt(req.params.id), req.body.date, req.body.status, req.body.notes, req.session.user.is_decoy);
         logActivity(req.session.user.id, 'mark_attendance', 'staff', parseInt(req.params.id), null, req.ip);
         res.json(result);
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: err.message || 'Failed to mark attendance' });
     }
 });
 
@@ -59,7 +61,7 @@ router.post('/:id/payroll', function(req, res) {
         logActivity(req.session.user.id, 'generate_payroll', 'staff', parseInt(req.params.id), null, req.ip);
         res.json({ success: true, transaction_id: result });
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: err.message || 'Failed to generate payroll' });
     }
 });
 

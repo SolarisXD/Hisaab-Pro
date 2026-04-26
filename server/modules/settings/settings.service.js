@@ -22,8 +22,8 @@ function getSystemStatus() {
         return db.prepare('SELECT * FROM security_state WHERE id = 1').get();
     });
     
-    var config = require('../../config');
-    var activeDb = config.database.active_database || 'hisaab.db';
+    var currentConfig = require('../../config');
+    var activeDb = currentConfig.database.active_database || 'hisaab.db';
     var backupDir = path.join(__dirname, '../../../backups');
     var lastBackup = null;
 
@@ -160,6 +160,9 @@ function createFinancialYear(data) {
         
         // Reset sqlite sequences (auto-increment IDs) for clean start
         tempDb.prepare("UPDATE sqlite_sequence SET seq = 0 WHERE name IN ('sales', 'sales_items', 'purchases', 'payments', 'transactions')").run();
+        
+        // Reset Book-Bill sequence settings for the NEW year
+        tempDb.prepare("UPDATE system_settings SET value = '1' WHERE key IN ('current_book_no', 'current_bill_no')").run();
         
         // Clear activity log but keep security state
         tempDb.prepare('DELETE FROM activity_log').run();

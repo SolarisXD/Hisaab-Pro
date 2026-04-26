@@ -9,14 +9,18 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const { appRootDir } = require('./shared/paths');
 
-const configPath = path.resolve(__dirname, '../config.json');
+const configPath = path.join(appRootDir, 'config.json');
 
 let rawConfig = {};
 
 try {
-    const configFile = fs.readFileSync(configPath, 'utf-8');
-    rawConfig = JSON.parse(configFile);
+    if (fs.existsSync(configPath)) {
+        const configFile = fs.readFileSync(configPath, 'utf-8');
+        rawConfig = JSON.parse(configFile);
+    }
 } catch (err) {
     console.error('[Config] Failed to load config.json:', err.message);
     console.error('[Config] Using default configuration');
@@ -39,7 +43,7 @@ const config = {
     locale: rawConfig.locale || 'en-IN',
     session: {
         timeout_minutes: 15,
-        secret: 'hisaab-pro-default-secret-change-this',
+        secret: 'PLACEHOLDER',
         ...rawConfig.session
     },
     backup: {
@@ -56,8 +60,30 @@ const config = {
         path: './data/hisaab.db',
         ...rawConfig.database
     },
-    financial_years: rawConfig.financial_years || []
+    financial_years: rawConfig.financial_years || [],
+    is_production: rawConfig.is_production || false
 };
+
+// ============================================================
+// AUTO-GENERATE SESSION SECRET (CRIT-3)
+// ============================================================
+// If the session secret is still a placeholder or default, generate a real one
+var weakSecrets = ['PLACEHOLDER', 'hisaab-pro-default-secret-change-this', 'change-this-to-a-random-secret-key'];
+if (weakSecrets.includes(config.session.secret)) {
+    var generatedSecret = crypto.randomBytes(64).toString('hex');
+    config.session.secret = generatedSecret;
+    
+    // Persist it to config.json so it stays the same across restarts
+    try {
+        var rawFile = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+        if (!rawFile.session) rawFile.session = {};
+        rawFile.session.secret = generatedSecret;
+        fs.writeFileSync(configPath, JSON.stringify(rawFile, null, 2), 'utf-8');
+        console.log('[Config] Auto-generated and saved a secure session secret.');
+    } catch (e) {
+        console.warn('[Config] Could not persist session secret to config.json:', e.message);
+    }
+}
 
 function reloadConfig() {
     try {

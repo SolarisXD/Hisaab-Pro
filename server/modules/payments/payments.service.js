@@ -47,8 +47,11 @@ function listPayments(filters, isDecoy) {
         params.push('%' + filters.search + '%');
     }
 
-    var sql = 'SELECT p.*, a.name as account_name, a.type as account_type FROM payments p' +
+    var sql = 'SELECT p.*, a.name as account_name, a.type as account_type, ' +
+        ' s.invoice_no as sale_invoice_no, s.total as sale_total, s.amount_paid as sale_amount_paid, s.status as sale_status ' +
+        'FROM payments p ' +
         ' LEFT JOIN accounts a ON p.account_id = a.id' +
+        ' LEFT JOIN sales s ON p.sale_id = s.id' +
         ' WHERE ' + conditions.join(' AND ') +
         ' ORDER BY p.date DESC, p.id DESC';
 
@@ -69,8 +72,11 @@ function listPayments(filters, isDecoy) {
  */
 function getPaymentById(id, isDecoy) {
     return db.prepare(
-        'SELECT p.*, a.name as account_name, a.type as account_type FROM payments p' +
+        'SELECT p.*, a.name as account_name, a.type as account_type, ' +
+        ' s.invoice_no as sale_invoice_no, s.total as sale_total, s.amount_paid as sale_amount_paid, s.status as sale_status ' +
+        'FROM payments p ' +
         ' LEFT JOIN accounts a ON p.account_id = a.id' +
+        ' LEFT JOIN sales s ON p.sale_id = s.id' +
         ' WHERE p.id = ? AND p.is_decoy = ? AND p.is_deleted = 0'
     ).get(id, isDecoy ? 1 : 0);
 }
@@ -89,7 +95,7 @@ function createPayment(data, isDecoy) {
     if (!data.type || (data.type !== 'in' && data.type !== 'out')) throw new Error('Type must be "in" or "out"');
 
     var transaction = db.transaction(function() {
-        var result = db.prepare(
+var result = db.prepare(
             'INSERT INTO payments (date, account_id, amount, type, mode, reference, ref_no, sale_id, notes, is_decoy)' +
             ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         ).run(

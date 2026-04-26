@@ -22,7 +22,7 @@ router.get('/', function(req, res) {
         var data = dashboardService.getDashboardData(req.session.user.is_decoy);
         res.json(data);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to load dashboard data' });
     }
 });
 

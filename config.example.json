@@ -1,0 +1,29 @@
+{
+  "shop": {
+    "name": "Your Shop Name",
+    "address": "Shop Address",
+    "phone": "+91-XXXXX-XXXXX",
+    "gstin": "",
+    "logo_path": "assets/logo.png"
+  },
+  "currency": "INR",
+  "currency_symbol": "₹",
+  "tax_rate": 18,
+  "invoice_prefix": "INV",
+  "locale": "hi-IN",
+  "session": {
+    "timeout_minutes": 15
+  },
+  "backup": {
+    "auto_time": "23:00",
+    "usb_drive_label": "HISAABPRO_BKP"
+  },
+  "server": {
+    "port": 3000,
+    "host": "localhost"
+  },
+  "database": {
+    "path": "./data/hisaab.db"
+  },
+  "financial_years": []
+}

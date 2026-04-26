@@ -1,8 +1,15 @@
-/**
- * accounts.js — Hisaab Pro Accounts Page Controller
- */
-
 'use strict';
+
+// Global pointer for the edit button
+window.editCurrentAccount = function() {
+    if (typeof editAccount === 'function' && window.viewingAccountId) {
+        editAccount(window.viewingAccountId);
+    } else if (window.editAccount && window.viewingAccountId) {
+        window.editAccount(window.viewingAccountId);
+    } else {
+        if (typeof showToast === 'function') showToast('No account selected to modify', 'warning');
+    }
+};
 
 (function() {
     var currentType = '';
@@ -12,6 +19,7 @@
     window.viewingAccountId = null; // Expose for HTML events
     var allAccountTypes = [];
     var currentAccountsData = [];
+    var searchInput = document.getElementById('search-input');
 
     checkAuth().then(function(user) {
         if (!user) return;
@@ -25,8 +33,9 @@
         var ledgerDateFrom = document.getElementById('ledger-date-from');
         var ledgerDateTo = document.getElementById('ledger-date-to');
         var fy = getFinancialYearDates();
+        var today = getToday();
         if (ledgerDateFrom) ledgerDateFrom.value = fy.start;
-        if (ledgerDateTo) ledgerDateTo.value = fy.end;
+        if (ledgerDateTo) ledgerDateTo.value = today;
 
         loadInitialData();
     });
@@ -154,18 +163,20 @@
         document.getElementById('btn-delete-type').style.display = (type && !type.is_system) ? 'flex' : 'none';
         
         var modal = document.getElementById('type-modal');
-        modal.classList.remove('hidden');
+        if (!modal) return;
+        modal.classList.remove('hidden', 'translate-y-full', 'opacity-0');
         setTimeout(function() {
-            modal.classList.remove('translate-y-full', 'opacity-0');
-            modal.classList.add('active'); // CSS should handle backdrop/display
+            modal.classList.add('active');
         }, 10);
     }
 
     window.closeTypeModal = function() {
         var modal = document.getElementById('type-modal');
+        if (!modal) return;
         modal.classList.remove('active');
-        modal.classList.add('translate-y-full', 'opacity-0');
-        setTimeout(function() { modal.classList.add('hidden'); }, 300);
+        setTimeout(function() { 
+            modal.classList.add('hidden', 'translate-y-full', 'opacity-0'); 
+        }, 300);
         editingTypeId = null;
     };
 
@@ -368,7 +379,7 @@
         if (!select) return;
         
         var html = '';
-        allAccountTypes.filter(t => t.is_active).forEach(t => {
+        allAccountTypes.filter(function(t) { return t.is_active; }).forEach(function(t) {
             html += '<option value="' + t.slug + '">' + escapeHtml(t.name) + '</option>';
         });
         select.innerHTML = html;
@@ -376,14 +387,13 @@
 
     // --- Search ---
 
-    var searchInput = document.getElementById('search-input');
     if (searchInput) {
         searchInput.addEventListener('input', debounce(function() { loadAccounts(); }, 400));
     }
 
     // --- Ledger View ---
 
-    window.viewLedger = function(id) {
+    function viewLedger(id) {
         window.viewingAccountId = id;
         document.getElementById('accounts-list-view').style.display = 'none';
         document.getElementById('ledger-panel').style.display = 'block';
@@ -402,57 +412,70 @@
                 document.getElementById('ledger-content').innerHTML = '<div class="error-state p-8 text-center text-error font-bold">' + escapeHtml(err.message) + '</div>';
                 showToast('Failed to load ledger: ' + err.message, 'error');
             });
-    };
+    }
+    window.viewLedger = viewLedger;
 
     function renderLedger(data) {
         document.getElementById('ledger-account-name').textContent = data.account.name;
         
+        var totalCredits = (data.transactions || []).filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
+        var totalDebits = (data.transactions || []).filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+
         var statsHtml = '';
-        statsHtml += '<div class="p-6 bg-surface-container-low rounded-xl flex items-center justify-between">' +
-                        '<div>' +
-                            '<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Opening Balance</p>' +
-                            '<p class="text-2xl font-extrabold text-primary tracking-tight">' + formatBalance(data.opening_balance, data.account.type) + '</p>' +
-                        '</div>' +
-                        '<div class="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center">' +
-                            '<span class="material-symbols-outlined text-primary">first_page</span>' +
-                        '</div>' +
+        statsHtml += '<div class="p-6 bg-surface-container-low rounded-xl border border-outline-variant/10 flex flex-col justify-center items-center text-center shadow-sm hover:shadow-md transition-shadow">' +
+                        '<p class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] opacity-40 mb-2">Opening Balance</p>' +
+                        '<p class="text-xl font-black text-primary tracking-tight">' + formatBalance(data.opening_balance, data.account.type) + '</p>' +
                      '</div>';
-        statsHtml += '<div class="p-6 bg-primary rounded-xl flex items-center justify-between text-white">' +
-                        '<div>' +
-                            '<p class="text-xs font-bold opacity-70 uppercase tracking-widest mb-1">Closing Balance</p>' +
-                            '<p class="text-2xl font-extrabold tracking-tight">' + formatBalance(data.closing_balance, data.account.type) + '</p>' +
-                        '</div>' +
-                        '<div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">' +
-                            '<span class="material-symbols-outlined">last_page</span>' +
-                        '</div>' +
+        
+        statsHtml += '<div class="p-6 bg-white rounded-xl border border-outline-variant/10 flex flex-col justify-center items-center text-center shadow-sm hover:shadow-md transition-shadow">' +
+                        '<p class="text-[10px] font-black text-green-600 uppercase tracking-[0.2em] opacity-60 mb-2">Aggregate Credits</p>' +
+                        '<p class="text-xl font-black text-green-600 tracking-tight">' + formatINR(totalCredits) + '</p>' +
                      '</div>';
+
+        statsHtml += '<div class="p-6 bg-white rounded-xl border border-outline-variant/10 flex flex-col justify-center items-center text-center shadow-sm hover:shadow-md transition-shadow">' +
+                        '<p class="text-[10px] font-black text-error uppercase tracking-[0.2em] opacity-60 mb-2">Aggregate Debits</p>' +
+                        '<p class="text-xl font-black text-error tracking-tight">' + formatINR(totalDebits) + '</p>' +
+                     '</div>';
+
+        statsHtml += '<div class="p-6 bg-primary text-white rounded-xl shadow-xl shadow-primary/20 flex flex-col justify-center items-center text-center hover:scale-[1.02] transition-transform cursor-default">' +
+                        '<p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-2">Final Book Value</p>' +
+                        '<p class="text-xl font-black tracking-tight">' + formatBalance(data.closing_balance, data.account.type) + '</p>' +
+                     '</div>';
+
         document.getElementById('ledger-stats').innerHTML = statsHtml;
 
         if (data.transactions && data.transactions.length > 0) {
             document.getElementById('ledger-content').innerHTML = renderTable(data.transactions, [
-                { label: 'Date', key: 'date', render: function(row) { return '<span class="text-xs font-bold text-on-surface-variant">' + formatDate(row.date) + '</span>'; } },
-                { label: 'Ref / Description', key: 'description', render: function(row) { 
-                    var desc = escapeHtml(row.description || 'Entry');
-                    if (row.linked_invoice) {
-                        desc = '<span class="text-primary font-bold cursor-pointer hover:underline" onclick="event.stopPropagation(); viewInvoice(' + row.linked_sale_id + ')">' + escapeHtml(row.linked_invoice) + '</span> ' + desc;
+                { label: 'Audit Date', key: 'date', render: function(row) { return '<span class="text-xs font-bold text-primary">' + formatDate(row.date) + '</span>'; } },
+                { label: 'Particulars & Descriptions', key: 'description', render: function(row) { 
+                    var desc = '<div class="flex flex-col gap-1">';
+                    desc += '<span class="text-sm font-bold text-primary leading-tight">' + escapeHtml(row.description || 'General Entry') + '</span>';
+                    desc += '<div class="flex gap-2 items-center">';
+                    if (row.ref_no) desc += '<span class="text-[9px] font-black bg-surface-container-highest px-2 py-0.5 rounded text-on-surface-variant uppercase tracking-tighter">REF: ' + row.ref_no + '</span>';
+                    if (row.linked_invoice) desc += '<span class="text-[9px] font-black bg-primary/5 px-2 py-0.5 rounded text-primary uppercase tracking-tighter">INV: ' + row.linked_invoice + '</span>';
+                    if (row.payment_mode) desc += '<span class="text-[9px] font-black bg-secondary-container/30 px-2 py-0.5 rounded text-secondary uppercase tracking-tighter">MODE: ' + row.payment_mode.toUpperCase() + '</span>';
+                    desc += '</div></div>';
+
+                    // Evidence Handlers
+                    var images = [];
+                    try { if (row.sale_images && row.sale_images !== '[]') images = JSON.parse(row.sale_images); } catch(e){}
+                    try { if (row.purchase_images && row.purchase_images !== '[]') images = images.concat(JSON.parse(row.purchase_images)); } catch(e){}
+                    
+                    if (images && images.length > 0) {
+                        var encodedUrls = encodeURIComponent(JSON.stringify(images));
+                        desc += '<button class="mt-2 flex items-center gap-1.5 px-3 py-1 bg-surface-container-high rounded-full text-[9px] font-black text-primary uppercase border border-outline-variant/20 hover:bg-white transition-all shadow-sm" onclick="event.stopPropagation(); openGalleryModal(\'' + encodedUrls + '\')"><span class="material-symbols-outlined text-sm">visibility</span> Evidence Attached (' + images.length + ')</button>';
                     }
-                    var subText = row.ref_no || (row.payment_mode ? row.payment_mode.toUpperCase() : '');
-                    return '<div>' +
-                                '<p class="text-sm font-medium">' + desc + '</p>' +
-                                (subText ? '<p class="text-[10px] text-on-surface-variant font-bold opacity-60 uppercase">' + escapeHtml(subText) + '</p>' : '') +
-                           '</div>';
+                    return desc;
                 }},
-                { label: 'Debit', key: 'amount', align: 'text-right', render: function(row) { 
-                    return row.type === 'debit' ? '<span class="text-sm font-extrabold text-error">' + formatINR(row.amount) + '</span>' : '—'; 
-                }},
-                { label: 'Credit', key: 'amount', align: 'text-right', render: function(row) { 
-                    return row.type === 'credit' ? '<span class="text-sm font-extrabold text-green-600">' + formatINR(row.amount) + '</span>' : '—'; 
+                { label: 'Audit Flows', key: 'amount', align: 'text-right', render: function(row) { 
+                    return row.type === 'debit' ? '<div class="text-right"><span class="text-[8px] font-black text-error uppercase opacity-60">DEBIT OUT</span><p class="font-black text-error text-sm">' + formatINR(row.amount) + '</p></div>' : 
+                                                  '<div class="text-right"><span class="text-[8px] font-black text-green-600 uppercase opacity-60">CREDIT IN</span><p class="font-black text-green-600 text-sm">' + formatINR(row.amount) + '</p></div>';
                 }},
                 { label: 'Running Balance', key: 'running_balance', align: 'text-right', render: function(row) { 
                     var balanceStr = formatBalance(row.running_balance, data.account.type);
-                    return '<span class="text-sm font-extrabold text-primary">' + balanceStr + '</span>'; 
+                    return '<div class="text-right"><span class="text-[8px] font-black text-on-surface-variant uppercase opacity-40">LEDGER POS</span><p class="font-bold text-primary text-xs">' + balanceStr + '</p></div>'; 
                 }}
-            ]);
+            ], { onRowClick: 'viewTransactionDetail' });
         } else {
             document.getElementById('ledger-content').innerHTML = '<div class="py-20 flex flex-col items-center justify-center text-on-surface-variant">' +
                                                                     '<span class="material-symbols-outlined text-4xl opacity-20 mb-2">history</span>' +
@@ -469,6 +492,56 @@
         } else {
             showListView();
         }
+    };
+
+    window.viewTransactionDetail = function(id) {
+        // Find transaction
+        api.get('/reports/account-ledger', { account_id: window.viewingAccountId })
+            .then(function(data) {
+                var tx = data.transactions.find(t => t.id === id);
+                if (tx && tx.linked_sale_id) viewInvoice(tx.linked_sale_id);
+                else if (tx && tx.linked_purchase_id) showToast('Purchase detail view pending optimization', 'info');
+            });
+    };
+
+    window.openGalleryModal = function(encodedUrls) {
+        var urls = [];
+        try { urls = JSON.parse(decodeURIComponent(encodedUrls)); } catch(e) {}
+        
+        var container = document.getElementById('gallery-container');
+        var modal = document.getElementById('gallery-modal');
+        if (!container || !modal) return;
+
+        container.innerHTML = '';
+        urls.forEach(function(url) {
+            var imgId = 'ev-img-' + Math.random().toString(36).substr(2, 9);
+            container.innerHTML += `
+                <div class="relative group block overflow-hidden rounded-xl border border-outline-variant/10 hover:border-primary/50 transition-all shadow-sm bg-surface-container-low min-h-[120px] flex items-center justify-center">
+                    <a href="${url}" target="_blank" class="w-full h-full block" id="${imgId}-link">
+                        <img src="${url}" 
+                             class="w-full h-auto object-cover" 
+                             onerror="this.style.display='none'; document.getElementById('${imgId}-error').classList.remove('hidden'); document.getElementById('${imgId}-link').classList.add('hidden');"
+                        />
+                    </a>
+                    <div id="${imgId}-error" class="hidden flex flex-col items-center justify-center p-8 text-center text-error space-y-2">
+                        <span class="material-symbols-outlined text-4xl opacity-30">broken_image</span>
+                        <p class="text-[11px] font-black uppercase tracking-tighter">Image deleted or corrupted</p>
+                        <p class="text-[9px] font-bold opacity-50 leading-tight">The evidence file is missing from the server storage.</p>
+                    </div>
+                </div>`;
+        });
+        
+        modal.classList.remove('hidden', 'translate-y-full', 'opacity-0');
+        setTimeout(function() { modal.classList.add('active'); }, 10);
+    };
+
+    window.closeGalleryModal = function() {
+        var modal = document.getElementById('gallery-modal');
+        if (!modal) return;
+        modal.classList.remove('active');
+        setTimeout(function() { 
+            modal.classList.add('hidden', 'translate-y-full', 'opacity-0'); 
+        }, 300);
     };
 
     // --- Invoice Modal ---
@@ -530,14 +603,18 @@
         };
         
         var modal = document.getElementById('invoice-view-modal');
-        modal.classList.remove('hidden');
-        setTimeout(() => modal.classList.add('opacity-100'), 10);
+        if (!modal) return;
+        modal.classList.remove('hidden', 'translate-y-full', 'opacity-0');
+        setTimeout(function() { modal.classList.add('active'); }, 10);
     }
 
     window.closeInvoiceModal = function() {
         var modal = document.getElementById('invoice-view-modal');
-        modal.classList.remove('opacity-100');
-        setTimeout(() => modal.classList.add('hidden'), 300);
+        if (!modal) return;
+        modal.classList.remove('active');
+        setTimeout(function() { 
+            modal.classList.add('hidden', 'translate-y-full', 'opacity-0'); 
+        }, 300);
     };
 
     // --- Account Modal CRUD ---
@@ -563,18 +640,20 @@
         document.getElementById('account-notes').value = account ? (account.notes || '') : '';
         
         var modal = document.getElementById('account-modal');
-        modal.classList.remove('hidden');
+        if (!modal) return;
+        modal.classList.remove('hidden', 'translate-y-full', 'opacity-0');
         setTimeout(function() {
-            modal.classList.remove('translate-y-full', 'opacity-0');
-            modal.classList.add('opacity-100');
+            modal.classList.add('active');
         }, 10);
     }
 
     window.closeAccountModal = function() {
         var modal = document.getElementById('account-modal');
-        modal.classList.remove('opacity-100');
-        modal.classList.add('translate-y-full', 'opacity-0');
-        setTimeout(function() { modal.classList.add('hidden'); }, 300);
+        if (!modal) return;
+        modal.classList.remove('active');
+        setTimeout(function() {
+            modal.classList.add('hidden', 'translate-y-full', 'opacity-0');
+        }, 300);
         editingAccountId = null;
     };
 
@@ -615,7 +694,8 @@
             });
     }
 
-    window.editAccount = function(id) {
+    function editAccount(id) {
+        if (!id) return;
         api.get('/accounts/' + id)
             .then(function(account) {
                 openAccountModal(account);
@@ -623,12 +703,15 @@
             .catch(function(err) {
                 showToast('Error: ' + err.message, 'error');
             });
-    };
+    }
+    window.editAccount = editAccount;
 
-    window.editCurrentAccount = function() {
-        if (!window.viewingAccountId) return;
-        editAccount(window.viewingAccountId);
-    };
+
+    // Attach event listener for the ledger edit button
+    var btnEditLedger = document.getElementById('btn-edit-ledger');
+    if (btnEditLedger) {
+        btnEditLedger.addEventListener('click', editCurrentAccount);
+    }
 
     function deleteAccount(id) {
         showConfirm({

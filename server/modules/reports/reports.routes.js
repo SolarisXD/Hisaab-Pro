@@ -26,7 +26,7 @@ router.get('/daily-sales', function(req, res) {
         var report = reportsService.getDailySalesReport(date, req.session.user.is_decoy);
         res.json(report);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to generate daily sales report' });
     }
 });
 
@@ -41,7 +41,7 @@ router.get('/monthly', function(req, res) {
         var report = reportsService.getMonthlyReport(month, req.session.user.is_decoy);
         res.json(report);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to generate monthly report' });
     }
 });
 
@@ -54,7 +54,7 @@ router.get('/debtor-aging', function(req, res) {
         var report = reportsService.getDebtorAgingReport(date, req.session.user.is_decoy);
         res.json(report);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to generate debtor aging report' });
     }
 });
 
@@ -67,7 +67,7 @@ router.get('/creditor-schedule', function(req, res) {
         var report = reportsService.getCreditorSchedule(date, req.session.user.is_decoy);
         res.json(report);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to generate creditor schedule' });
     }
 });
 
@@ -80,18 +80,21 @@ router.get('/balance-sheet', function(req, res) {
         var report = reportsService.getBalanceSheet(date, req.session.user.is_decoy);
         res.json(report);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to generate balance sheet' });
     }
 });
 
 router.get('/account-ledger', function(req, res) {
     try {
-        const { account_id, date_from, date_to } = req.query;
+        const account_id = req.query.account_id || req.query.accountId;
+        const date_from = req.query.date_from || req.query.from;
+        const date_to = req.query.date_to || req.query.to;
+
         if (!account_id) throw new Error('Account ID is required');
         const data = reportsService.getAccountLedger(account_id, date_from, date_to, req.session.user.is_decoy);
         res.json(data);
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: err.message || 'Failed to generate account ledger' });
     }
 });
 
@@ -104,7 +107,7 @@ router.get('/amount-receivable', function(req, res) {
         var report = reportsService.getAmountReceivableReport(date, req.session.user.is_decoy);
         res.json(report);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to generate receivable report' });
     }
 });
 

@@ -31,8 +31,8 @@ function formatINR(amount) {
 }
 
 /**
- * Format balance with DR/CR notation
- * @param {number} amount - The numeric balance
+ * Format balance with Dr/Cr suffix based on account type
+ * @param {number} amount - Balance amount
  * @param {string} type - Account grouping (customer, supplier, cash, bank, expense, revenue)
  */
 function formatBalance(amount, type) {
@@ -40,26 +40,22 @@ function formatBalance(amount, type) {
     var num = parseFloat(amount);
     if (Math.abs(num) < 0.01) return '₹0.00';
 
-    var formatted = formatINR(num);
+    var formatted = formatINR(Math.abs(num));
     
-    // Default accounting notation:
-    // Customer (Asset): Positive = DR, Negative = CR
-    // Supplier (Liability): Positive = CR, Negative = DR
-    // Cash/Bank (Asset): Positive = DR, Negative = CR
+    // Account type determines Dr/Cr notation:
+    // Customer (debtor): Positive = DR, Negative = CR
+    // Supplier (creditor): Positive = CR, Negative = DR  
+    // Cash/Bank (asset): Positive = DR, Negative = CR
     // Expense: Positive = DR, Negative = CR
-    // Revenue: Positive = CR, Negative = DR
+// Revenue: Positive = CR, Negative = DR
     
-    var suffix = '';
     if (type === 'customer' || type === 'cash' || type === 'bank' || type === 'expense') {
-        suffix = num > 0 ? ' DR' : ' CR';
+        return formatted + (num > 0 ? ' DR' : ' CR');
     } else if (type === 'supplier' || type === 'revenue') {
-        suffix = num > 0 ? ' CR' : ' DR';
+        return formatted + (num > 0 ? ' CR' : ' DR');
     } else {
-        // Fallback for unknown types (Asset-like convention)
-        suffix = num > 0 ? ' DR' : ' CR';
+        return formatted + (num > 0 ? ' DR' : ' CR');
     }
-
-    return formatted + suffix;
 }
 
 /**
@@ -421,9 +417,6 @@ function showConfirm(options) {
     });
 }
 
-/**
- * Logout
- */
 /**
  * Logout with backup prompt
  */

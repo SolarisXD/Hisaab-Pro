@@ -17,8 +17,17 @@ var router = express.Router();
 var accountsService = require('./accounts.service');
 var { requireAuth } = require('../auth/auth.middleware');
 var { logActivity } = require('../auth/auth.service');
+var { validate, accountSchema } = require('../../shared/validation');
+var { z } = require('zod');
 
 var accountTypesService = require('./account-types.service');
+
+// Validation schema for account types
+var accountTypeSchema = z.object({
+    name: z.string().min(1).max(100),
+    slug: z.string().min(1).max(50).optional(),
+    icon: z.string().max(50).optional()
+});
 
 router.use(requireAuth);
 
@@ -30,33 +39,33 @@ router.get('/types', function(req, res) {
         var types = accountTypesService.listAccountTypes(req.query.include_inactive === 'true', req.session.user.is_decoy);
         res.json(types);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to list account types' });
     }
 });
 
 /**
  * POST /types — Create account type
  */
-router.post('/types', function(req, res) {
+router.post('/types', validate(accountTypeSchema), function(req, res) {
     try {
         var type = accountTypesService.createAccountType(req.body);
         logActivity(req.session.user.id, 'create_account_type', 'account_type', type.id, null, req.ip);
         res.status(201).json(type);
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: err.message || 'Failed to create account type' });
     }
 });
 
 /**
  * PUT /types/:id — Update account type
  */
-router.put('/types/:id', function(req, res) {
+router.put('/types/:id', validate(accountTypeSchema), function(req, res) {
     try {
         var type = accountTypesService.updateAccountType(parseInt(req.params.id), req.body);
         logActivity(req.session.user.id, 'edit_account_type', 'account_type', type.id, null, req.ip);
         res.json(type);
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: err.message || 'Failed to update account type' });
     }
 });
 
@@ -69,7 +78,7 @@ router.delete('/types/:id', function(req, res) {
         logActivity(req.session.user.id, 'delete_account_type', 'account_type', parseInt(req.params.id), null, req.ip);
         res.json({ success: true });
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: err.message || 'Failed to delete account type' });
     }
 });
 
@@ -84,7 +93,7 @@ router.get('/', function(req, res) {
         }, req.session.user.is_decoy);
         res.json(accounts);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to list accounts' });
     }
 });
 
@@ -96,7 +105,7 @@ router.get('/summary', function(req, res) {
         var summary = accountsService.getAccountsSummary(req.session.user.is_decoy);
         res.json(summary);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to get account summary' });
     }
 });
 
@@ -109,14 +118,14 @@ router.get('/:id', function(req, res) {
         if (!account) return res.status(404).json({ error: 'Account not found' });
         res.json(account);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to retrieve account' });
     }
 });
 
 /**
  * POST / — Create account
  */
-router.post('/', function(req, res) {
+router.post('/', validate(accountSchema), function(req, res) {
     try {
         var account = accountsService.createAccount(req.body, req.session.user.is_decoy);
         logActivity(req.session.user.id, 'create_account', 'account', account.id, null, req.ip);
@@ -129,14 +138,14 @@ router.post('/', function(req, res) {
 /**
  * PUT /:id — Update account
  */
-router.put('/:id', function(req, res) {
+router.put('/:id', validate(accountSchema), function(req, res) {
     try {
         var account = accountsService.updateAccount(parseInt(req.params.id), req.body, req.session.user.is_decoy);
         logActivity(req.session.user.id, 'edit_account', 'account', account.id, null, req.ip);
         res.json(account);
     } catch (err) {
-        if (err.message === 'Account not found') return res.status(404).json({ error: err.message });
-        res.status(500).json({ error: err.message });
+        if (err.message === 'Account not found') return res.status(404).json({ error: 'Account not found' });
+        res.status(500).json({ error: 'Failed to update account' });
     }
 });
 
@@ -149,7 +158,7 @@ router.delete('/:id', function(req, res) {
         logActivity(req.session.user.id, 'delete_account', 'account', parseInt(req.params.id), null, req.ip);
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to delete account' });
     }
 });
 
@@ -166,7 +175,7 @@ router.get('/:id/transactions', function(req, res) {
         }, req.session.user.is_decoy);
         res.json(transactions);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to retrieve transactions' });
     }
 });
 

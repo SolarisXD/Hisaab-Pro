@@ -8,6 +8,7 @@ data/
 
 # Local config overrides
 config.local.json
+config.json
 
 # OS files
 Thumbs.db
@@ -28,5 +29,4 @@ sync/venv/
 
 # Backups (managed separately)
 backups/
-
-stitch_hisaab_1/
+Docs/

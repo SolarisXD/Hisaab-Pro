@@ -1,7 +1,5 @@
 /**
  * Database Adapter — Hisaab Pro
-/**
- * Database Adapter — Hisaab Pro
  * 
  * Manages dynamic SQLite database connections to support multiple 
  * financial years (each year is a totally isolated SQLite file).
@@ -12,6 +10,7 @@ const Database = require('better-sqlite3-multiple-ciphers');
 const path = require('path');
 const fs = require('fs');
 const { AsyncLocalStorage } = require('async_hooks');
+const { resolvePath } = require('../shared/paths');
 let config = require('../config');
 
 const asyncLocalStorage = new AsyncLocalStorage();
@@ -38,16 +37,32 @@ function getDbInstance(filename) {
         return dbInstances.get(filename);
     }
 
-    // Construct full path
-    const basePath = path.resolve(__dirname, '../../', config.database.path);
-    const dbDir = path.dirname(basePath);
-    const dbPath = path.join(dbDir, filename);
+    // Construct full path relative to the app root
+    const dbDir = path.dirname(config.database.path);
+    const dbPath = resolvePath(dbDir, filename);
     
     ensureDataDir(dbPath);
 
     console.log(`[DB] Opening database: ${filename}`);
     const db = new Database(dbPath);
-    const dbKey = config.database_key || 'hisaab-pro-default-key-2026';
+    // SECURITY: DB key must come from config. 
+    // For existing installations, migrate the legacy key into config.json.
+    var dbKey = config.database_key;
+    if (!dbKey) {
+        // Use the legacy key that existing databases were encrypted with
+        dbKey = 'hisaab-pro-default-key-2026';
+        config.database_key = dbKey;
+        // Persist to config.json so it's no longer hardcoded in source
+        try {
+            var configPath = require('path').join(__dirname, '../../config.json');
+            var rawCfg = JSON.parse(require('fs').readFileSync(configPath, 'utf-8'));
+            rawCfg.database_key = dbKey;
+            require('fs').writeFileSync(configPath, JSON.stringify(rawCfg, null, 2), 'utf-8');
+            console.log('[DB] Migrated database encryption key to config.json.');
+        } catch(e) {
+            console.warn('[DB] Could not persist database key to config.json:', e.message);
+        }
+    }
 
     try {
         db.pragma(`key = '${dbKey}'`);

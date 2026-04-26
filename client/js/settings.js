@@ -25,13 +25,16 @@
         } else if (view === 'fy') {
             document.getElementById('container-fy-book').classList.remove('hidden');
             document.getElementById('panel-fy').classList.remove('hidden');
-            document.getElementById('panel-book').classList.add('hidden', 'md:block'); // On desktop, both might show if structured that way, but let's follow the routing
+            document.getElementById('panel-book').classList.add('hidden', 'md:block');
         } else if (view === 'book') {
             document.getElementById('container-fy-book').classList.remove('hidden');
             document.getElementById('panel-fy').classList.add('hidden', 'md:block');
             document.getElementById('panel-book').classList.remove('hidden');
         } else if (view === 'security') {
             document.getElementById('section-security').classList.remove('hidden');
+        } else if (view === 'shortcuts') {
+            document.getElementById('section-shortcuts').classList.remove('hidden');
+            populateShortcutsList();
         }
 
         // Update top tabs
@@ -82,11 +85,26 @@
     }
 
     // Event Listeners
-    document.getElementById('btn-save-shop').addEventListener('click', updateShopInfo);
-    document.getElementById('btn-save-book-settings').addEventListener('click', updateBookSettings);
-    document.getElementById('btn-manual-backup').addEventListener('click', runManualBackup);
-    document.getElementById('password-form').addEventListener('submit', updatePassword);
-    document.getElementById('btn-save-fy').addEventListener('click', createFinancialYear);
+    if (document.getElementById('btn-save-shop')) {
+        document.getElementById('btn-save-shop').addEventListener('click', updateShopInfo);
+    }
+    
+    if (document.getElementById('btn-save-book-settings')) {
+        document.getElementById('btn-save-book-settings').addEventListener('click', updateBookSettings);
+    }
+
+    if (document.getElementById('btn-manual-backup')) {
+        document.getElementById('btn-manual-backup').addEventListener('click', runManualBackup);
+    }
+
+    var passwordForm = document.getElementById('password-form');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', updatePassword);
+    }
+
+    if (document.getElementById('btn-save-fy')) {
+        document.getElementById('btn-save-fy').addEventListener('click', createFinancialYear);
+    }
     
     var btnSaveBackupPath = document.getElementById('btn-save-backup-path');
     if (btnSaveBackupPath) {
@@ -103,13 +121,12 @@
     function loadSettings() {
         // Load Shop Config
         api.getConfig().then(function(config) {
-            
-            document.getElementById('shop-name').value = config.shop.name;
-            document.getElementById('shop-gstin').value = config.shop.gstin || '';
-            document.getElementById('shop-address').value = config.shop.address || '';
-            document.getElementById('shop-phone').value = config.shop.phone || '';
-            document.getElementById('shop-tax-rate').value = config.tax_rate || 0;
-            document.getElementById('shop-prefix').value = config.invoice_prefix || '';
+            if (document.getElementById('shop-name')) document.getElementById('shop-name').value = config.shop.name;
+            if (document.getElementById('shop-gstin')) document.getElementById('shop-gstin').value = config.shop.gstin || '';
+            if (document.getElementById('shop-address')) document.getElementById('shop-address').value = config.shop.address || '';
+            if (document.getElementById('shop-phone')) document.getElementById('shop-phone').value = config.shop.phone || '';
+            if (document.getElementById('shop-tax-rate')) document.getElementById('shop-tax-rate').value = config.tax_rate || 0;
+            if (document.getElementById('shop-prefix')) document.getElementById('shop-prefix').value = config.invoice_prefix || '';
             
             var backupPathEl = document.getElementById('backup-custom-path');
             if (backupPathEl) backupPathEl.value = config.backup_path || '';
@@ -117,11 +134,15 @@
 
         // Load Book settings
         Promise.all([
-            api.getSystemSetting('current_book_no'),
-            api.getSystemSetting('current_page_no')
+            api.getSystemSetting('current_book_no').catch(() => ({ value: '1' })),
+            api.getSystemSetting('current_bill_no').catch(() => ({ value: '1' }))
         ]).then(function(results) {
-            document.getElementById('setting-book-no').value = results[0].value || '01';
-            document.getElementById('setting-page-no').value = results[1].value || '01';
+            if (document.getElementById('book-start-no')) {
+                document.getElementById('book-start-no').value = results[0].value || '1';
+            }
+            if (document.getElementById('bill-start-no')) {
+                document.getElementById('bill-start-no').value = results[1].value || '1';
+            }
         });
 
         // Load Financial Years
@@ -166,22 +187,22 @@
     }
 
     function updateBookSettings() {
-        var bookNo = document.getElementById('setting-book-no').value;
-        var pageNo = document.getElementById('setting-page-no').value;
+        var bookNo = document.getElementById('book-start-no').value;
+        var billNo = document.getElementById('bill-start-no').value;
 
         showConfirm({
-            title: 'Update Book Settings',
-            message: 'Are you sure you want to update the current Book No and Page No? WARNING: Changing this incorrectly might cause invoice number collisions or gaps. Only change this if you are starting a new physical ledger book.',
-            confirmText: 'Update Settings',
+            title: 'Authorize Reference Sequence',
+            message: 'Are you sure you want to update the Book-Page starting sequence? This will affect the next generated reference number.',
+            confirmText: 'Authorize Sequence',
             intent: 'primary'
         }).then(function(confirmed) {
             if (!confirmed) return;
 
             Promise.all([
                 api.setSystemSetting('current_book_no', bookNo),
-                api.setSystemSetting('current_page_no', pageNo)
+                api.setSystemSetting('current_bill_no', billNo)
             ]).then(function() {
-                showToast('Book reference settings updated!', 'success');
+                showToast('Reference sequence authorized!', 'success');
             }).catch(function(err) {
                 showToast('Error: ' + err.message, 'error');
             });
@@ -189,10 +210,11 @@
     }
 
     function loadFinancialYears() {
+        var fyActiveBadge = document.getElementById('fy-active-badge');
+        var fyList = document.getElementById('fy-list');
+        if (!fyList) return;
+
         api.getFinancialYears().then(function(years) {
-            var fyActiveBadge = document.getElementById('fy-active-badge');
-            var fyList = document.getElementById('fy-list');
-            
             fyActiveBadge.innerHTML = '';
             fyList.innerHTML = '';
 
@@ -208,17 +230,12 @@
                     is_active: activeDb === 'hisaab.db' ? 1 : 0
                 });
 
-                if (years.length === 0) {
-                    fyList.innerHTML = '<p class="text-[10px] font-bold text-on-surface-variant/40 text-center py-10 uppercase tracking-widest">No archival periods defined</p>';
-                    return;
-                }
-
                 var currentSessionDb = localStorage.getItem('hisaab_active_fy') || 'hisaab.db';
 
                 years.forEach(function(fy) {
                     var isLiveSession = fy.db_filename === currentSessionDb;
                     
-                    if (isLiveSession) {
+                    if (isLiveSession && fyActiveBadge) {
                         fyActiveBadge.innerHTML = '<div class="flex items-center gap-2 px-4 py-2 bg-on-primary-container/10 rounded-xl border border-on-primary-container/20"><span class="w-2 h-2 rounded-full bg-on-primary-container animate-pulse"></span><span class="text-[10px] font-black text-on-primary-container uppercase tracking-widest leading-none">Primary Active Session: ' + escapeHtml(fy.name) + '</span></div>';
                     }
                     
@@ -250,7 +267,6 @@
             intent: 'primary'
         }).then(function(confirmed) {
             if (!confirmed) return;
-            // Also notify the backend so it remembers this state system-wide
             api.activateFinancialYear(id).then(function() {
                 localStorage.setItem('hisaab_active_fy', dbFilename);
                 window.location.reload();
@@ -293,6 +309,8 @@
     function loadSecurityStatus() {
         api.getSettingsStatus().then(function(status) {
             var container = document.getElementById('backup-info');
+            if (!container) return;
+            
             var lastBackup = status.backup.last_backup 
                 ? formatDate(status.backup.last_backup.time) + ' (' + status.backup.last_backup.filename + ')'
                 : 'Never';
@@ -311,84 +329,103 @@
                         <p class="opacity-40 font-black uppercase tracking-widest text-[8px]">Last Sync Timestamp</p>
                         <p class="font-bold text-primary">${lastBackup}</p>
                     </div>
-                    <div class="space-y-1">
-                        <p class="opacity-40 font-black uppercase tracking-widest text-[8px]">Archived Snapshots</p>
-                        <p class="font-black text-primary text-sm">${status.backup.total_backups}</p>
-                    </div>
-                    <div class="space-y-1 text-right">
-                        <p class="opacity-40 font-black uppercase tracking-widest text-[8px]">Integrity Check</p>
-                        <p class="font-black ${status.security.is_nuked ? 'text-error' : 'text-green-600'} text-[10px] uppercase">${status.security.is_nuked ? 'COMPROMISED' : 'VERIFIED'}</p>
-                    </div>
                 </div>
             `;
         });
     }
+
     function runManualBackup() {
-        showConfirm({
-            title: 'Manual Backup',
-            message: 'Do you want to create a manual backup of the system database now?',
-            confirmText: 'Create Backup',
-            intent: 'success'
-        }).then(function(confirmed) {
-            if (!confirmed) return;
-            
-            var btn = document.getElementById('btn-manual-backup');
-            btn.disabled = true;
-            btn.textContent = '⏳ Backing up...';
-            
-            api.runManualBackup().then(function() {
-                showToast('Backup created successfully!', 'success');
-                loadSecurityStatus();
-            }).catch(function(err) {
-                showToast('Backup failed: ' + err.message, 'error');
-            }).finally(function() {
-                btn.disabled = false;
-                btn.textContent = 'Create Manual Backup';
-            });
+        api.runManualBackup().then(function() {
+            showToast('Backup successfully created!', 'success');
+            loadSecurityStatus();
+        }).catch(function(err) {
+            showToast('Backup failed: ' + err.message, 'error');
         });
     }
 
     function updatePassword(e) {
         e.preventDefault();
-        var old = document.getElementById('pass-old').value;
-        var newP = document.getElementById('pass-new').value;
-        var conf = document.getElementById('pass-confirm').value;
+        var oldP = document.getElementById('old-password').value;
+        var newP = document.getElementById('new-password').value;
+        var confirmP = document.getElementById('confirm-password').value;
 
-        if (newP !== conf) return showToast('New passwords match', 'warning');
-        if (newP.length < 6) return showToast('Minimum 6 characters', 'warning');
+        if (newP !== confirmP) {
+            showToast('New passwords do not match', 'warning');
+            return;
+        }
 
-        showConfirm({
-            title: 'Change Password',
-            message: 'Are you sure you want to change your administration password? WARNING: If you forget the new password, you will be locked out of the system. There is no password recovery.',
-            confirmText: 'Change Password',
-            intent: 'warning'
-        }).then(function(confirmed) {
-            if (!confirmed) return;
-
-            api.post('/auth/change-password', { old_password: old, new_password: newP })
-                .then(function() {
-                    showToast('Password updated!', 'success');
-                    document.getElementById('password-form').reset();
-                })
-                .catch(function(err) {
-                    showToast('Error: ' + err.message, 'error');
-                });
+        api.post('/auth/change-password', {
+            old_password: oldP,
+            new_password: newP
+        }).then(function() {
+            showToast('Password updated!', 'success');
+            document.getElementById('password-form').reset();
+        }).catch(function(err) {
+            showToast('Error: ' + err.message, 'error');
         });
     }
 
+    // Modal Helpers
     window.openFYModal = function() {
-        var modal = document.getElementById('fy-modal');
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            modal.classList.add('opacity-100');
-            modal.querySelector('.scale-95').classList.remove('scale-95');
-        }, 10);
+        document.getElementById('fy-modal').classList.add('active');
     };
     window.closeFYModal = function() {
-        var modal = document.getElementById('fy-modal');
-        modal.classList.remove('opacity-100');
-        modal.querySelector('.transform').classList.add('scale-95');
-        setTimeout(() => modal.classList.add('hidden'), 300);
+        document.getElementById('fy-modal').classList.remove('active');
     };
 
+    // Helper functions
+    function formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        var d = new Date(dateStr);
+        return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text ? String(text) : '';
+        return div.innerHTML;
+    }
+
+    function showToast(message, type) {
+        if (window.showNotification) {
+            window.showNotification(message, type);
+        }
+    }
+
+    // Populate Keyboard Shortcuts List
+    window.populateShortcutsList = function() {
+        var shortcuts = [
+            { key: 'F10', desc: 'Toggle Calculator', category: 'Calculator' },
+            { key: 'Alt + Q', desc: 'Quick Add Menu (↑↓ to navigate, Enter to select)', category: 'Navigation' },
+            { key: 'F2', desc: 'Save / Authorize Transaction', category: 'Global' },
+            { key: 'F8', desc: 'Delete Record', category: 'Global' },
+            { key: 'Escape', desc: 'Close Modal / Calculator / Menu', category: 'Global' },
+            { key: 'Ctrl + S', desc: 'Quick Save', category: 'Global' },
+            { key: 'Ctrl + P', desc: 'Print / Download PDF', category: 'Global' },
+            { key: 'Alt + P', desc: 'New Purchase', category: 'Navigation' },
+            { key: 'Alt + S', desc: 'Go to Sales', category: 'Navigation' },
+            { key: 'Alt + A', desc: 'Go to Accounts', category: 'Navigation' },
+            { key: 'Alt + H', desc: 'Go to Dashboard', category: 'Navigation' },
+            { key: 'Alt + L', desc: 'Open Ledger Report', category: 'Navigation' }
+        ];
+
+        var container = document.getElementById('shortcuts-list');
+        if (!container) return;
+
+        var html = '';
+        shortcuts.forEach(function(s) {
+            var keyClass = s.category === 'Calculator' ? 'bg-primary/20 text-primary' : 
+                        s.category === 'Navigation' ? 'bg-secondary/20 text-secondary' :
+                        'bg-surface-container-highest text-on-surface';
+            html += '<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl hover:bg-surface-container-high transition-all">';
+            html += '<div class="flex items-center gap-4">';
+            html += '<span class="px-3 py-1.5 rounded-lg text-xs font-bold ' + keyClass + '">' + s.key + '</span>';
+            html += '<span class="text-xs font-medium text-on-surface">' + s.desc + '</span>';
+            html += '</div>';
+            html += '<span class="text-[10px] font-bold uppercase tracking-widest opacity-30">' + s.category + '</span>';
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
+    };
 })();

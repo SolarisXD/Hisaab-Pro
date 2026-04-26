@@ -10,12 +10,15 @@ var express = require('express');
 var router = express.Router();
 var { requireAuth } = require('../auth/auth.middleware');
 var multer = require('multer');
-var path = require('path');
 var fs = require('fs');
+var path = require('path');
+const { resolvePath } = require('../../shared/paths');
 
 // Ensure uploads folder exists
-var uploadDir = path.resolve(__dirname, '../../../../data/uploads/bills');
+var uploadDir = resolvePath('data', 'uploads', 'bills');
+console.log('[Uploads] Storage path initialized at:', uploadDir);
 if (!fs.existsSync(uploadDir)) {
+    console.log('[Uploads] Creating missing directory:', uploadDir);
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
@@ -54,12 +57,14 @@ router.post('/bills', upload.array('images', 20), function(req, res) {
         }
         
         var urls = req.files.map(function(file) {
+            console.log('[Uploads] File saved:', file.path);
             return '/data/uploads/bills/' + file.filename;
         });
         
         res.json({ success: true, urls: urls });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('[Uploads] Post-upload error:', err);
+        res.status(500).json({ error: 'Upload failed' });
     }
 });
 

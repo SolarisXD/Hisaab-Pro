@@ -202,8 +202,8 @@
                             <input type="date" id="ledger-date-from" title="From Date" class="bg-surface-container-high border-0 focus:ring-0 rounded-xl px-3 py-2 text-[10px] font-bold text-primary shadow-sm" onchange="if(window.viewingAccountId) viewLedger(window.viewingAccountId)">
                             <input type="date" id="ledger-date-to" title="To Date" class="bg-surface-container-high border-0 focus:ring-0 rounded-xl px-3 py-2 text-[10px] font-bold text-primary shadow-sm" onchange="if(window.viewingAccountId) viewLedger(window.viewingAccountId)">
                         </div>
-                        <button onclick="editCurrentAccount()" class="p-2.5 bg-surface-container-high text-primary rounded-xl hover:bg-surface-container-highest transition-all">
-                            <span class="material-symbols-outlined">edit</span>
+                        <button id="btn-edit-ledger" onclick="window.editCurrentAccount()" class="p-2.5 bg-surface-container-high text-primary rounded-xl hover:bg-surface-container-highest transition-all">
+                            <span class="material-symbols-outlined pointer-events-none">edit</span>
                         </button>
                         <button onclick="printLedger()" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
                             <span class="material-symbols-outlined text-lg">save</span> Save Ledger (PDF)
@@ -211,7 +211,7 @@
                     </div>
                 </div>
 
-                <div id="ledger-stats" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div id="ledger-stats" class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <!-- Stats cards like Opening/Closing balance -->
                 </div>
 
@@ -336,12 +336,38 @@
         </div>
     </div>
 
+    <!-- Modal: Evidence Gallery -->
+    <div id="gallery-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-4xl">
+            <div class="p-8 pb-4 flex justify-between items-center bg-surface-container-low border-b border-outline-variant/5">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 transition-all">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline text-2xl font-black text-primary tracking-tight">Evidence Repository</h3>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Verified Transaction Artifacts</p>
+                    </div>
+                </div>
+                <button onclick="closeGalleryModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-8">
+                <div id="gallery-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto no-scrollbar p-1">
+                    <!-- Images injected by JS -->
+                </div>
+                <p class="text-[10px] font-bold text-on-surface-variant opacity-40 mt-6 text-center uppercase tracking-widest">End of Audit Artifacts</p>
+            </div>
+        </div>
+    </div>
+
     <script src="js/api.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/shortcuts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="js/pdf.js"></script>
-    <script src="js/accounts.js"></script>
+    <script src="js/accounts.js?v=2"></script>
 </body>
 </html>

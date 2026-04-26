@@ -9,10 +9,13 @@
 
 var express = require('express');
 var session = require('express-session');
+var helmet = require('helmet');
 var cors = require('cors');
 var path = require('path');
 var config = require('./config');
 var logger = require('./shared/logger');
+var { resolvePath } = require('./shared/paths');
+var { standardLimiter } = require('./shared/rate-limiter');
 
 // Initialize database (runs schema on first load)
 var { db, closeDb, fyRequestContext } = require('./db/database');
@@ -33,19 +36,28 @@ var backup = require('../scripts/backup');
 // Create Express app
 var app = express();
 
+// Import auth middleware for protecting routes
+var { requireAuth } = require('./modules/auth/auth.middleware');
+
 // ============================================================
 // MIDDLEWARE
 // ============================================================
 
-// Parse JSON bodies
-app.use(express.json());
+// Security headers (XSS protection, Content-Type sniffing, etc.)
+app.use(helmet({
+    contentSecurityPolicy: false  // Disabled — we serve inline scripts in vanilla HTML
+}));
 
-// Parse URL-encoded bodies
-app.use(express.urlencoded({ extended: true }));
+// Parse JSON bodies (limit size to prevent memory exhaustion)
+app.use(express.json({ limit: '1mb' }));
 
-// CORS (for development)
+// Parse URL-encoded bodies (limit size)
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// CORS — locked down to localhost only (this is a private pendrive app)
+var allowedOrigin = 'http://' + (config.server.host || 'localhost') + ':' + (config.server.port || 3000);
 app.use(cors({
-    origin: true,
+    origin: allowedOrigin,
     credentials: true
 }));
 
@@ -57,19 +69,23 @@ app.use(session({
     cookie: {
         maxAge: config.session.timeout_minutes * 60 * 1000,
         httpOnly: true,
-        sameSite: 'lax'
+        sameSite: 'lax',
+        secure: config.server.host !== 'localhost' && config.server.host !== '127.0.0.1'
     }
 }));
 
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '../client')));
 
-// Serve static uploaded files
-app.use('/data/uploads', express.static(path.join(__dirname, '../../data/uploads')));
+// Serve static uploaded files — PROTECTED by auth (bill images contain sensitive data)
+app.use('/data/uploads', requireAuth, express.static(resolvePath('data', 'uploads')));
 
 // ============================================================
 // API ROUTES (all under /api/v1/)
 // ============================================================
+
+// Rate limit all API routes (100 requests / 15 min per IP)
+app.use('/api/v1', standardLimiter);
 
 // Wrap all API requests in the requested Financial Year context
 app.use('/api/v1', function(req, res, next) {
@@ -83,6 +99,14 @@ app.use('/api/v1', function(req, res, next) {
     // If not specified, default to whatever is globally active or hisaab.db
     if (!requestedFy) {
         requestedFy = config.database.active_database || 'hisaab.db';
+    }
+    
+    // SECURITY: Validate FY header to prevent path traversal
+    // Only allow safe filenames: alphanumeric, underscores, hyphens, dots, ending in .db
+    var safeFilenameRegex = /^[a-zA-Z0-9_\-\.]+\.db$/;
+    if (!safeFilenameRegex.test(requestedFy) || requestedFy.includes('..') || requestedFy.includes('/') || requestedFy.includes('\\')) {
+        logger.warn('Security', 'Rejected invalid x-financial-year header: ' + requestedFy);
+        return res.status(400).json({ error: 'Invalid financial year identifier' });
     }
     
     fyRequestContext(requestedFy, function() {
@@ -102,10 +126,10 @@ app.use('/api/v1/uploads', uploadsRoutes);
 app.use('/api/v1/staff', staffRoutes);
 
 // ============================================================
-// CONFIG ENDPOINT (public — sends non-sensitive shop info to frontend)
+// CONFIG ENDPOINT (protected — sends shop info to authenticated frontend)
 // ============================================================
 
-app.get('/api/v1/config', function(req, res) {
+app.get('/api/v1/config', requireAuth, function(req, res) {
     res.json({
         shop: config.shop,
         currency: config.currency,
@@ -131,11 +155,11 @@ app.get('*', function(req, res) {
 });
 
 // ============================================================
-// ERROR HANDLER
+// ERROR HANDLER — Never leak internal details to the client
 // ============================================================
 
 app.use(function(err, req, res, next) {
-    logger.error('Server', 'Unhandled error: ' + err.message);
+    logger.error('Server', 'Unhandled error: ' + err.message, { stack: err.stack });
     res.status(500).json({ error: 'Internal server error' });
 });
 

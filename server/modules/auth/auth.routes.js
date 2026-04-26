@@ -13,12 +13,13 @@ var express = require('express');
 var router = express.Router();
 var authService = require('./auth.service');
 var { requireAuth } = require('./auth.middleware');
+var { loginLimiter } = require('../../shared/rate-limiter');
 var logger = require('../../shared/logger');
 
 /**
  * POST /login
  */
-router.post('/login', function(req, res) {
+router.post('/login', loginLimiter, function(req, res) {
     var username = req.body.username;
     var password = req.body.password;
 
@@ -42,8 +43,7 @@ router.post('/login', function(req, res) {
             user: {
                 id: user.id,
                 username: user.username,
-                role: user.role,
-                is_decoy: user.is_decoy
+                role: user.role
             }
         });
     } catch (err) {
@@ -109,26 +109,26 @@ router.post('/change-password', requireAuth, function(req, res) {
     }
 });
 
-router.get('/setup-status', async (req, res) => {
+router.get('/setup-status', loginLimiter, async (req, res) => {
     try {
         const isFirstTime = await authService.isFirstTime();
         res.json({ is_first_time: isFirstTime });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Failed to check setup status' });
     }
 });
 
 // Check if system has any users (Initialized)
-router.get('/status', (req, res) => {
+router.get('/status', loginLimiter, (req, res) => {
     try {
         const count = authService.getUserCount();
         res.json({ initialized: count > 0 });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to check system status' });
     }
 });
 
-router.post('/signup', async (req, res) => {
+router.post('/signup', loginLimiter, async (req, res) => {
     try {
         const isFirstTime = await authService.isFirstTime();
         if (!isFirstTime) {
@@ -143,7 +143,7 @@ router.post('/signup', async (req, res) => {
         const result = await authService.signup(shopDetails, ownerUser, financialYear);
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Signup failed. Please try again.' });
     }
 });
 

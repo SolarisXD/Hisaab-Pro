@@ -82,8 +82,9 @@
     var filterDateTo = document.getElementById('filter-date-to');
 
     var fy = getFinancialYearDates();
+    var today = getToday();
     if (filterDateFrom && !filterDateFrom.value) filterDateFrom.value = fy.start;
-    if (filterDateTo && !filterDateTo.value) filterDateTo.value = fy.end;
+    if (filterDateTo && !filterDateTo.value) filterDateTo.value = today;
 
     var debouncedSearch = debounce(function() { loadSales(); }, 400);
     if (searchInput) searchInput.addEventListener('input', debouncedSearch);

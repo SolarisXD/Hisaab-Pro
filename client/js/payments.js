@@ -58,8 +58,9 @@
     var filterDateTo = document.getElementById('filter-date-to');
 
     var fy = getFinancialYearDates();
+    var today = getToday();
     if (filterDateFrom && !filterDateFrom.value) filterDateFrom.value = fy.start;
-    if (filterDateTo && !filterDateTo.value) filterDateTo.value = fy.end;
+    if (filterDateTo && !filterDateTo.value) filterDateTo.value = today;
 
     var debouncedSearch = debounce(function() { loadPayments(); }, 400);
     if (searchInput) searchInput.addEventListener('input', debouncedSearch);
@@ -117,6 +118,20 @@
             { label: 'Amount', key: 'amount', align: 'text-right', render: function(row) {
                 var cls = row.type === 'in' ? 'positive' : 'negative';
                 return '<span class="amount ' + cls + '">' + formatINR(row.amount) + '</span>';
+            }},
+            { label: 'Invoice', key: 'sale_invoice_no', render: function(row) {
+                if (!row.sale_invoice_no) return '<span class="opacity-40">—</span>';
+                var badge = row.sale_status === 'paid' ? 'badge-success' : 
+                         row.sale_status === 'partial' ? 'badge-warning' : 'badge-neutral';
+                return '<span class="badge ' + badge + '">' + escapeHtml(row.sale_invoice_no) + '</span>';
+            }},
+            { label: 'Status', key: 'sale_status', render: function(row) {
+                if (!row.sale_status) return '<span class="opacity-40">—</span>';
+                var label = row.sale_status === 'paid' ? 'Full' : 
+                         row.sale_status === 'partial' ? 'Partial' : 'Pending';
+                var cls = row.sale_status === 'paid' ? 'text-green-600' : 
+                         row.sale_status === 'partial' ? 'text-amber-600' : 'text-gray-500';
+                return '<span class="' + cls + ' font-medium">' + label + '</span>';
             }},
             { label: 'Ref No', key: 'ref_no', render: function(row) { return escapeHtml(row.ref_no || '—'); } },
             { label: 'Reference', key: 'reference', render: function(row) { return escapeHtml(row.reference || '—'); } },

@@ -224,8 +224,9 @@ CREATE TABLE IF NOT EXISTS system_settings (
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
-INSERT OR IGNORE INTO system_settings (key, value) VALUES ('current_book_no', '01');
-INSERT OR IGNORE INTO system_settings (key, value) VALUES ('current_page_no', '01');
+INSERT OR IGNORE INTO system_settings (key, value) VALUES ('invoice_prefix', 'INV-');
+INSERT OR IGNORE INTO system_settings (key, value) VALUES ('current_book_no', '1');
+INSERT OR IGNORE INTO system_settings (key, value) VALUES ('current_bill_no', '1');
 INSERT OR IGNORE INTO system_settings (key, value) VALUES ('fy_active', '');
 
 -- ============================================================

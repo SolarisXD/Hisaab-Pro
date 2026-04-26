@@ -17,6 +17,7 @@ var salesService = require('./sales.service');
 var { requireAuth } = require('../auth/auth.middleware');
 var { logActivity } = require('../auth/auth.service');
 var { isDateInActiveFY } = require('../../shared/utils');
+var { validate, saleSchema } = require('../../shared/validation');
 
 // All sales routes require authentication
 router.use(requireAuth);
@@ -37,7 +38,7 @@ router.get('/', function(req, res) {
         }, req.session.user.is_decoy);
         res.json(sales);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to list sales' });
     }
 });
 
@@ -49,7 +50,7 @@ router.get('/next-ref-no', function(req, res) {
         var nextRefNo = salesService.getNextRefNo(req.session.user.is_decoy);
         res.json({ next_ref_no: nextRefNo });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to get next reference number' });
     }
 });
 
@@ -61,7 +62,7 @@ router.get('/next-invoice-no', function(req, res) {
         var nextInvoiceNo = salesService.generateInvoiceNumber(req.session.user.is_decoy);
         res.json({ next_invoice_no: nextInvoiceNo });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to get next invoice number' });
     }
 });
 
@@ -76,7 +77,7 @@ router.get('/summary', function(req, res) {
         var summary = salesService.getSalesSummary(dateFrom, dateTo, req.session.user.is_decoy);
         res.json(summary);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to get sales summary' });
     }
 });
 
@@ -91,14 +92,14 @@ router.get('/:id', function(req, res) {
         }
         res.json(sale);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to get sale details' });
     }
 });
 
 /**
  * POST / — Create new sale
  */
-router.post('/', function(req, res) {
+router.post('/', validate(saleSchema), function(req, res) {
     try {
         var reqFy = req.headers['x-financial-year'];
         if (!isDateInActiveFY(req.body.date, reqFy)) {
@@ -108,14 +109,14 @@ router.post('/', function(req, res) {
         logActivity(req.session.user.id, 'create_sale', 'sale', sale.id, null, req.ip);
         res.status(201).json(sale);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to create sale' });
     }
 });
 
 /**
  * PUT /:id — Update sale
  */
-router.put('/:id', function(req, res) {
+router.put('/:id', validate(saleSchema), function(req, res) {
     try {
         var reqFy = req.headers['x-financial-year'];
         if (!isDateInActiveFY(req.body.date, reqFy)) {
@@ -126,9 +127,9 @@ router.put('/:id', function(req, res) {
         res.json(sale);
     } catch (err) {
         if (err.message === 'Sale not found') {
-            return res.status(404).json({ error: err.message });
+            return res.status(404).json({ error: 'Sale not found' });
         }
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to update sale' });
     }
 });
 
@@ -141,7 +142,7 @@ router.delete('/:id', function(req, res) {
         logActivity(req.session.user.id, 'delete_sale', 'sale', parseInt(req.params.id), null, req.ip);
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Failed to delete sale' });
     }
 });
 
