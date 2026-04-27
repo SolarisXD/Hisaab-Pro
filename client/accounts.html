@@ -205,7 +205,7 @@
                         <button id="btn-edit-ledger" onclick="window.editCurrentAccount()" class="p-2.5 bg-surface-container-high text-primary rounded-xl hover:bg-surface-container-highest transition-all">
                             <span class="material-symbols-outlined pointer-events-none">edit</span>
                         </button>
-                        <button onclick="printLedger()" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                        <button onclick="window.printLedger()" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
                             <span class="material-symbols-outlined text-lg">save</span> Save Ledger (PDF)
                         </button>
                     </div>
@@ -367,7 +367,7 @@
     <script src="js/shortcuts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="js/pdf.js"></script>
+    <script src="js/pdf.js?v=8"></script>
     <script src="js/accounts.js?v=2"></script>
 </body>
 </html>

@@ -49,13 +49,7 @@ function formatBalance(amount, type) {
     // Expense: Positive = DR, Negative = CR
 // Revenue: Positive = CR, Negative = DR
     
-    if (type === 'customer' || type === 'cash' || type === 'bank' || type === 'expense') {
-        return formatted + (num > 0 ? ' DR' : ' CR');
-    } else if (type === 'supplier' || type === 'revenue') {
-        return formatted + (num > 0 ? ' CR' : ' DR');
-    } else {
-        return formatted + (num > 0 ? ' DR' : ' CR');
-    }
+    return formatted + (num < 0 ? ' CR' : ' DR');
 }
 
 /**
@@ -552,7 +546,7 @@ function renderTable(data, columns, options) {
 
 /**
  * Show a format selector for printing (Standard vs Anonymous)
- * @param {Function} onSelect - Callback function(anonymous: boolean)
+ * @param {Function} onSelect - Callback function(anonymous: boolean, period: string)
  */
 function showPrintFormatSelector(onSelect) {
     if (typeof onSelect !== 'function') return;
@@ -561,14 +555,25 @@ function showPrintFormatSelector(onSelect) {
     overlay.className = 'modal-overlay';
     overlay.style.zIndex = '4000';
 
+    var fy = getFinancialYearDates();
+    var today = getToday();
+
     var modalHtml = `
-        <div class="modal-content max-w-md">
+        <div class="modal_content max-w-md">
             <div class="p-8 pb-4 text-center">
                 <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
                     <span class="material-symbols-outlined text-4xl">save</span>
                 </div>
                 <h3 class="font-headline text-2xl font-black text-primary tracking-tight">Select Save Format</h3>
                 <p class="text-on-surface-variant text-[10px] font-black opacity-60 mt-1 uppercase tracking-widest leading-none">Document visibility preference</p>
+            </div>
+            
+            <div class="px-8 pb-2">
+                <p class="text-[9px] font-black text-on-surface-variant/60 uppercase tracking-widest">Period (Optional)</p>
+                <div class="flex gap-2 mt-1">
+                    <input type="date" id="print-period-from" class="flex-1 bg-surface-container-low border-0 rounded-xl px-3 py-2 text-xs font-bold text-primary" value="${fy.start}" title="From Date">
+                    <input type="date" id="print-period-to" class="flex-1 bg-surface-container-low border-0 rounded-xl px-3 py-2 text-xs font-bold text-primary" value="${today}" title="To Date">
+                </div>
             </div>
             
             <div class="p-8 space-y-4">
@@ -611,10 +616,14 @@ function showPrintFormatSelector(onSelect) {
     setTimeout(function() { overlay.classList.add('active'); }, 10);
 
     function cleanup(anon) {
+        var fromDate = document.getElementById('print-period-from').value;
+        var toDate = document.getElementById('print-period-to').value;
+        var period = fromDate && toDate ? (formatDate(fromDate) + ' to ' + formatDate(toDate)) : null;
+        
         overlay.classList.remove('active');
         setTimeout(function() {
             if (overlay.parentNode) overlay.remove();
-            if (anon !== null) onSelect(anon);
+            if (anon !== null) onSelect(anon, period);
         }, 300);
     }
 

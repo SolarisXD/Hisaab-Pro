@@ -1,402 +1,659 @@
 /**
- * pdf.js — Hisaab Pro PDF Generation
- * 
- * Uses jsPDF and html2canvas to generate PDFs of invoices and reports.
- * Assumes libraries are loaded via <script> tags in the HTML.
+ * pdf.js — Hisaab Pro Plain PDF Generation v3
+ * Clean, audit-ready ledger statements
  */
 
 'use strict';
 
+console.log('PDF.js v8 FIXED Indian format');
+
 var pdf = {
+    PAGE_WIDTH: 210,
+    PAGE_HEIGHT: 297,
+    MARGIN: 15,
+    
     /**
-     * Helper to generate a clean, professional filename
+     * Format amount in Indian numbering (1,23,456.78)
+     */
+    formatAmount: function(amount, type) {
+        if (amount == null || isNaN(amount)) return '0.00';
+        
+        var isNegative = amount < 0;
+        var num = Math.abs(amount);
+        var str = num.toFixed(2);
+        var parts = str.split('.');
+        var intPart = parts[0];
+        var decPart = parts[1] || '00';
+        
+        var result = '';
+        if (intPart.length > 3) {
+            var lastThree = intPart.substring(intPart.length - 3);
+            var otherNumbers = intPart.substring(0, intPart.length - 3);
+            result = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + ',' + lastThree;
+        } else {
+            result = intPart;
+        }
+        
+        var formatted = result + '.' + decPart;
+        
+        if (type === 'balance') {
+            return formatted + (isNegative ? ' Cr' : ' Dr');
+        }
+        return (isNegative ? '-' : '') + formatted;
+    },
+    
+    // Use helvetica - built-in with jsPDF
+    setFont: function(doc, style, size) {
+        style = style || 'normal';
+        size = size || 11;
+        doc.setFont('helvetica', style, size);
+    },
+    
+    /**
+     * Helper: generate filename
      */
     getSafeFilename: function(baseName, type) {
         var date = getToday();
         var name = (baseName || 'Hisaab').replace(/[^a-z0-9]/gi, '_');
         var suffix = (type || 'Report').replace(/[^a-z0-9]/gi, '_');
-        return `${name}_${suffix}_${date}.pdf`;
+        return name + '_' + suffix + '_' + date + '.pdf';
     },
-
+    
     /**
-     * Generate PDF from an HTML element
-     * @param {HTMLElement} element - The element to capture
-     * @param {string} filename - The name of the PDF file
+     * DRAW: Horizontal line
      */
-    fromElement: function(element, filename) {
-        if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
-            showToast('PDF libraries not loaded. Please check assets.', 'error');
-            return Promise.reject(new Error('Libraries missing'));
-        }
-
-        showToast('Generating PDF...', 'info');
-
-        // Capture with html2canvas
-        return html2canvas(element, {
-            scale: 2, // Higher quality
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff'
-        }).then(function(canvas) {
-            var imgData = canvas.toDataURL('image/jpeg', 0.95);
-            var { jsPDF } = window.jspdf;
-            var doc = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
-
-            var imgWidth = 210; // A4 width in mm
-            var pageHeight = 297; // A4 height in mm
-            var imgHeight = (canvas.height * imgWidth) / canvas.width;
-            var heightLeft = imgHeight;
-            var position = 0;
-
-            // Add first page
-            doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            // Add extra pages if needed
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                doc.addPage();
-                doc.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            doc.save(filename || 'hisaab-pro-export.pdf');
-            showToast('PDF downloaded successfully!', 'success');
-        }).catch(function(err) {
-            showToast('Failed to generate PDF: ' + err.message, 'error');
-            console.error(err);
-        });
+    drawLine: function(doc, y, x1, x2) {
+        doc.setLineWidth(0.5);
+        doc.line(x1 || this.MARGIN, y, x2 || (this.PAGE_WIDTH - this.MARGIN), y);
     },
-
+    
+    /**
+     * DRAW: Centered text
+     */
+    drawCentered: function(doc, text, y, fontSize, fontStyle) {
+        fontSize = fontSize || 12;
+        fontStyle = fontStyle || 'normal';
+        doc.setFont('Times New Roman', fontStyle);
+        doc.setFontSize(fontSize);
+        doc.text(text, this.PAGE_WIDTH / 2, y, { align: 'center' });
+    },
+    
+    /**
+     * Generate Ledger Statement PDF
+     */
+    generateLedgerPDF: function(options) {
+        options = options || {};
+        
+        if (typeof jspdf === 'undefined') {
+            showToast('jsPDF not loaded', 'error');
+            return;
+        }
+        
+        var self = this;
+        var jsPDF = jspdf.jsPDF;
+        var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        
+        var page = 1;
+        var yPos = this.MARGIN;
+        var rowHeight = 7;
+        
+        // Table columns - fixed widths in mm
+        var cols = [
+            { label: 'Date', w: 22, a: 'left' },
+            { label: 'Particulars', w: 65, a: 'left' },
+            { label: 'Ref.No.', w: 18, a: 'center' },
+            { label: 'Debit', w: 28, a: 'right' },
+            { label: 'Credit', w: 28, a: 'right' },
+            { label: 'Balance', w: 32, a: 'right' }
+        ];
+        
+        // Scale to fit
+        var totW = cols.reduce(function(s, c) { return s + c.w; }, 0);
+        var scale = (this.PAGE_WIDTH - 2 * this.MARGIN) / totW;
+        cols = cols.map(function(c) { c.w = c.w * scale; return c; });
+        
+        function getX(i) {
+            var x = self.MARGIN;
+            for (var j = 0; j < i; j++) x += cols[j].w;
+            return x;
+        }
+        
+        // ============ HEADER ============
+        yPos += 6;
+        
+        if (options.anonymous) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.text('LEDGER ACCOUNT', this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 8;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            doc.text('(Confidential Financial Record)', this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 12;
+            doc.setLineWidth(0.75);
+            doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+        } else {
+            // Company info - handle undefined/null properly
+            var shopName = options.shopName || '';
+            var shopAddr = options.shopAddress || '';
+            var shopPhone = options.shopPhone || '';
+            var shopGSTIN = options.shopGSTIN || '';
+            
+            // Clean up address if undefined
+            if (shopAddr === 'undefined' || shopAddr === 'null') shopAddr = '';
+            if (shopPhone === 'undefined' || shopPhone === 'null') shopPhone = '';
+            if (shopGSTIN === 'undefined' || shopGSTIN === 'null') shopGSTIN = '';
+            
+            var fyLabel = options.fy ? '- ' + options.fy : '';
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            var headerLine = shopName ? shopName + ' ' + fyLabel : 'LEDGER ACCOUNT';
+            doc.text(headerLine, this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 8;
+            
+            if (shopAddr) {
+                doc.setFontSize(10);
+                doc.text(shopAddr, this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+                yPos += 5;
+            }
+            
+            if (shopPhone || shopGSTIN) {
+                doc.setFontSize(9);
+                var contactParts = [];
+                if (shopPhone) contactParts.push('Ph: ' + shopPhone);
+                if (shopGSTIN) contactParts.push('GSTIN: ' + shopGSTIN);
+                doc.text(contactParts.join('  |  '), this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+                yPos += 5;
+            }
+            
+            yPos += 4;
+            doc.setLineWidth(0.75);
+            doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+        }
+        
+        yPos += 10;
+        
+        // Account name
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.text(options.accountName || 'Account', this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+        yPos += 6;
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text('Ledger Account', this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+        yPos += 5;
+        
+        // Period
+        if (options.period) {
+            doc.setFontSize(9);
+            doc.text(options.period, this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 5;
+        }
+        
+        yPos += 6;
+        
+        // ============ TABLE HEADER ============
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        
+        cols.forEach(function(col, i) {
+            var x = getX(i);
+            if (col.a === 'right') {
+                doc.text(col.label, x + col.w, yPos, { align: 'right' });
+            } else if (col.a === 'center') {
+                doc.text(col.label, x + col.w / 2, yPos, { align: 'center' });
+            } else {
+                doc.text(col.label, x + 1, yPos);
+            }
+        });
+        
+        yPos += 2;
+        doc.setLineWidth(0.5);
+        doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+        yPos += 6;
+        
+        // ============ TABLE BODY ============
+        var entries = options.entries || [];
+        var balance = options.openingBalance || 0;
+        var totDebit = 0;
+        var totCredit = 0;
+        
+        // Opening Balance
+        if (options.openingBalance != null && options.openingBalance !== undefined) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            
+            doc.text('-', getX(0) + 1, yPos);
+            doc.text('Opening Balance', getX(1) + 1, yPos);
+            doc.text('-', getX(2) + cols[2].w / 2, yPos, { align: 'center' });
+            
+            var obStr = self.formatAmount(balance, 'balance');
+            var rightStart = getX(3);
+            
+            doc.text('', rightStart + cols[3].w, yPos, { align: 'right' });
+            doc.text('', rightStart + cols[3].w + cols[4].w, yPos, { align: 'right' });
+            doc.text(obStr, rightStart + cols[3].w + cols[4].w + cols[5].w, yPos, { align: 'right' });
+            
+            if (balance >= 0) totDebit += balance;
+            else totCredit += Math.abs(balance);
+            
+            yPos += 3;
+            doc.setLineWidth(0.25);
+            doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+            yPos += rowHeight;
+        }
+        
+        // Transactions
+        entries.forEach(function(entry) {
+            if (yPos > this.PAGE_HEIGHT - 50) {
+                doc.addPage();
+                page++;
+                yPos = this.MARGIN;
+                
+                // Repeat header
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                cols.forEach(function(col, i) {
+                    var x = getX(i);
+                    if (col.a === 'right') {
+                        doc.text(col.label, x + col.w, yPos, { align: 'right' });
+                    } else if (col.a === 'center') {
+                        doc.text(col.label, x + col.w / 2, yPos, { align: 'center' });
+                    } else {
+                        doc.text(col.label, x + 1, yPos);
+                    }
+                });
+                yPos += 2;
+                doc.setLineWidth(0.5);
+                doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+                yPos += 6;
+                
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(8);
+                doc.text('continued...', this.MARGIN + 2, yPos);
+                yPos += 6;
+            }
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            
+            // Date
+            doc.text(entry.date || '-', getX(0) + 1, yPos);
+            
+            // Particulars - clean text
+            var part = entry.particulars || '-';
+            if (part.length > 30) part = part.substring(0, 27) + '...';
+            doc.text(part, getX(1) + 1, yPos);
+            
+            // Ref.No
+            var ref = entry.ref_no || '-';
+            doc.text(ref.substring(0, 5), getX(2) + cols[2].w / 2, yPos, { align: 'center' });
+            
+            // Debit/Credit
+            var debit = parseFloat(entry.debit) || 0;
+            var credit = parseFloat(entry.credit) || 0;
+            
+            var debitStr = debit > 0 ? self.formatAmount(debit, 'amount') : '';
+            var creditStr = credit > 0 ? self.formatAmount(credit, 'amount') : '';
+            
+            var r3 = getX(3) + cols[3].w;
+            var r4 = r3 + cols[4].w;
+            var r5 = r4 + cols[5].w;
+            
+            // Update running balance
+            if (debit > 0) balance += debit;
+            if (credit > 0) balance -= credit;
+            
+            doc.text(debitStr, r3, yPos, { align: 'right' });
+            doc.text(creditStr, r4, yPos, { align: 'right' });
+            doc.text(self.formatAmount(balance, 'balance'), r5, yPos, { align: 'right' });
+            
+            // Totals
+            if (debit > 0) totDebit += debit;
+            if (credit > 0) totCredit += credit;
+            
+            // Row line
+            yPos += 3;
+            doc.setLineWidth(0.25);
+            doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+            yPos += rowHeight;
+        }.bind(this));
+        
+        // ============ TOTALS ============
+        yPos += 4;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('Total', getX(1) + 1, yPos);
+        
+        var td = getX(3) + cols[3].w;
+        var tc = td + cols[4].w;
+        var tb = tc + cols[5].w;
+        
+        doc.text(self.formatAmount(totDebit, 'amount'), td, yPos, { align: 'right' });
+        doc.text(self.formatAmount(totCredit, 'amount'), tc, yPos, { align: 'right' });
+        doc.text(self.formatAmount(balance, 'balance'), tb, yPos, { align: 'right' });
+        
+        yPos += 4;
+        doc.setLineWidth(0.75);
+        doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+        yPos += 12;
+        
+        // Final balance
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        var finalLabel = 'Closing Balance: ' + self.formatAmount(balance, 'balance');
+        doc.text(finalLabel, this.PAGE_WIDTH - this.MARGIN, yPos, { align: 'right' });
+        
+        // Page number
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text('Page ' + page, this.PAGE_WIDTH - this.MARGIN, this.PAGE_HEIGHT - 8, { align: 'right' });
+        
+        // Save
+        var filename = options.filename || this.getSafeFilename(options.accountName || 'Ledger', 'Statement');
+        doc.save(filename);
+        showToast('PDF downloaded', 'success');
+    },
+    
     /**
      * Generate Invoice PDF
-     * @param {Object} sale - The sale data object
-     * @param {Object} options - { anonymous: boolean }
      */
     generateInvoice: function(data, options) {
         options = options || {};
-        var type = options.type || (data.supplier_account_id || data.supplier_name ? 'purchase' : 'sale');
+        
+        if (typeof jspdf === 'undefined') {
+            showToast('jsPDF not loaded', 'error');
+            return;
+        }
+        
+        var jsPDF = jspdf.jsPDF;
+        var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        
+        var type = options.type || 'sale';
         var isSale = type === 'sale';
+        var yPos = this.MARGIN;
         
-        // Branding based on context
-        var themeColor = isSale ? '#2563EB' : '#475569'; // Blue vs Slate
-        var secondaryColor = isSale ? '#f8fafc' : '#f1f5f9';
-        var label = isSale ? 'SALES INVOICE' : 'PURCHASE RECORD';
+        // Header
+        yPos += 6;
         
-        // Default descriptions
-        var partyName = isSale ? (data.customer_name || 'Walk-in Customer') : (data.supplier_name || 'Regular Supplier');
-        var defaultDesc = isSale ? `Sale Transaction — ${partyName}` : `Procurement Entry — ${partyName}`;
-
-        // Create a hidden print-ready element
-        var printEl = document.createElement('div');
-        printEl.className = 'print-only-container';
-        printEl.style.width = '800px'; 
-        printEl.style.padding = '40px';
-        printEl.style.background = 'white';
-        printEl.style.color = '#1e293b';
-        printEl.style.fontFamily = "'Inter', Arial, sans-serif";
-
-        // Get shop info
-        api.getConfig().then(function(config) {
-            var headerHtml = '';
-            if (options.anonymous) {
-                var anonLabel = isSale ? 'ANONYMOUS SALES RECORD' : 'CONFIDENTIAL PURCHASE RECORD';
-                headerHtml = `
-                    <div style="text-align: center; border-bottom: 4px solid #64748b; padding-bottom: 20px; margin-bottom: 30px; background-color: #f1f5f9; padding-top: 20px; border-radius: 8px 8px 0 0;">
-                        <h1 style="margin: 0; font-size: 24px; text-transform: uppercase; font-weight: 900; color: #334155; letter-spacing: 3px;">${anonLabel}</h1>
-                        <p style="margin: 8px 0 2px 0; font-size: 13px; font-weight: 600; color: #64748b;">(Confidential Internal Document — No Firm Identity)</p>
-                    </div>
-                `;
-            } else {
-                headerHtml = `
-                    <div style="text-align: center; border-bottom: 4px solid ${themeColor}; padding-bottom: 20px; margin-bottom: 30px; background-color: ${secondaryColor}; padding-top: 20px; border-radius: 8px 8px 0 0;">
-                        <h1 style="margin: 0; font-size: 28px; text-transform: uppercase; font-weight: 900; color: ${isSale ? '#1e3a8a' : '#1e293b'}; letter-spacing: 2px;">${escapeHtml(config.shop.name)}</h1>
-                        <p style="margin: 8px 0 2px 0; font-size: 15px; font-weight: 600; color: #333;">${escapeHtml(config.shop.address || '')}</p>
-                        <p style="margin: 4px 0; font-size: 14px; color: #475569;"><strong>Contact:</strong> ${escapeHtml(config.shop.phone || '—')} &nbsp;|&nbsp; <strong>GSTIN:</strong> ${escapeHtml(config.shop.gstin || '—')}</p>
-                    </div>
-                `;
+        if (options.anonymous) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.text(isSale ? 'SALES INVOICE' : 'PURCHASE RECORD', this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 8;
+            doc.setFontSize(11);
+            doc.text('(Confidential Document)', this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 12;
+            doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+        } else {
+            var cfg = options.shopConfig || {};
+            var name = cfg.name || '';
+            var addr = cfg.address || '';
+            var phone = cfg.phone || '';
+            var gstin = cfg.gstin || '';
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.text(name, this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 8;
+            
+            if (addr) {
+                doc.setFontSize(10);
+                doc.text(addr, this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+                yPos += 5;
             }
-
-            var html = `
-                ${headerHtml}
-                
-                <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
-                    <div>
-                        <h3 style="margin: 0 0 10px 0; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">${isSale ? 'Billed To:' : 'Supplier:'}</h3>
-                        <p style="margin: 0; font-weight: 800; font-size: 18px; color: #1e293b;">${escapeHtml(partyName)}</p>
-                    </div>
-                    <div style="text-align: right;">
-                        <h2 style="margin: 0; font-size: 20px; color: ${themeColor}; font-weight: 900; letter-spacing: 1px;">${label}</h2>
-                        <p style="margin: 6px 0; font-size: 14px; font-weight: 600;"><strong>No:</strong> ${escapeHtml(data.invoice_no)}</p>
-                        <p style="margin: 4px 0; font-size: 14px; font-weight: 600;"><strong>Date:</strong> ${formatDate(data.date)}</p>
-                    </div>
-                </div>
-
-                <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 30px; background: #fdfdfd; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
-                    <p style="margin: 0; font-size: 12px; color: #94a3b8; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">Transaction Context / Description:</p>
-                    <p style="margin: 8px 0 0 0; font-size: 16px; font-weight: 500; color: #1e293b; line-height: 1.5;">${escapeHtml(data.notes || defaultDesc)}</p>
-                </div>
-
-                <div style="display: flex; justify-content: flex-end;">
-                    <div style="width: 300px; background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #f1f5f9;">
-                        <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; font-weight: 600; color: #475569;">
-                            <span>Subtotal Volume:</span>
-                            <span>${formatINR(data.subtotal)}</span>
-                        </div>
-                        ${data.tax_amount > 0 ? `
-                        <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; font-weight: 600; color: #475569;">
-                            <span>Taxation (${data.tax_percent}%):</span>
-                            <span>${formatINR(data.tax_amount)}</span>
-                        </div>
-                        ` : ''}
-                        <div style="display: flex; justify-content: space-between; padding: 12px 0 0 0; border-top: 2px dashed #cbd5e1; margin-top: 12px; font-weight: 900; font-size: 22px;">
-                            <span style="color: #64748b;">Total:</span>
-                            <span style="color: ${themeColor};">${formatINR(data.total)}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="margin-top: 40px; border-top: 2px solid #f1f5f9; padding-top: 20px; font-size: 12px; color: #94a3b8; text-align: center; font-weight: 600;">
-                    <p style="margin: 4px 0;">${options.anonymous ? 'Privileged Financial Documentation.' : 'This is a digitally verified commercial record.'}</p>
-                    <p style="margin: 4px 0; color: #64748b; font-size: 11px;">Computer generated ${isSale ? 'sales record' : 'entry'} — authorized by Hisaab Pro Protocol.</p>
-                </div>
-            `;
-
-            printEl.innerHTML = html;
-            document.body.appendChild(printEl);
-
-            // Capture and remove
-            var filename = pdf.getSafeFilename(isSale ? 'Sale' : 'Purchase', data.invoice_no);
-            pdf.fromElement(printEl, filename)
-                .finally(function() {
-                    document.body.removeChild(printEl);
-                });
-        });
+            
+            if (phone || gstin) {
+                var parts = [];
+                if (phone) parts.push('Ph: ' + phone);
+                if (gstin) parts.push('GSTIN: ' + gstin);
+                doc.setFontSize(9);
+                doc.text(parts.join('  |  '), this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+                yPos += 5;
+            }
+            
+            yPos += 4;
+            doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+        }
+        
+        yPos += 10;
+        
+        // Party & Invoice
+        var party = isSale ? (data.customer_name || 'Customer') : (data.supplier_name || 'Supplier');
+        var invLabel = isSale ? 'INVOICE' : 'PURCHASE';
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text(isSale ? 'Customer:' : 'Supplier:', this.MARGIN + 5, yPos);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text(invLabel, this.PAGE_WIDTH - this.MARGIN - 5, yPos, { align: 'right' });
+        
+        yPos += 6;
+        doc.setFont('helvetica', 'normal');
+        doc.text(party, this.MARGIN + 5, yPos);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text('No: ' + (data.invoice_no || '-'), this.PAGE_WIDTH - this.MARGIN - 5, yPos, { align: 'right' });
+        
+        yPos += 5;
+        doc.text('Date: ' + formatDate(data.date), this.PAGE_WIDTH - this.MARGIN - 5, yPos, { align: 'right' });
+        
+        yPos += 12;
+        doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+        yPos += 8;
+        
+        // Particulars
+        doc.text('Particulars:', this.MARGIN + 5, yPos);
+        yPos += 6;
+        doc.text(data.notes || (isSale ? 'Sale' : 'Purchase'), this.MARGIN + 5, yPos);
+        
+        yPos += 12;
+        
+        // Amounts
+        var amtX = this.PAGE_WIDTH - 50;
+        
+        doc.text('Subtotal:', amtX, yPos);
+        doc.text(this.formatAmount(data.subtotal), this.PAGE_WIDTH - this.MARGIN - 5, yPos, { align: 'right' });
+        
+        if (data.tax_amount > 0) {
+            yPos += 6;
+            doc.text('Tax (' + (data.tax_percent || 0) + '%):', amtX, yPos);
+            doc.text(this.formatAmount(data.tax_amount), this.PAGE_WIDTH - this.MARGIN - 5, yPos, { align: 'right' });
+        }
+        
+        yPos += 8;
+        doc.line(amtX, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+        
+        yPos += 6;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('Total:', amtX, yPos);
+        doc.text(this.formatAmount(data.total), this.PAGE_WIDTH - this.MARGIN - 5, yPos, { align: 'right' });
+        
+        // Footer
+        yPos += 15;
+        doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+        
+        yPos += 8;
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9);
+        doc.text(options.anonymous ? 'Confidential.' : 'Computer generated record.', this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+        
+        doc.setFontSize(8);
+        doc.text('Page 1', this.PAGE_WIDTH - this.MARGIN - 5, this.PAGE_HEIGHT - 8, { align: 'right' });
+        
+        var filename = this.getSafeFilename(isSale ? 'Sale' : 'Purchase', data.invoice_no);
+        doc.save(filename);
+        showToast('PDF downloaded', 'success');
     },
-
+    
     /**
-     * Generate Report PDF with professional header
-     * @param {HTMLElement} contentEl - The report content element
-     * @param {string} title - Report title
-     * @param {string} filename - Filename
-     * @param {Object} options - { anonymous: boolean }
+     * Generate Report PDF
      */
-    generateReportPDF: function(contentEl, title, filename, options) {
+    generateReportPDF: function(data, columns, title, options) {
         options = options || {};
-        // Create a wrapper for the report to add a header
-        var printEl = document.createElement('div');
-        printEl.className = 'print-report-container';
-        printEl.style.width = '800px';
-        printEl.style.padding = '30px';
-        printEl.style.background = 'white';
-        printEl.style.color = 'black';
-        printEl.style.fontFamily = 'Arial, sans-serif';
-
-        api.getConfig().then(function(config) {
-            var headerHtml = '';
-            if (options.anonymous) {
-                headerHtml = `
-                    <div style="text-align: center; border-bottom: 3px solid #64748b; padding-bottom: 12px; margin-bottom: 15px; background-color: #f1f5f9; padding-top: 12px; border-radius: 4px 4px 0 0;">
-                        <h1 style="margin: 0; font-size: 20px; text-transform: uppercase; font-weight: 900; color: #334155; letter-spacing: 1.5px;">FINANCIAL RECORD</h1>
-                        <p style="margin: 5px 0 2px 0; font-size: 12px; color: #64748b;"><strong>Subject:</strong> ${escapeHtml(title)} &nbsp;|&nbsp; <strong>Generated on:</strong> ${formatDate(getToday())}</p>
-                    </div>
-                `;
-            } else {
-                headerHtml = `
-                    <div style="text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 12px; margin-bottom: 15px; background-color: #f8fafc; padding-top: 12px; border-radius: 4px 4px 0 0;">
-                        <h1 style="margin: 0; font-size: 22px; text-transform: uppercase; font-weight: 900; color: #1e3a8a; letter-spacing: 1px;">${escapeHtml(config.shop.name)}</h1>
-                        <p style="margin: 5px 0 2px 0; font-size: 13px; font-weight: 600; color: #333;">${escapeHtml(config.shop.address)}</p>
-                        <p style="margin: 2px 0; font-size: 12px; color: #555;"><strong>Report:</strong> ${escapeHtml(title)} &nbsp;|&nbsp; <strong>Generated on:</strong> ${formatDate(getToday())}</p>
-                    </div>
-                `;
+        
+        if (typeof jspdf === 'undefined') {
+            showToast('jsPDF not loaded', 'error');
+            return;
+        }
+        
+        var jsPDF = jspdf.jsPDF;
+        var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        
+        var yPos = this.MARGIN;
+        
+        // Header
+        yPos += 6;
+        
+        if (options.anonymous) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.text('FINANCIAL RECORD', this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 8;
+            doc.setFontSize(12);
+            doc.text(title, this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 10;
+            doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+        } else {
+            var cfg = options.shopConfig || {};
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.text(cfg.name || 'Business', this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 8;
+            
+            if (cfg.address) {
+                doc.setFontSize(10);
+                doc.text(cfg.address, this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+                yPos += 5;
             }
             
-            var styleHtml = `
-                <style>
-                    .print-report-container * { box-sizing: border-box; }
-                    .print-report-container .btn,
-                    .print-report-container button,
-                    .print-report-container .header-actions,
-                    .print-report-container .loading-overlay,
-                    .print-report-container .spinner,
-                    .print-report-container .material-symbols-outlined,
-                    .print-report-container input,
-                    .print-report-container select,
-                    .print-report-container .no-print { display: none !important; }
-
-                    /* Hide the entire action bar in Ledger */
-                    .print-report-container #ledger-panel > div.flex.justify-between {
-                        border-bottom: 2px solid #f1f5f9 !important;
-                        padding-bottom: 15px !important;
-                        margin-bottom: 25px !important;
-                    }
-                    .print-report-container #ledger-panel > div.flex.justify-between > div.flex.items-center {
-                        display: none !important; /* Hide action buttons container */
-                    }
-                    
-                    /* Decluttering Ledger Account Name */
-                    .print-report-container #ledger-account-name {
-                        font-size: 22px !important;
-                        font-weight: 900 !important;
-                        color: #0f172a !important;
-                        margin: 0 !important;
-                        font-style: normal !important;
-                        text-transform: uppercase !important;
-                        letter-spacing: -0.5px !important;
-                    }
-                    
-                    /* Decluttering Cards */
-                    .print-report-container #ledger-stats { 
-                        display: flex !important; 
-                        gap: 20px !important; 
-                        margin-bottom: 25px !important;
-                    }
-                    .print-report-container #ledger-stats > div { 
-                        flex: 1 !important;
-                        background: #f8fafc !important; 
-                        border: 1px solid #e2e8f0 !important;
-                        padding: 15px 20px !important;
-                        border-radius: 8px !important;
-                        justify-content: flex-start !important;
-                        box-shadow: none !important;
-                    }
-                    .print-report-container #ledger-stats > div:last-child {
-                        background: #f1f5f9 !important;
-                        border-color: #cbd5e1 !important;
-                        color: #1e293b !important;
-                    }
-                    .print-report-container #ledger-stats p { margin: 0 !important; }
-                    .print-report-container #ledger-stats .text-xs { font-size: 11px !important; color: #64748b !important; font-weight: 800 !important; }
-                    .print-report-container #ledger-stats .text-2xl { font-size: 20px !important; margin-top: 4px !important; font-weight: 900 !important; }
-
-                    .print-report-container .panel,
-                    .print-report-container .stat-card {
-                        box-shadow: none !important;
-                        border: 1px solid #e5e7eb !important;
-                        margin-bottom: 20px !important;
-                        border-radius: 6px !important;
-                    }
-                    .print-report-container .panel-body,
-                    .print-report-container .stat-card { padding: 15px !important; }
-                    
-                    /* Table Decluttering */
-                    .print-report-container table { 
-                        font-size: 11.5px !important; 
-                        width: 100% !important; 
-                        border-collapse: separate !important;
-                        border-spacing: 0 !important;
-                        border: 1px solid #e2e8f0 !important;
-                        border-radius: 8px !important;
-                        overflow: hidden !important;
-                    }
-                    .print-report-container th { 
-                        background: #f8fafc !important; 
-                        border-bottom: 1px solid #e2e8f0 !important; 
-                        border-right: 1px solid #f1f5f9 !important;
-                        padding: 12px 15px !important; 
-                        font-weight: 900 !important;
-                        text-transform: uppercase !important;
-                        letter-spacing: 0.5px !important;
-                        color: #475569 !important;
-                    }
-                    .print-report-container td { 
-                        border-bottom: 1px solid #f1f5f9 !important; 
-                        border-right: 1px solid #fdfdfd !important;
-                        padding: 10px 15px !important; 
-                        vertical-align: middle !important;
-                        line-height: 1.4 !important;
-                    }
-                    .print-report-container td div p.text-sm { font-weight: 800 !important; color: #1e293b !important; margin-bottom: 2px !important; }
-                    .print-report-container td div p.text-[10px] { color: #64748b !important; font-weight: 700 !important; }
-                    .print-report-container .amount { font-weight: 800 !important; }
-                    .print-report-container h3 { font-size: 15px !important; margin: 0 0 10px 0 !important; color: #111 !important; }
-                    .print-report-container .stat-label { font-size: 11px !important; margin-bottom: 4px !important; }
-                    .print-report-container .stat-value { font-size: 18px !important; }
-                </style>
-            `;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text(title, this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 6;
             
-            printEl.innerHTML = styleHtml + headerHtml + contentEl.innerHTML;
-            document.body.appendChild(printEl);
-            
-            pdf.fromElement(printEl, filename)
-                .finally(function() {
-                    document.body.removeChild(printEl);
-                });
-        });
-    },
-
-    /**
-     * Generate PDF from a data array and columns definition
-     * @param {Array} data - Array of objects
-     * @param {Array} columns - Array of column definitions {label, key, render}
-     * @param {string} title - Report title
-     * @param {string} filename - Filename
-     * @param {Object} options - { anonymous: boolean }
-     */
-    generateTablePDF: function(data, columns, title, filename, options) {
-        options = options || {};
-        var printEl = document.createElement('div');
-        printEl.className = 'print-report-container';
-        printEl.style.width = '800px';
-        printEl.style.padding = '30px';
-        printEl.style.background = 'white';
-        printEl.style.color = 'black';
-        printEl.style.fontFamily = 'Arial, sans-serif';
-
-        api.getConfig().then(function(config) {
-            var headerHtml = '';
-            if (options.anonymous) {
-                headerHtml = `
-                    <div style="text-align: center; border-bottom: 3px solid #64748b; padding-bottom: 12px; margin-bottom: 15px; background-color: #f1f5f9; padding-top: 12px; border-radius: 4px 4px 0 0;">
-                        <h1 style="margin: 0; font-size: 20px; text-transform: uppercase; font-weight: 900; color: #334155; letter-spacing: 1px;">FINANCIAL LISTING</h1>
-                        <p style="margin: 2px 0; font-size: 12px; color: #555;"><strong>Table:</strong> ${escapeHtml(title)} &nbsp;|&nbsp; <strong>Generated on:</strong> ${formatDate(getToday())}</p>
-                    </div>
-                `;
-            } else {
-                headerHtml = `
-                    <div style="text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 12px; margin-bottom: 15px; background-color: #f8fafc; padding-top: 12px; border-radius: 4px 4px 0 0;">
-                        <h1 style="margin: 0; font-size: 22px; text-transform: uppercase; font-weight: 900; color: #1e3a8a; letter-spacing: 1px;">${escapeHtml(config.shop.name)}</h1>
-                        <p style="margin: 5px 0 2px 0; font-size: 13px; font-weight: 600; color: #333;">${escapeHtml(config.shop.address)}</p>
-                        <p style="margin: 2px 0; font-size: 12px; color: #555;"><strong>Report:</strong> ${escapeHtml(title)} &nbsp;|&nbsp; <strong>Generated on:</strong> ${formatDate(getToday())}</p>
-                    </div>
-                `;
+            if (options.period) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.text(options.period, this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+                yPos += 5;
             }
             
-            var tableHtml = '<table style="width:100%; border-collapse: collapse; font-size: 11px;">';
+            doc.setFontSize(9);
+            doc.text('Generated: ' + formatDate(getToday()), this.PAGE_WIDTH / 2, yPos, { align: 'center' });
+            yPos += 5;
+            doc.line(this.MARGIN, yPos, this.PAGE_WIDTH - this.MARGIN, yPos);
+        }
+        
+        yPos += 10;
+        
+        // Table
+        if (columns && data && data.length > 0) {
+            var self = this;
+            var tableW = self.PAGE_WIDTH - 2 * self.MARGIN;
+            var colW = tableW / columns.length;
+            
             // Header
-            tableHtml += '<thead><tr style="background: #f3f4f6;">';
-            columns.forEach(col => {
-                tableHtml += `<th style="border: 1px solid #e5e7eb; padding: 6px 8px; text-align: ${col.align || 'left'}; font-weight: 600;">${escapeHtml(col.label)}</th>`;
-            });
-            tableHtml += '</tr></thead><tbody>';
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            for (var ci = 0; ci < columns.length; ci++) {
+                var x = self.MARGIN + ci * colW;
+                var a = columns[ci].align || 'left';
+                if (a === 'right' || a === 'text-right') {
+                    doc.text(columns[ci].label || '', x + colW - 2, yPos, { align: 'right' });
+                } else if (a === 'center') {
+                    doc.text(columns[ci].label || '', x + colW / 2, yPos, { align: 'center' });
+                } else {
+                    doc.text(columns[ci].label || '', x + 2, yPos);
+                }
+            }
             
-            // Body
-            data.forEach(row => {
-                tableHtml += '<tr>';
-                columns.forEach(col => {
-                    var val = col.render ? col.render(row) : (row[col.key] || '');
-                    // Strip HTML tags safely if render returns HTML (e.g. badges or colored spans)
-                    if (typeof val === 'string' && val.includes('<')) {
-                        val = val.replace(/<[^>]*>?/gm, '');
+            yPos += 2;
+            doc.setLineWidth(0.5);
+            doc.line(self.MARGIN, yPos, self.PAGE_WIDTH - self.MARGIN, yPos);
+            yPos += 6;
+            
+            // Data
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            
+            for (var ri = 0; ri < data.length; ri++) {
+                var row = data[ri];
+                if (yPos > self.PAGE_HEIGHT - 25) {
+                    doc.addPage();
+                    yPos = self.MARGIN;
+                    
+                    doc.setFont('helvetica', 'bold');
+                    for (var qi = 0; qi < columns.length; qi++) {
+                        var qx = self.MARGIN + qi * colW;
+                        var qa = columns[qi].align || 'left';
+                        if (qa === 'right' || qa === 'text-right') {
+                            doc.text(columns[qi].label || '', qx + colW - 2, yPos, { align: 'right' });
+                        } else if (qa === 'center') {
+                            doc.text(columns[qi].label || '', qx + colW / 2, yPos, { align: 'center' });
+                        } else {
+                            doc.text(columns[qi].label || '', qx + 2, yPos);
+                        }
                     }
-                    tableHtml += `<td style="border: 1px solid #e5e7eb; padding: 4px 8px; text-align: ${col.align || 'left'};">${escapeHtml(String(val))}</td>`;
-                });
-                tableHtml += '</tr>';
-            });
-            
-            tableHtml += '</tbody></table>';
-
-            printEl.innerHTML = headerHtml + tableHtml;
-            document.body.appendChild(printEl);
-            
-            pdf.fromElement(printEl, filename)
-                .finally(function() {
-                    document.body.removeChild(printEl);
-                });
-        });
+                    yPos += 2;
+                    doc.setLineWidth(0.5);
+                    doc.line(self.MARGIN, yPos, self.PAGE_WIDTH - self.MARGIN, yPos);
+                    yPos += 6;
+                    doc.setFont('helvetica', 'normal');
+                }
+                
+                for (var cj = 0; cj < columns.length; cj++) {
+                    var col = columns[cj];
+                    var cx = self.MARGIN + cj * colW;
+                    var val = col.render ? col.render(row) : (row[col.key] || '');
+                    if (typeof val === 'string') {
+                        val = val.replace(/<[^>]*>/g, '');
+                        val = val.replace(/₹/g, '').trim();
+                    }
+                    var align = col.align || 'left';
+                    
+                    if (align === 'right' || align === 'text-right') {
+                        doc.text(String(val), cx + colW - 2, yPos, { align: 'right' });
+                    } else if (align === 'center') {
+                        doc.text(String(val), cx + colW / 2, yPos, { align: 'center' });
+                    } else {
+                        doc.text(String(val), cx + 2, yPos);
+                    }
+                }
+                
+                yPos += 3;
+                doc.setLineWidth(0.25);
+                doc.line(self.MARGIN, yPos, self.PAGE_WIDTH - self.MARGIN, yPos);
+                yPos += 6;
+            }
+        }
+        
+        // Footer
+        yPos += 10;
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9);
+        doc.text(options.anonymous ? 'Confidential.' : 'Generated by Hisaab Pro.', self.PAGE_WIDTH / 2, yPos, { align: 'center' });
+        
+        doc.setFontSize(8);
+        doc.text('Page 1', self.PAGE_WIDTH - self.MARGIN - 5, self.PAGE_HEIGHT - 8, { align: 'right' });
+        
+        var filename = options.filename || self.getSafeFilename(title || 'Report', 'Data');
+        doc.save(filename);
+        showToast('PDF downloaded', 'success');
+    },
+    
+    /**
+     * Legacy
+     */
+    fromElement: function() {
+        showToast('Use direct PDF generation', 'info');
     }
 };

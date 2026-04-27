@@ -260,12 +260,12 @@
             { label: 'Account', key: 'account_name' },
             { label: 'Type', key: 'type', render: (row) => row.type === 'in' ? 'Received' : 'Paid Out' },
             { label: 'Mode', key: 'mode', render: (row) => getPaymentModeLabel(row.mode) },
-            { label: 'Amount', key: 'amount', align: 'text-right', render: (row) => formatINR(row.amount) },
+            { label: 'Amount', key: 'amount', align: 'text-right', render: (row) => pdf.formatAmount(row.amount) },
             { label: 'Ref No', key: 'ref_no' },
             { label: 'Reference', key: 'reference' }
         ];
 
         var filename = pdf.getSafeFilename('Payments', 'Report');
-        pdf.generateTablePDF(currentPaymentsData, columns, 'Payments Report', filename);
+        pdf.generateReportPDF(currentPaymentsData, columns, 'Payments Report', { filename: filename });
     }
 })();

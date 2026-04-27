@@ -194,7 +194,10 @@
                 btnDownload.style.display = 'flex';
                 btnDownload.onclick = function() {
                     showPrintFormatSelector(function(anonymous) {
-                        if (anonymous !== null) pdf.generateInvoice(purchase, { anonymous: anonymous, type: 'purchase' });
+                        if (anonymous === null) return;
+                        api.getConfig().then(function(config) {
+                            pdf.generateInvoice(purchase, { anonymous: anonymous, type: 'purchase', shopConfig: config.shop });
+                        });
                     });
                 };
             }
@@ -388,16 +391,22 @@
 
         var columns = [
             { label: 'Bill No', key: 'invoice_no' },
-            { label: 'Date', key: 'date', render: (row) => formatDate(row.date) },
-            { label: 'Supplier', key: 'supplier_name', render: (row) => row.supplier_name || 'Generic' },
-            { label: 'Total', key: 'total', align: 'text-right', render: (row) => formatINR(row.total) },
-            { label: 'Paid', key: 'amount_paid', align: 'text-right', render: (row) => formatINR(row.amount_paid) },
-            { label: 'Status', key: 'status', render: (row) => row.status.toUpperCase() }
+            { label: 'Date', key: 'date', render: function(row) { return formatDate(row.date); } },
+            { label: 'Supplier', key: 'supplier_name', render: function(row) { return row.supplier_name || 'Generic'; } },
+            { label: 'Total', key: 'total', align: 'right', render: function(row) { return pdf.formatAmount(row.total); } },
+            { label: 'Paid', key: 'amount_paid', align: 'right', render: function(row) { return pdf.formatAmount(row.amount_paid); } },
+            { label: 'Status', key: 'status', render: function(row) { return row.status.toUpperCase(); } }
         ];
 
-        var filename = pdf.getSafeFilename('Purchases', 'Report');
         showPrintFormatSelector(function(anonymous) {
-            if (anonymous !== null) pdf.generateTablePDF(currentPurchasesData, columns, 'Purchases Report', filename, { anonymous: anonymous });
+            if (anonymous === null) return;
+            
+            api.getConfig().then(function(config) {
+                pdf.generateReportPDF(currentPurchasesData, columns, 'Purchases Report', { 
+                    anonymous: anonymous, 
+                    shopConfig: config.shop 
+                });
+            });
         });
     }
 })();

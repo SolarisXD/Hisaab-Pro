@@ -142,32 +142,156 @@
         setTimeout(() => exportModal.classList.add('hidden'), 300);
     };
 
-    var btnPrintReport = document.getElementById('btn-print-report');
-    if (btnPrintReport) {
-        btnPrintReport.addEventListener('click', function() {
-            var title = (document.getElementById('report-results-title').textContent || 'Report').trim();
-            var cleanTitle = title.replace(/[^a-z0-9 ]/gi, '').replace(/\s+/g, ' ');
-            var filename = pdf.getSafeFilename(cleanTitle, 'Report');
-            showPrintFormatSelector(function(anonymous) {
-                if (anonymous !== null) pdf.generateReportPDF(document.getElementById('report-content'), title, filename, { anonymous: anonymous });
+    function handlePDFExport(isModal) {
+        var title = (document.getElementById('report-results-title').textContent || 'Report').trim();
+        showPrintFormatSelector(function(anonymous, period) {
+            if (anonymous === null) return;
+            
+            api.getConfig().then(function(config) {
+                // Special Handling: Account Ledger should use its native PDF drawing function
+                if (currentReportType === 'account-ledger' && currentReportData) {
+                    var entries = (currentReportData.transactions || []).map(function(t) {
+                        var desc = t.description || 'Entry';
+                        desc = desc.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+                        if (desc.length > 30) desc = desc.substring(0, 27) + '...';
+                        return {
+                            date: formatDate(t.date),
+                            particulars: desc,
+                            ref_no: t.ref_no || '',
+                            debit: t.type === 'debit' ? t.amount : 0,
+                            credit: t.type === 'credit' ? t.amount : 0
+                        };
+                    });
+                    
+                    var fyDates = getFinancialYearDates();
+                    var fyString = fyDates.start.substring(0, 4) + '-' + fyDates.end.substring(2, 4);
+                    
+                    var pdfOptions = {
+                        accountName: currentReportData.account.name,
+                        accountAddress: currentReportData.account.address || '',
+                        fromDate: formatDate(document.getElementById('report-date-from').value),
+                        toDate: formatDate(document.getElementById('report-date-to').value),
+                        entries: entries,
+                        openingBalance: currentReportData.opening_balance,
+                        anonymous: anonymous,
+                        fy: fyString,
+                        period: period
+                    };
+                    
+                    if (!anonymous && config && config.shop) {
+                        pdfOptions.shopName = config.shop.name;
+                        pdfOptions.shopAddress = config.shop.address || config.shop.city ? (config.shop.address + ', ' + config.shop.city) : '';
+                        pdfOptions.shopPhone = config.shop.phone;
+                        pdfOptions.shopGSTIN = config.shop.gstin;
+                    }
+                    
+                    pdf.generateLedgerPDF(pdfOptions);
+                    if (isModal) closeExportModal();
+                    return;
+                }
+                
+                if (currentReportType === 'balance-sheet' && currentReportData) {
+                    var typeLabels = {
+                        customer: 'Trade Debtor Portfolios', supplier: 'Trade Creditor Obligations',
+                        cash: 'Liquid Capital Reserves', bank: 'Institutional Deposits',
+                        expense: 'Operating Expenditures', revenue: 'Gross Revenue Streams'
+                    };
+                    var bsRows = [];
+                    var bsHeaders = [
+                        { label: 'Category / Account', key: 'name', align: 'left' },
+                        { label: 'Book Value', key: 'balance', align: 'right' }
+                    ];
+
+                    for (var type in currentReportData.accounts) {
+                        var accounts = currentReportData.accounts[type];
+                        if (!accounts || accounts.length === 0) continue;
+                        var typeTotal = accounts.reduce((sum, a) => sum + a.current_balance, 0);
+                        
+                        bsRows.push({
+                            name: '[' + (typeLabels[type] || type).toUpperCase() + ']',
+                            balance: formatBalance(typeTotal, type)
+                        });
+                        
+                        accounts.forEach(function(a) {
+                            bsRows.push({
+                                name: '   ' + a.name,
+                                balance: formatBalance(a.current_balance, type)
+                            });
+                        });
+                        bsRows.push({ name: '', balance: '' });
+                    }
+                    
+                    pdf.generateReportPDF(bsRows, bsHeaders, title, { anonymous: anonymous, shopConfig: config.shop, period: period });
+                    if (isModal) closeExportModal();
+                    return;
+                }
+
+                if (currentReportType === 'monthly' && currentReportData) {
+                    var mRows = [];
+                    var mHeaders = [
+                        { label: 'Date / Entity', key: 'name', align: 'left' },
+                        { label: 'Transactions', key: 'count', align: 'center' },
+                        { label: 'Amount', key: 'total', align: 'right' }
+                    ];
+
+                    mRows.push({ name: '[CHRONOLOGICAL BREAKDOWN]', count: '', total: '' });
+                    (currentReportData.daily_breakdown || []).forEach(function(row) {
+                        mRows.push({
+                            name: formatDate(row.date),
+                            count: row.count,
+                            total: formatINR(row.total)
+                        });
+                    });
+
+                    if (currentReportData.top_customers && currentReportData.top_customers.length > 0) {
+                        mRows.push({ name: '', count: '', total: '' });
+                        mRows.push({ name: '[KEY CLIENT RELATIONSHIPS]', count: '', total: '' });
+                        currentReportData.top_customers.forEach(function(row) {
+                            mRows.push({
+                                name: row.name,
+                                count: row.sale_count,
+                                total: formatINR(row.total)
+                            });
+                        });
+                    }
+
+                    pdf.generateReportPDF(mRows, mHeaders, title, { anonymous: anonymous, shopConfig: config.shop, period: period });
+                    if (isModal) closeExportModal();
+                    return;
+                }
+
+                // Generic table scraping for other report types
+                var contentEl = document.getElementById('report-content');
+                var rows = [];
+                var tableEl = contentEl.querySelector('table');
+                if (tableEl) {
+                    var headers = [];
+                    tableEl.querySelectorAll('thead th').forEach(function(th) {
+                        headers.push({ label: th.textContent.trim(), key: th.textContent.trim().toLowerCase().replace(/\s+/g, '_') });
+                    });
+                    tableEl.querySelectorAll('tbody tr').forEach(function(tr) {
+                        var row = {};
+                        tr.querySelectorAll('td').forEach(function(td, i) {
+                            if (headers[i]) row[headers[i].key] = td.textContent.trim();
+                        });
+                        rows.push(row);
+                    });
+                    if (rows.length > 0) {
+                        pdf.generateReportPDF(rows, headers, title, { anonymous: anonymous, shopConfig: config.shop, period: period });
+                        if (isModal) closeExportModal();
+                        return;
+                    }
+                }
+                showToast('Complex report - using simplified export', 'info');
             });
         });
     }
 
+    var btnPrintReport = document.getElementById('btn-print-report');
+    if (btnPrintReport) btnPrintReport.addEventListener('click', function() { handlePDFExport(false); });
+
     var btnExportPdf = document.getElementById('btn-export-pdf');
-    if (btnExportPdf) {
-        btnExportPdf.addEventListener('click', function() {
-            var title = (document.getElementById('report-results-title').textContent || 'Report').trim();
-            var cleanTitle = title.replace(/[^a-z0-9 ]/gi, '').replace(/\s+/g, ' ');
-            var filename = pdf.getSafeFilename(cleanTitle, 'Report');
-            showPrintFormatSelector(function(anonymous) {
-                if (anonymous !== null) {
-                    pdf.generateReportPDF(document.getElementById('report-content'), title, filename, { anonymous: anonymous });
-                    closeExportModal();
-                }
-            });
-        });
-    }
+    if (btnExportPdf) btnExportPdf.addEventListener('click', function() { handlePDFExport(true); });
 
     window.openGalleryModal = function(encodedUrls) {
         var urls = [];

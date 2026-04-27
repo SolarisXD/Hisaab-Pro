@@ -19,6 +19,7 @@ window.editCurrentAccount = function() {
     window.viewingAccountId = null; // Expose for HTML events
     var allAccountTypes = [];
     var currentAccountsData = [];
+    var currentLedgerData = null; // Store for PDF export
     var searchInput = document.getElementById('search-input');
 
     checkAuth().then(function(user) {
@@ -310,15 +311,8 @@ window.editCurrentAccount = function() {
 
         accounts.forEach(function(acc) {
             var Bal = parseFloat(acc.current_balance) || 0;
-            if (acc.type === 'customer' || acc.type === 'expense' || acc.type === 'cash' || acc.type === 'bank') {
-                // Asset convention: + is DR (Receivable)
-                if (Bal > 0) receivable += Bal;
-                else payable += Math.abs(Bal);
-            } else {
-                // Liability convention: + is CR (Payable)
-                if (Bal > 0) payable += Bal;
-                else receivable += Math.abs(Bal);
-            }
+            if (Bal > 0) receivable += Bal;
+            else if (Bal < 0) payable += Math.abs(Bal);
         });
 
         document.getElementById('summary-accounts-count').textContent = count;
@@ -414,8 +408,11 @@ window.editCurrentAccount = function() {
             });
     }
     window.viewLedger = viewLedger;
-
+    
     function renderLedger(data) {
+        // Store ledger data for PDF export
+        currentLedgerData = data;
+        
         document.getElementById('ledger-account-name').textContent = data.account.name;
         
         var totalCredits = (data.transactions || []).filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
@@ -739,30 +736,101 @@ window.editCurrentAccount = function() {
     // --- Export & Printing ---
 
     window.printLedger = function() {
-        if (!window.viewingAccountId) return;
+        if (!window.viewingAccountId || !currentLedgerData) {
+            showToast('No ledger data to print', 'warning');
+            return;
+        }
+        
         var fullTitle = document.getElementById('ledger-account-name').textContent;
         var accountName = fullTitle.replace('Ledger — ', '').trim();
-        var filename = pdf.getSafeFilename(accountName, 'Ledger');
-        showPrintFormatSelector(function(anonymous) {
-            if (anonymous !== null) pdf.generateReportPDF(document.getElementById('ledger-panel'), fullTitle, filename, { anonymous: anonymous });
+        
+        // Get date range from inputs
+        var dateFrom = document.getElementById('ledger-date-from').value;
+        var dateTo = document.getElementById('ledger-date-to').value;
+        
+        showPrintFormatSelector(function(anonymous, period) {
+            if (anonymous === null) return;
+            
+            // Transform ledger data for PDF (strip HTML and clean up)
+            var entries = (currentLedgerData.transactions || []).map(function(t) {
+                // Clean description - strip HTML tags and format nicely
+                var desc = t.description || 'Entry';
+                // Remove HTML tags
+                desc = desc.replace(/<[^>]*>/g, '');
+                // Replace multiple spaces/newlines with single space
+                desc = desc.replace(/\s+/g, ' ').trim();
+                // Cap length for PDF
+                if (desc.length > 30) desc = desc.substring(0, 27) + '...';
+                
+                // Clean up ref_no
+                var ref = t.ref_no || '';
+                
+                return {
+                    date: formatDate(t.date),
+                    particulars: desc,
+                    ref_no: ref,
+                    debit: t.type === 'debit' ? t.amount : 0,
+                    credit: t.type === 'credit' ? t.amount : 0
+                };
+            });
+            
+var pdfOptions = {
+                accountName: currentLedgerData.account.name,
+                accountAddress: currentLedgerData.account.address || '',
+                fromDate: formatDate(dateFrom),
+                toDate: formatDate(dateTo),
+                entries: entries,
+                openingBalance: currentLedgerData.opening_balance,
+                anonymous: anonymous,
+                fy: getCurrentFY(),
+                period: period
+            };
+            
+            // Add company info if not anonymous - fetch config asynchronously
+            if (!anonymous) {
+                api.getConfig().then(function(config) {
+                    if (config && config.shop) {
+                        pdfOptions.shopName = config.shop.name;
+                        pdfOptions.shopAddress = config.shop.address || config.shop.city ? (config.shop.address + ', ' + config.shop.city) : '';
+                        pdfOptions.shopPhone = config.shop.phone;
+                        pdfOptions.shopGSTIN = config.shop.gstin;
+                    }
+                    pdf.generateLedgerPDF(pdfOptions);
+                }).catch(function() {
+                    pdf.generateLedgerPDF(pdfOptions);
+                });
+            } else {
+                pdf.generateLedgerPDF(pdfOptions);
+            }
         });
     };
 
+    // Define getCurrentFY locally since utils.js may not have it
+    window.getCurrentFY = function() {
+        var fy = getFinancialYearDates();
+        var startYear = fy.start.substring(0, 4);
+        var endYear = fy.end.substring(0, 4);
+        return startYear + '-' + endYear.substring(2);
+    };
+    
     function printAccountsList() {
         if (!currentAccountsData || currentAccountsData.length === 0) {
             showToast('No accounts data to export', 'warning');
             return;
         }
         var title = currentType ? (currentType.toUpperCase() + 's List') : 'Accounts Report';
-        var columns = [
-            { label: 'Name', key: 'name' },
-            { label: 'Group', key: 'type', render: function(row) { return row.type.toUpperCase(); } },
-            { label: 'Phone', key: 'phone' },
-            { label: 'Balance', key: 'current_balance', align: 'text-right', render: function(row) { return formatBalance(row.current_balance, row.type); } }
-        ];
-        var filename = pdf.getSafeFilename(currentType ? currentType.toUpperCase() : 'Accounts', 'List');
+        
         showPrintFormatSelector(function(anonymous) {
-            if (anonymous !== null) pdf.generateTablePDF(currentAccountsData, columns, title, filename, { anonymous: anonymous });
+            if (anonymous === null) return;
+            
+            var columns = [
+                { label: 'Name', key: 'name' },
+                { label: 'Group', key: 'type', render: function(row) { return row.type.toUpperCase(); } },
+                { label: 'Phone', key: 'phone' },
+                { label: 'Balance', key: 'current_balance', align: 'right', render: function(row) { return formatBalance(row.current_balance, row.type); } }
+            ];
+            
+            pdf.generateReportPDF(currentAccountsData, columns, title, { anonymous: anonymous });
         });
     }
 

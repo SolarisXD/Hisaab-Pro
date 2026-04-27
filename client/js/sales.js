@@ -202,7 +202,10 @@
             btnDownload.style.display = 'flex';
             btnDownload.onclick = function() { 
                 showPrintFormatSelector(function(anonymous) {
-                    if (anonymous !== null) pdf.generateInvoice(sale, { anonymous: anonymous, type: 'sale' });
+                    if (anonymous === null) return;
+                    api.getConfig().then(function(config) {
+                        pdf.generateInvoice(sale, { anonymous: anonymous, type: 'sale', shopConfig: config.shop });
+                    });
                 });
             };
             
@@ -392,7 +395,10 @@
         api.get('/sales/' + id)
             .then(function(sale) {
                 showPrintFormatSelector(function(anonymous) {
-                    if (anonymous !== null) pdf.generateInvoice(sale, { anonymous: anonymous });
+                    if (anonymous === null) return;
+                    api.getConfig().then(function(config) {
+                        pdf.generateInvoice(sale, { anonymous: anonymous, shopConfig: config.shop });
+                    });
                 });
             })
             .catch(function(err) {
@@ -430,15 +436,21 @@
         var columns = [
             { label: 'Invoice No', key: 'invoice_no' },
             { label: 'Ref No', key: 'ref_no' },
-            { label: 'Date', key: 'date', render: (row) => formatDate(row.date) },
-            { label: 'Customer', key: 'customer_name', render: (row) => row.customer_name || 'Walk-in' },
-            { label: 'Total', key: 'total', align: 'text-right', render: (row) => formatINR(row.total) },
-            { label: 'Status', key: 'status', render: (row) => row.status.toUpperCase() }
+            { label: 'Date', key: 'date', render: function(row) { return formatDate(row.date); } },
+            { label: 'Customer', key: 'customer_name', render: function(row) { return row.customer_name || 'Walk-in'; } },
+            { label: 'Total', key: 'total', align: 'right', render: function(row) { return pdf.formatAmount(row.total); } },
+            { label: 'Status', key: 'status', render: function(row) { return row.status.toUpperCase(); } }
         ];
-
-        var filename = pdf.getSafeFilename('Sales', 'Report');
+        
         showPrintFormatSelector(function(anonymous) {
-            if (anonymous !== null) pdf.generateTablePDF(currentSalesData, columns, 'Sales Report', filename, { anonymous: anonymous });
+            if (anonymous === null) return;
+            
+            api.getConfig().then(function(config) {
+                pdf.generateReportPDF(currentSalesData, columns, 'Sales Report', { 
+                    anonymous: anonymous, 
+                    shopConfig: config.shop 
+                });
+            });
         });
     }
 })();

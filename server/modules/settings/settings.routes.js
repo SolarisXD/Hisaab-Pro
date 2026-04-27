@@ -11,7 +11,7 @@ var express = require('express');
 var router = express.Router();
 var settingsService = require('./settings.service');
 var { requireAuth, requireRole } = require('../auth/auth.middleware');
-var { loginLimiter } = require('../../shared/rate-limiter');
+var { standardLimiter, loginLimiter } = require('../../shared/rate-limiter');
 var { z } = require('zod');
 
 // Validation schemas for settings
@@ -40,7 +40,7 @@ var shopConfigSchema = z.object({
 });
 
 // Rate-limited public endpoint for FY list (needed before login for FY selector)
-router.get('/public-financial-years', loginLimiter, function(req, res) {
+router.get('/public-financial-years', standardLimiter, function(req, res) {
     try {
         res.json(settingsService.listFinancialYears());
     } catch (err) {

@@ -167,7 +167,7 @@ function getTotalDebtors(isDecoy) {
 function getTotalCreditors(isDecoy) {
     var stmt = db.prepare(
         'SELECT COALESCE(SUM(current_balance), 0) as total' +
-        ' FROM accounts WHERE type = \'supplier\' AND current_balance > 0 AND is_active = 1 AND is_decoy = ?'
+        ' FROM accounts WHERE type = \'supplier\' AND current_balance < 0 AND is_active = 1 AND is_decoy = ?'
     );
     return stmt.get(isDecoy ? 1 : 0).total;
 }

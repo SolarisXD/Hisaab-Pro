@@ -56,7 +56,7 @@ const paymentSchema = z.object({
     account_id: z.number().int().positive(),
     amount: z.number().positive(),
     type: z.enum(['in', 'out']),
-    mode: z.enum(['cash', 'bank', 'other']).default('cash'),
+    mode: z.enum(['cash', 'bank_transfer', 'upi', 'cheque']).default('cash'),
     reference: z.string().max(100).nullable().optional(),
     notes: z.string().max(500).nullable().optional()
 });
@@ -104,9 +104,11 @@ function validate(schema) {
             next();
         } catch (err) {
             if (err instanceof z.ZodError) {
+                console.error('[Validation Error] Body:', req.body);
+                console.error('[Validation Error] Issues:', err.issues);
                 return res.status(400).json({
                     error: "Validation failed",
-                    details: err.errors.map(e => ({ path: e.path.join('.'), message: e.message }))
+                    details: (err.issues || []).map(e => ({ path: e.path.join('.'), message: e.message }))
                 });
             }
             next(err);
