@@ -65,4 +65,26 @@ router.post('/:id/payroll', function(req, res) {
     }
 });
 
+// Update a staff member
+router.put('/:id', validate(staffSchema), function(req, res) {
+    try {
+        var result = staffService.updateStaff(parseInt(req.params.id), req.body, req.session.user.is_decoy);
+        logActivity(req.session.user.id, 'update_staff', 'account', parseInt(req.params.id), null, req.ip);
+        res.json(result);
+    } catch (err) {
+        res.status(400).json({ error: err.message || 'Failed to update staff member' });
+    }
+});
+
+// Delete a staff member
+router.delete('/:id', function(req, res) {
+    try {
+        var result = staffService.deleteStaff(parseInt(req.params.id), req.session.user.is_decoy);
+        logActivity(req.session.user.id, 'delete_staff', 'account', parseInt(req.params.id), null, req.ip);
+        res.json(result);
+    } catch (err) {
+        res.status(400).json({ error: err.message || 'Failed to delete staff member' });
+    }
+});
+
 module.exports = router;

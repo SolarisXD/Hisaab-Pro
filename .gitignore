@@ -30,3 +30,7 @@ sync/venv/
 # Backups (managed separately)
 backups/
 Docs/
+
+# Temporary files
+scratch/
+.tmp/

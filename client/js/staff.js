@@ -95,7 +95,7 @@
                             '<button class="p-2 text-primary hover:bg-primary/5 rounded-lg transition-colors" title="Edit Staff" onclick="event.stopPropagation(); editStaff(' + row.id + ')">' +
                                 '<span class="material-symbols-outlined text-lg">edit</span>' +
                             '</button>' +
-                            '<button class="px-4 py-1.5 text-[10px] font-bold text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-all uppercase tracking-wider" onclick="event.stopPropagation(); openAttendanceModal(' + JSON.stringify(row).replace(/"/g, '&quot;') + ')">Payroll</button>' +
+                            '<button class="px-4 py-1.5 text-[10px] font-bold text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-all uppercase tracking-wider" onclick="event.stopPropagation(); openAttendanceModalFromId(' + row.id + ')">Payroll</button>' +
                        '</div>';
             }}
         ], { onRowClick: 'openAttendanceModalFromId' });
@@ -111,14 +111,42 @@
 
     window.openAttendanceModalFromId = function(id) {
         var staff = allStaff.find(function(s) { return s.id === id; });
-        if (staff) openAttendanceModal(staff);
+        if (staff) openAttendanceModal(staff.id, staff.name, staff.monthly_salary, staff.daily_wage || (staff.monthly_salary / 30), staff.account_balance);
     };
 
     window.openStaffModal = function() {
         document.getElementById('staff-form').reset();
+        document.getElementById('staff-modal-title').textContent = 'Establish Personnel Record';
+        document.getElementById('btn-delete-staff').classList.add('hidden');
+        document.getElementById('staff-opening-balance').disabled = false;
         document.getElementById('staff-modal').classList.remove('hidden');
         setTimeout(function() {
             var modal = document.getElementById('staff-modal');
+            modal.classList.remove('translate-y-full', 'opacity-0');
+            modal.classList.add('active');
+        }, 10);
+    };
+
+    window.editStaff = function(id) {
+        var staff = allStaff.find(function(s) { return s.id === id; });
+        if (!staff) return;
+        editingStaffId = id;
+        document.getElementById('staff-name').value = staff.name;
+        document.getElementById('staff-role').value = '';
+        document.getElementById('staff-phone').value = staff.phone || '';
+        document.getElementById('staff-salary').value = staff.monthly_salary || 0;
+        document.getElementById('staff-opening-balance').value = 0;
+        document.getElementById('staff-opening-balance').disabled = true; // Cannot edit opening balance later easily
+        
+        document.getElementById('staff-modal-title').textContent = 'Modify Personnel Record';
+        
+        var delBtn = document.getElementById('btn-delete-staff');
+        delBtn.classList.remove('hidden');
+        delBtn.onclick = function() { deleteStaff(id); };
+
+        var modal = document.getElementById('staff-modal');
+        modal.classList.remove('hidden');
+        setTimeout(function() {
             modal.classList.remove('translate-y-full', 'opacity-0');
             modal.classList.add('active');
         }, 10);
@@ -149,15 +177,35 @@
         btn.disabled = true;
         btn.textContent = 'Saving...';
 
-        api.post('/staff', data).then(function() {
-            showToast('Staff added successfully!', 'success');
+        var req = editingStaffId ? api.put('/staff/' + editingStaffId, data) : api.post('/staff', data);
+
+        req.then(function() {
+            showToast('Staff saved successfully!', 'success');
             closeStaffModal();
             loadStaffList();
         }).catch(function(err) {
             showToast(err.message, 'error');
         }).finally(function() {
             btn.disabled = false;
-            btn.textContent = 'Save Staff';
+            btn.textContent = 'Authorize Entry';
+        });
+    }
+
+    function deleteStaff(id) {
+        showConfirm({
+            title: 'Revoke Personnel',
+            message: 'Are you sure you want to remove this staff member? Their ledger history will remain but they will be deactivated.',
+            confirmText: 'Revoke Personnel',
+            intent: 'danger'
+        }).then(function(confirmed) {
+            if (!confirmed) return;
+            api.delete('/staff/' + id).then(function() {
+                showToast('Staff deactivated successfully', 'success');
+                closeStaffModal();
+                loadStaffList();
+            }).catch(function(err) {
+                showToast(err.message, 'error');
+            });
         });
     }
 
@@ -169,11 +217,15 @@
     };
 
     window.openAttendanceModal = function(id, name, salary, daily, balance) {
+        if (!id) {
+            showToast('Please select a staff member from the list below', 'info');
+            return;
+        }
         editingStaffId = id;
-        document.getElementById('att-staff-name').textContent = name;
-        document.getElementById('att-monthly-salary').textContent = formatINR(salary).replace('₹', '');
-        document.getElementById('att-daily-wage').textContent = formatINR(daily).replace('₹', '');
-        document.getElementById('att-account-balance').textContent = formatINR(balance).replace('₹', '');
+        document.getElementById('att-staff-name').textContent = name || 'Unknown Staff';
+        document.getElementById('att-monthly-salary').textContent = formatINR(salary || 0).replace('₹', '');
+        document.getElementById('att-daily-wage').textContent = formatINR(daily || 0).replace('₹', '');
+        document.getElementById('att-account-balance').textContent = formatINR(balance || 0).replace('₹', '');
         
         var d = new Date();
         document.getElementById('att-month-picker').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
@@ -181,15 +233,17 @@
         
         var modal = document.getElementById('attendance-modal');
         modal.classList.remove('hidden');
-        setTimeout(() => modal.classList.add('opacity-100'), 10);
+        setTimeout(() => modal.classList.add('opacity-100', 'active'), 10);
         window.loadAttendance();
     };
 
     window.closeAttendanceModal = function() {
         var modal = document.getElementById('attendance-modal');
-        modal.classList.remove('opacity-100');
-        setTimeout(() => modal.classList.add('hidden'), 300);
-        editingStaffId = null;
+        modal.classList.remove('opacity-100', 'active');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            editingStaffId = null;
+        }, 300);
     };
 
     function renderAttendance(logs) {
@@ -246,8 +300,12 @@
     }
 
     function generatePayroll() {
+        if (!editingStaffId) {
+            showToast('Please open a staff member\'s attendance first to generate payroll', 'info');
+            return;
+        }
         var picker = document.getElementById('att-month-picker').value; // YYYY-MM
-        if (!picker || !editingStaffId) return;
+        if (!picker) return;
         var parts = picker.split('-');
         
         showConfirm({

@@ -100,12 +100,6 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <button onclick="window.openAttendanceModal()" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all">
-                    <span class="material-symbols-outlined text-lg">calendar_month</span> Attendance
-                </button>
-                <button id="btn-generate-payroll" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low rounded-xl transition-all">
-                    <span class="material-symbols-outlined text-lg">account_balance_wallet</span> Payroll
-                </button>
                 <button id="btn-new-staff" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
                     <span class="material-symbols-outlined text-lg">person_add</span> Enlist New
                 </button>
@@ -293,6 +287,9 @@
                             <h4 class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Attendance Logs</h4>
                             <div class="flex items-center gap-2">
                                 <input type="month" id="att-month-picker" class="bg-surface-container-low border-0 px-3 py-1.5 rounded-lg text-xs font-bold text-primary focus:ring-0">
+                                <button id="btn-generate-payroll" class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold shadow hover:bg-green-700 transition-colors flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">account_balance_wallet</span> Payroll
+                                </button>
                             </div>
                         </div>
                         

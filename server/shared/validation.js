@@ -89,7 +89,7 @@ const staffSchema = z.object({
  */
 const attendanceSchema = z.object({
     date: z.string().regex(dateRegex, "Invalid date format (YYYY-MM-DD)"),
-    status: z.enum(['present', 'absent', 'half-day', 'leave']),
+    status: z.enum(['present', 'absent', 'half_day', 'leave']),
     notes: z.string().max(200).nullable().optional()
 });
 
