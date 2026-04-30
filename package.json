@@ -7,7 +7,10 @@
     "start": "node server/index.js",
     "dev": "nodemon server/index.js",
     "seed": "node server/db/seed.js",
-    "demo": "node server/db/seed.js --demo && node server/index.js"
+    "demo": "node server/db/seed.js --demo && node server/index.js",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch"
   },
   "engines": {
     "node": ">=14 <20"
@@ -37,6 +40,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "jest": "^30.3.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^7.0.0"
   }
 }

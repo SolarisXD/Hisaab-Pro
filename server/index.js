@@ -181,6 +181,16 @@ app.listen(PORT, HOST, function() {
     console.log('');
     logger.info('Server', 'Started on http://' + HOST + ':' + PORT);
 
+    // Auto-backup on start (if enabled in config)
+    if (config.backup && config.backup.auto_start) {
+        console.log('[Auto-Backup] Creating backup on server start...');
+        try {
+            backup();
+        } catch (err) {
+            console.error('[Auto-Backup] Start backup failed:', err.message);
+        }
+    }
+
     // Schedule backups every 24 hours (or at specific time)
     // For demo/simplicity, we just run it every 24 hours from start
     setInterval(function() {
@@ -192,12 +202,34 @@ app.listen(PORT, HOST, function() {
 // Graceful shutdown
 process.on('SIGINT', function() {
     logger.info('Server', 'Shutting down...');
+    
+    // Auto-backup on exit (if enabled in config)
+    if (config.backup && config.backup.auto_exit) {
+        console.log('[Auto-Backup] Creating backup on server exit...');
+        try {
+            backup();
+        } catch (err) {
+            console.error('[Auto-Backup] Exit backup failed:', err.message);
+        }
+    }
+    
     closeDb();
     process.exit(0);
 });
 
 process.on('SIGTERM', function() {
     logger.info('Server', 'Shutting down...');
+    
+    // Auto-backup on exit (if enabled in config)
+    if (config.backup && config.backup.auto_exit) {
+        console.log('[Auto-Backup] Creating backup on server exit...');
+        try {
+            backup();
+        } catch (err) {
+            console.error('[Auto-Backup] Exit backup failed:', err.message);
+        }
+    }
+    
     closeDb();
     process.exit(0);
 });

@@ -33,4 +33,4 @@ Docs/
 
 # Temporary files
 scratch/
-.tmp/
+.tmp/coverage/

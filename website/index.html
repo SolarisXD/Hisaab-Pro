@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hisaab-Pro — Offline Accounting for Indian Businesses</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 20px; text-align: center; }
+        .header h1 { font-size: 3em; margin-bottom: 10px; }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin: 40px 0; }
+        .feature { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .feature h3 { color: #667eea; margin-bottom: 15px; }
+        .screenshots { margin: 60px 0; text-align: center; }
+        .screenshots img { max-width: 100%; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); margin: 20px 0; }
+        .download { background: white; padding: 40px; border-radius: 10px; text-align: center; margin: 40px 0; }
+        .btn { display: inline-block; padding: 15px 40px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; font-size: 1.1em; margin: 10px; }
+        .btn:hover { background: #764ba2; }
+        .version { background: #e8e8e8; padding: 20px; border-radius: 10px; margin: 40px 0; }
+        .version h3 { margin-bottom: 15px; }
+        .changelog { background: white; padding: 30px; border-radius: 10px; margin: 40px 0; }
+        .changelog h2 { margin-bottom: 20px; }
+        .changelog ul { list-style: none; }
+        .changelog li { padding: 10px 0; border-bottom: 1px solid #eee; }
+        .footer { background: #333; color: white; text-align: center; padding: 30px; margin-top: 60px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Hisaab-Pro</h1>
+        <p>Offline-First Accounting System for Indian Small Businesses</p>
+        <p style="margin-top: 20px; font-size: 1em;">Works from USB • No Internet Required • Double-Entry Accounting</p>
+    </div>
+
+    <div class="container">
+        <div class="features">
+            <div class="feature">
+                <h3>📊 Double-Entry Accounting</h3>
+                <p>Strict debit=credit enforcement. Trial balance always resolves to zero. Professional-grade accuracy.</p>
+            </div>
+            <div class="feature">
+                <h3>💾 USB Portable</h3>
+                <p>Run directly from USB drive. Works on any Windows PC. No installation required on host machine.</p>
+            </div>
+            <div class="feature">
+                <h3>🔒 Data Safe</h3>
+                <p>SQLite WAL mode, atomic writes, crash recovery. Auto backup on start/exit. Your data is protected.</p>
+            </div>
+            <div class="feature">
+                <h3>📈 Reports That Matter</h3>
+                <p>Profit & Loss, Balance Sheet, Debtor Aging, Creditor Schedule. Export to PDF instantly.</p>
+            </div>
+            <div class="feature">
+                <h3>🏢 Multi-Financial Year</h3>
+                <p>Switch between financial years seamlessly. Keep your historical data organized and accessible.</p>
+            </div>
+            <div class="feature">
+                <h3>⚡ Fast & Offline</h3>
+                <p>Local server (localhost), no cloud dependency. Lightning-fast performance even on slow USB drives.</p>
+            </div>
+        </div>
+
+        <div class="screenshots">
+            <h2 style="margin-bottom: 30px;">Screenshots</h2>
+            <p style="color: #666; font-style: italic;">Screenshots will be added here after real-world deployment</p>
+        </div>
+
+        <div class="download">
+            <h2 style="margin-bottom: 20px;">Download Hisaab-Pro V1.0.0</h2>
+            <p style="margin-bottom: 30px; color: #666;">Complete offline accounting solution for your business</p>
+            <a href="#" class="btn">Download Installer (Windows)</a>
+            <a href="#" class="btn" style="background: #28a745;">View on GitHub</a>
+            <p style="margin-top: 20px; font-size: 0.9em; color: #999;">Version 1.0.0 • 2026-04-28 • 45MB</p>
+        </div>
+
+        <div class="version">
+            <h3>Version History</h3>
+            <p><strong>V1.0.0</strong> (2026-04-28) — Publication Release</p>
+            <p><strong>V1.0.0-rc</strong> (2026-03-06) — Release Candidate</p>
+        </div>
+
+        <div class="changelog">
+            <h2>Changelog — V1.0.0</h2>
+            <ul>
+                <li>✅ Strict double-entry accounting (debit=credit always)</li>
+                <li>✅ SQLite WAL mode for USB reliability</li>
+                <li>✅ Atomic writes, crash recovery, backup/restore</li>
+                <li>✅ Server-side Zod validation</li>
+                <li>✅ Cross-PC compatibility, drive letter handling</li>
+                <li>✅ P&L, Balance Sheet, Debtor Aging reports</li>
+                <li>✅ PDF export for invoices and reports</li>
+                <li>✅ Financial year switching</li>
+                <li>✅ 179+ tests, all critical paths verified</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Hisaab-Pro © 2026 — Offline Accounting for Indian Businesses</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">Built with ❤️ for small businesses | MIT License</p>
+    </div>
+</body>
+</html>

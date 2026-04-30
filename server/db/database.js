@@ -205,5 +205,6 @@ module.exports = {
     switchDatabase,
     getCurrentDatabaseFilename,
     closeDb,
-    fyRequestContext
+    fyRequestContext,
+    getDbInstance  // Export for testing
 };
