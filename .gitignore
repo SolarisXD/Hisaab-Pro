@@ -34,3 +34,8 @@ Docs/
 # Temporary files
 scratch/
 .tmp/coverage/
+
+# Build artifacts (distribution packages)
+Hisaab-Pro-v1.0.0/
+Hisaab-Pro-v1.0.0.zip
+node-win.zip
