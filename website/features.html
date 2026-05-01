@@ -112,42 +112,37 @@
         }
     </style>
 </head>
-<body>
-    <header>
-        <nav>
-            <div class="container">
-                <a href="index.html" class="logo">DT Tech Inc.</a>
-                <ul>
-                    <li><a href="index.html">Hisaab-Pro</a></li>
-                    <li><a href="features.html">Features</a></li>
-                    <li><a href="changelog.html">Download</a></li>
-                    <li><a href="contact.html">Contact Us</a></li>
-                    <li><a href="issue.html">Report Issue</a></li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+<body class="bg-background font-body-main text-on-background">
 <!-- TopNavBar -->
-<header class="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm h-16">
-<nav class="flex justify-between items-center max-w-7xl mx-auto px-6 h-full">
-<div class="text-xl font-bold tracking-tight text-blue-900">Hisaab-Pro</div>
-<div class="hidden md:flex items-center space-x-8">
-<a class="font-sans text-sm font-medium tracking-tight text-slate-600 hover:text-blue-900 transition-colors" href="index.html">Hisaab-Pro</a>
-<a class="font-sans text-sm font-medium tracking-tight text-blue-700 border-b-2 border-blue-700 pb-1" href="features.html">Features</a>
-<a class="font-sans text-sm font-medium tracking-tight text-slate-600 hover:text-blue-900 transition-colors" href="changelog.html">Download</a>
-<a class="font-sans text-sm font-medium tracking-tight text-slate-600 hover:text-blue-900 transition-colors" href="contact.html">Contact Us</a>
-<a class="font-sans text-sm font-medium tracking-tight text-slate-600 hover:text-blue-900 transition-colors" href="issue.html">Report Issue</a>
-</div>
-<div class="flex items-center space-x-4">
-<button class="p-2 text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
-<span class="material-symbols-outlined" data-icon="code">code</span>
-</button>
-<button class="bg-primary text-on-primary px-6 py-2 rounded-lg font-sans text-sm font-medium hover:opacity-90 transition-all">
-                    Download
-                </button>
-</div>
-</nav>
+<!-- Consistent Navigation for ALL Pages -->
+<header class="bg-white/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200 shadow-sm">
+    <nav class="flex items-center justify-between w-full px-6 py-4 max-w-7xl mx-auto">
+        <!-- Logo -->
+        <a href="index.html" class="text-xl font-bold text-blue-900">DT Tech Inc.</a>
+        
+        <!-- Navigation Links -->
+        <ul class="hidden md:flex items-center gap-8 font-inter text-sm font-medium tracking-wide">
+            <li><a href="index.html" class="nav-link text-slate-600 hover:text-blue-800 transition-all duration-200">Hisaab-Pro</a></li>
+            <li><a href="features.html" class="nav-link text-slate-600 hover:text-blue-800 transition-all duration-200">Features</a></li>
+            <li><a href="changelog.html" class="nav-link text-slate-600 hover:text-blue-800 transition-all duration-200">Download</a></li>
+            <li><a href="contact.html" class="nav-link text-slate-600 hover:text-blue-800 transition-all duration-200">Contact Us</a></li>
+            <li><a href="issue.html" class="nav-link text-slate-600 hover:text-blue-800 transition-all duration-200">Report Issue</a></li>
+        </ul>
+        
+        <!-- Primary CTA -->
+        <a href="changelog.html" class="bg-primary text-on-primary px-5 py-2.5 rounded-lg font-inter text-sm font-semibold active:scale-95 transition-all shadow-sm">Download Now</a>
+    </nav>
 </header>
+
+<!-- CSS for Active State (add to each page's <style> section) -->
+<!--
+.nav-link.active {
+    color: #002045;
+    border-bottom: 2px solid #002045;
+    padding-bottom: 1px;
+}
+-->
+
 <main class="pt-24 pb-xl">
 <!-- Hero Section -->
 <section class="max-w-7xl mx-auto px-6 mb-xl">
@@ -314,9 +309,9 @@
 <p class="font-sans text-xs text-slate-500 max-w-sm">© 2024 Hisaab-Pro. Precision in Accounting. Designed for professionals who value privacy and performance.</p>
 </div>
 <div class="flex flex-wrap gap-x-8 gap-y-4 md:justify-end">
-<a class="font-sans text-xs text-slate-500 hover:text-blue-700 transition-all hover:underline" href="support.html">Support</a>
-<a class="font-sans text-xs text-slate-500 hover:text-blue-700 transition-all hover:underline" href="privacy.html">Privacy Policy</a>
-<a class="font-sans text-xs text-slate-500 hover:text-blue-700 transition-all hover:underline" href="terms.html">Terms of Service</a>
+<a class="font-sans text-xs text-slate-500 hover:text-blue-700 transition-all hover:underline" href="#">Support</a>
+<a class="font-sans text-xs text-slate-500 hover:text-blue-700 transition-all hover:underline" href="#">Privacy Policy</a>
+<a class="font-sans text-xs text-slate-500 hover:text-blue-700 transition-all hover:underline" href="#">Terms of Service</a>
 <a class="font-sans text-xs text-slate-500 hover:text-blue-700 transition-all hover:underline" href="#">Documentation</a>
 </div>
 </div>

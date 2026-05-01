@@ -105,39 +105,37 @@
         }
     </style>
 </head>
-<body>
-    <header>
-        <nav>
-            <div class="container">
-                <a href="index.html" class="logo">DT Tech Inc.</a>
-                <ul>
-                    <li><a href="index.html">Hisaab-Pro</a></li>
-                    <li><a href="features.html">Features</a></li>
-                    <li><a href="changelog.html">Download</a></li>
-                    <li><a href="contact.html">Contact Us</a></li>
-                    <li><a href="issue.html">Report Issue</a></li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+<body class="bg-background text-on-background font-body-main selection:bg-primary-fixed selection:text-on-primary-fixed">
 <!-- TopAppBar -->
-<header class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-sm border-b border-slate-200 dark:border-slate-800 docked full-width top-0 sticky z-50">
-<div class="flex items-center justify-between w-full px-6 py-4 max-w-7xl mx-auto">
-<div class="flex items-center gap-8">
-<span class="text-xl font-black text-blue-900 dark:text-white tracking-tighter">Hisaab-Pro</span>
-<nav class="hidden md:flex items-center gap-6 font-inter text-sm font-medium tracking-wide">
-<a class="text-slate-600 dark:text-slate-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 active:scale-95 transition-transform" href="index.html">Hisaab-Pro</a>
-<a class="text-slate-600 dark:text-slate-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 active:scale-95 transition-transform" href="contact.html">Contact Us</a>
-<a class="text-blue-900 dark:text-blue-400 border-b-2 border-blue-900 dark:border-blue-400 pb-1 active:scale-95 transition-transform" href="issue.html">Report Issue</a>
-<a class="text-slate-600 dark:text-slate-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 active:scale-95 transition-transform" href="changelog.html">Download</a>
-<a class="text-slate-600 dark:text-slate-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 active:scale-95 transition-transform" href="https://github.com">GitHub</a>
-</nav>
-</div>
-<div class="flex items-center gap-4">
-<button class="bg-primary text-white font-inter text-sm font-semibold px-6 py-2.5 rounded-lg hover:opacity-90 active:scale-95 transition-all shadow-md">Download Now</button>
-</div>
-</div>
+<!-- Consistent Navigation for ALL Pages -->
+<header class="bg-white/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200 shadow-sm">
+    <nav class="flex items-center justify-between w-full px-6 py-4 max-w-7xl mx-auto">
+        <!-- Logo -->
+        <a href="index.html" class="text-xl font-bold text-blue-900">DT Tech Inc.</a>
+        
+        <!-- Navigation Links -->
+        <ul class="hidden md:flex items-center gap-8 font-inter text-sm font-medium tracking-wide">
+            <li><a href="index.html" class="nav-link text-slate-600 hover:text-blue-800 transition-all duration-200">Hisaab-Pro</a></li>
+            <li><a href="features.html" class="nav-link text-slate-600 hover:text-blue-800 transition-all duration-200">Features</a></li>
+            <li><a href="changelog.html" class="nav-link text-slate-600 hover:text-blue-800 transition-all duration-200">Download</a></li>
+            <li><a href="contact.html" class="nav-link text-slate-600 hover:text-blue-800 transition-all duration-200">Contact Us</a></li>
+            <li><a href="issue.html" class="nav-link text-slate-600 hover:text-blue-800 transition-all duration-200">Report Issue</a></li>
+        </ul>
+        
+        <!-- Primary CTA -->
+        <a href="changelog.html" class="bg-primary text-on-primary px-5 py-2.5 rounded-lg font-inter text-sm font-semibold active:scale-95 transition-all shadow-sm">Download Now</a>
+    </nav>
 </header>
+
+<!-- CSS for Active State (add to each page's <style> section) -->
+<!--
+.nav-link.active {
+    color: #002045;
+    border-bottom: 2px solid #002045;
+    padding-bottom: 1px;
+}
+-->
+
 <main class="max-w-7xl mx-auto px-6 py-xl">
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
 <!-- Context & Instruction Panel -->
@@ -258,10 +256,10 @@
 <p class="font-inter text-xs text-slate-500 dark:text-slate-400">© 2024 Hisaab-Pro. Precision Ledger for Professional Excellence.</p>
 </div>
 <div class="flex gap-8">
-<a class="font-inter text-xs text-slate-500 dark:text-slate-500 hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity" href="privacy.html">Privacy Policy</a>
-<a class="font-inter text-xs text-slate-500 dark:text-slate-500 hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity" href="terms.html">Terms of Service</a>
-<a class="font-inter text-xs text-slate-500 dark:text-slate-500 hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity" href="security.html">Security</a>
-<a class="font-inter text-xs text-slate-500 dark:text-slate-500 hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity" href="api-docs.html">API Documentation</a>
+<a class="font-inter text-xs text-slate-500 dark:text-slate-500 hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity" href="#">Privacy Policy</a>
+<a class="font-inter text-xs text-slate-500 dark:text-slate-500 hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity" href="#">Terms of Service</a>
+<a class="font-inter text-xs text-slate-500 dark:text-slate-500 hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity" href="#">Security</a>
+<a class="font-inter text-xs text-slate-500 dark:text-slate-500 hover:text-blue-700 dark:hover:text-blue-300 underline-offset-4 hover:underline transition-opacity" href="#">API Documentation</a>
 </div>
 </div>
 </footer>
