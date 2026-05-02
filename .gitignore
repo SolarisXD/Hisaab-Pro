@@ -36,6 +36,6 @@ scratch/
 .tmp/coverage/
 
 # Build artifacts (distribution packages)
-# Hisaab-Pro-v1.0.0/  # Uncomment to ignore distribution folder
-# Hisaab-Pro-v1.0.0.zip  # Uncomment to ignore zip
+Hisaab-Pro-v1.0.0/
+# Hisaab-Pro-v1.0.0.zip  # Uncomment to ignore zip in repo
 node-win.zip
