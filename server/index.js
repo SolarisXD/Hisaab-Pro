@@ -31,6 +31,7 @@ var settingsRoutes = require('./modules/settings/settings.routes');
 var purchasesRoutes = require('./modules/purchases/purchases.routes');
 var uploadsRoutes = require('./modules/uploads/uploads.routes');
 var staffRoutes = require('./modules/staff/staff.routes');
+var setupRoutes = require('./modules/setup/setup.routes');
 var backup = require('../scripts/backup');
 
 // Create Express app
@@ -124,6 +125,7 @@ app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/purchases', purchasesRoutes);
 app.use('/api/v1/uploads', uploadsRoutes);
 app.use('/api/v1/staff', staffRoutes);
+app.use('/api/v1/setup', setupRoutes);
 
 // ============================================================
 // CONFIG ENDPOINT (protected — sends shop info to authenticated frontend)
@@ -139,6 +141,41 @@ app.get('/api/v1/config', requireAuth, function(req, res) {
         locale: config.locale,
         backup_path: config.backup && config.backup.custom_path ? config.backup.custom_path : ''
     });
+});
+
+// ============================================================
+// FIRST-RUN DETECTION: Redirect to setup if needed
+// ============================================================
+
+app.use(function(req, res, next) {
+    // Skip setup check for:
+    // - API routes (including setup API)
+    // - setup.html page
+    // - static assets (CSS, JS, images)
+    // - Already on setup page
+    if (req.path.startsWith('/api/') || 
+        req.path === '/setup.html' || 
+        req.path.startsWith('/setup') ||
+        req.path.includes('.') && !req.path.endsWith('.html')) {
+        return next();
+    }
+    
+    try {
+        // Check if setup is required (no users exist)
+        var db = require('./db/database').db;
+        var result = db.prepare('SELECT COUNT(*) as count FROM users').get();
+        
+        if (result.count === 0 && req.path !== '/setup.html') {
+            return res.redirect('/setup.html');
+        }
+    } catch (err) {
+        // If users table doesn't exist or error, assume setup is required
+        if (req.path !== '/setup.html') {
+            return res.redirect('/setup.html');
+        }
+    }
+    
+    next();
 });
 
 // ============================================================

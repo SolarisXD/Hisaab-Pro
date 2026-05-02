@@ -2,17 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.0] - 2026-04-28 (V1 Publication Release)
+## [1.0.0] - 2026-05-02 (V1 Publication Release - Setup Wizard)
 ### Added
-- **Backend**: Express server with 6 core modules (Auth, Sales, Payments, Accounts, Dashboard, Reports).
+- **Backend**: Express server with 9 core modules (Auth, Sales, Purchases, Payments, Accounts, Staff, Dashboard, Reports, Setup).
 - **Database**: SQLite schema with WAL mode enabled for performance and USB reliability.
 - **Frontend**: Responsive Vanilla JS dashboard with Flexbox-only CSS for legacy compatibility.
 - **Design System**: Full CSS custom property system for easy branding.
 - **Reports**: Daily sales, monthly financial, debtor aging, creditor schedule, balance sheet, P&L.
 - **Exports**: PDF generation for invoices and reports via jsPDF.
 - **Auth**: Secure session-based authentication with bcrypt hashing.
+- **Setup Wizard**: First-run setup wizard for new businesses (admin account, shop config, financial year).
 - **Seeding**: Realistic demo data script for testing.
-- **Docs**: Comprehensive README, MIT License, and Client License.
+- **Docs**: Comprehensive README with Setup Wizard documentation, MIT License, and Client License.
 
 ### Validated (V1 Readiness)
 - ✅ **Accounting Integrity**: Strict double-entry (debit=credit), trial balance = 0, ledger consistency
