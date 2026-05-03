@@ -780,4 +780,4 @@ The setup wizard consists of:
 
 **Hisaab Pro -- Fast. Secure. Local.**
 
-[Documentation](Docs/) | [Changelog](CHANGELOG.md) | [License](LICENSE) | [Client License](CLIENT_LICENSE.md)
+[Changelog](CHANGELOG.md) | [License](LICENSE) | [Client License](CLIENT_LICENSE.md)
