@@ -2,7 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - 2026-05-03 (Security Patch — Public Release Prep)
+### Security
+- **Removed hardcoded fallback encryption key** from `server/db/database.js`, `server/modules/settings/settings.service.js`, and `scripts/migrate.js`. Missing `database_key` now causes a loud startup failure instead of silently using a known default string.
+- **Excluded `scripts/tests/`** from version control via `.gitignore` — these local debug utilities contained the fallback key string and are not intended for public distribution.
+
+### Notes
+- ✅ **No action needed for existing installations** — `config.json` (gitignored) already has `database_key` set via Setup Wizard. The removed fallback was never reached in any valid installation.
+- ✅ New installations continue to work normally through the Setup Wizard flow.
+
+---
+
 ## [1.0.0] - 2026-05-02 (V1 Publication Release - Setup Wizard)
+
 ### Added
 - **Backend**: Express server with 9 core modules (Auth, Sales, Purchases, Payments, Accounts, Staff, Dashboard, Reports, Setup).
 - **Database**: SQLite schema with WAL mode enabled for performance and USB reliability.

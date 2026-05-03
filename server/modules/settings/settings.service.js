@@ -140,7 +140,8 @@ function createFinancialYear(data) {
     // 2. Open temporary connection to the NEW database to wipe data
     var Database = require('better-sqlite3-multiple-ciphers');
     var tempDb = new Database(targetPath);
-    var dbKey = currentConfig.database_key || 'hisaab-pro-default-key-2026';
+    var dbKey = currentConfig.database_key;
+    if (!dbKey) throw new Error('[Settings] database_key is not set in config.json. Cannot create new financial year.');
     tempDb.pragma(`key = '${dbKey}'`);
     
     // Disable foreign keys temporarily while wiping data

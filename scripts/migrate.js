@@ -9,7 +9,8 @@ const config = require('./server/config');
 
 const dbPath = path.resolve(__dirname, './', config.database.path);
 const db = new Database(dbPath);
-const dbKey = config.database_key || 'hisaab-pro-default-key-2026';
+const dbKey = config.database_key;
+if (!dbKey) { console.error('[migrate] FATAL: database_key not set in config.json. Aborting.'); process.exit(1); }
 
 try {
     db.pragma(`key = '${dbKey}'`);

@@ -45,23 +45,15 @@ function getDbInstance(filename) {
 
     console.log(`[DB] Opening database: ${filename}`);
     const db = new Database(dbPath);
-    // SECURITY: DB key must come from config. 
-    // For existing installations, migrate the legacy key into config.json.
+    // SECURITY: DB key MUST come from config.json (set by Setup Wizard on first run).
+    // If missing, the installation is misconfigured — fail loudly rather than use a known default.
     var dbKey = config.database_key;
     if (!dbKey) {
-        // Use the legacy key that existing databases were encrypted with
-        dbKey = 'hisaab-pro-default-key-2026';
-        config.database_key = dbKey;
-        // Persist to config.json so it's no longer hardcoded in source
-        try {
-            var configPath = require('path').join(__dirname, '../../config.json');
-            var rawCfg = JSON.parse(require('fs').readFileSync(configPath, 'utf-8'));
-            rawCfg.database_key = dbKey;
-            require('fs').writeFileSync(configPath, JSON.stringify(rawCfg, null, 2), 'utf-8');
-            console.log('[DB] Migrated database encryption key to config.json.');
-        } catch(e) {
-            console.warn('[DB] Could not persist database key to config.json:', e.message);
-        }
+        throw new Error(
+            '[DB] FATAL: database_key is not set in config.json. ' +
+            'Run the Setup Wizard to configure your installation, or ' +
+            'manually add "database_key" to config.json.'
+        );
     }
 
     try {
