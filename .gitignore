@@ -40,7 +40,7 @@ passwords.txt
 scripts/tests/
 
 # Build artifacts (distribution packages)
-Hisaab-Pro-v1.0.0/
+Hisaab-Pro-v1.0.2/
 *.zip
 node-win.zip
 bfg.jar
