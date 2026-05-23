@@ -23,6 +23,7 @@ const bcrypt = require('bcryptjs');
 // Test database setup
 const TEST_DB_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'hisaab-account-test-'));
 const TEST_DB_PATH = path.join(TEST_DB_DIR, 'test-accounts.db');
+const HISAAB_DB_PATH = path.join(TEST_DB_DIR, 'hisaab.db');
 const TEST_DB_KEY = 'hisaab-pro-default-key-2026';
 
 // Store original modules to restore later
@@ -34,7 +35,7 @@ let cookies = null;
 // ============================================================
 
 function setupTestDatabase() {
-    // Create and initialize test database
+    // 1. Create and initialize test database
     const db = new Database(TEST_DB_PATH);
     db.pragma(`key = '${TEST_DB_KEY}'`);
     db.pragma('foreign_keys = ON');
@@ -57,12 +58,21 @@ function setupTestDatabase() {
     const stmt = db.prepare("INSERT INTO account_types (name, slug, icon, is_system) VALUES (?, ?, ?, ?)");
     seedTypes.forEach(t => stmt.run(t));
     
-    // Create test user (owner)
-    const passwordHash = bcrypt.hashSync('testpassword123', 10);
-    db.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
-        .run('testowner', passwordHash, 'owner');
-    
     db.close();
+
+    // 2. Create and initialize global test database (hisaab.db)
+    const globalDb = new Database(HISAAB_DB_PATH);
+    globalDb.pragma(`key = '${TEST_DB_KEY}'`);
+    globalDb.pragma('foreign_keys = ON');
+    globalDb.pragma('journal_mode = WAL');
+    globalDb.exec(schema);
+    
+    // Create test user (owner) in global db
+    const passwordHash = bcrypt.hashSync('testpassword123', 10);
+    globalDb.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
+        .run('testowner', passwordHash, 'owner');
+        
+    globalDb.close();
 }
 
 async function loginTestUser(testApp) {
@@ -93,6 +103,7 @@ beforeAll(async () => {
     const config = require('../server/config');
     config.database.path = TEST_DB_PATH;
     config.database.active_database = 'test-accounts.db';
+    config.database_key = TEST_DB_KEY;
     config.session.secret = 'test-session-secret-12345';
     
     // Load app
@@ -105,7 +116,10 @@ afterAll(async () => {
         const filesToDelete = [
             TEST_DB_PATH,
             TEST_DB_PATH + '-wal',
-            TEST_DB_PATH + '-shm'
+            TEST_DB_PATH + '-shm',
+            HISAAB_DB_PATH,
+            HISAAB_DB_PATH + '-wal',
+            HISAAB_DB_PATH + '-shm'
         ];
         
         filesToDelete.forEach(filePath => {
@@ -143,10 +157,10 @@ describe('Account Creation API - Basic Functionality', () => {
         // Arrange
         const accountData = {
             name: 'Raj Kumar',
-            type_slug: 'customer',
+            type: 'customer',
             phone: '9876543210',
             address: '123 Main Street',
-            initial_balance: 0
+            opening_balance: 0
         };
         
         // Act
@@ -168,7 +182,7 @@ describe('Account Creation API - Basic Functionality', () => {
         // Arrange
         const accountData = {
             name: 'Supplier Inc',
-            type_slug: 'supplier',
+            type: 'supplier',
             phone: '9876543211',
             address: '456 Supplier Road'
         };
@@ -197,7 +211,7 @@ describe('Account Creation API - Basic Functionality', () => {
         // Arrange
         const accountData = {
             name: 'Retrieve Test Account',
-            type_slug: 'customer'
+            type: 'customer'
         };
         
         // Act - Create account
@@ -224,7 +238,7 @@ describe('Account Creation API - Basic Functionality', () => {
         // Arrange
         const accountData = {
             name: 'Unauthorized Account',
-            type_slug: 'customer'
+            type: 'customer'
         };
         
         // Act - No cookies set
@@ -249,7 +263,7 @@ describe('Account Creation - All Account Types', () => {
         // Arrange
         const accountData = {
             name: 'Customer Test',
-            type_slug: 'customer',
+            type: 'customer',
             phone: '1111111111'
         };
         
@@ -269,7 +283,7 @@ describe('Account Creation - All Account Types', () => {
         // Arrange
         const accountData = {
             name: 'Supplier Test',
-            type_slug: 'supplier',
+            type: 'supplier',
             phone: '2222222222'
         };
         
@@ -289,7 +303,7 @@ describe('Account Creation - All Account Types', () => {
         // Arrange
         const accountData = {
             name: 'Cash Test',
-            type_slug: 'cash'
+            type: 'cash'
         };
         
         // Act
@@ -308,7 +322,7 @@ describe('Account Creation - All Account Types', () => {
         // Arrange
         const accountData = {
             name: 'Bank Test',
-            type_slug: 'bank',
+            type: 'bank',
             address: 'Main Branch, MG Road'
         };
         
@@ -328,7 +342,7 @@ describe('Account Creation - All Account Types', () => {
         // Arrange
         const accountData = {
             name: 'Expense Test',
-            type_slug: 'expense'
+            type: 'expense'
         };
         
         // Act
@@ -347,7 +361,7 @@ describe('Account Creation - All Account Types', () => {
         // Arrange
         const accountData = {
             name: 'Revenue Test',
-            type_slug: 'revenue'
+            type: 'revenue'
         };
         
         // Act
@@ -366,7 +380,7 @@ describe('Account Creation - All Account Types', () => {
         // Arrange
         const accountData = {
             name: 'Invalid Type Test',
-            type_slug: 'nonexistent_type'
+            type: 'nonexistent_type'
         };
         
         // Act
@@ -392,7 +406,7 @@ describe('Account Creation - Validation', () => {
     test('returns 400 when account name is missing', async () => {
         // Arrange
         const accountData = {
-            type_slug: 'customer'
+            type: 'customer'
             // name is missing
         };
         
@@ -412,7 +426,7 @@ describe('Account Creation - Validation', () => {
         // Arrange
         const accountData = {
             name: '',
-            type_slug: 'customer'
+            type: 'customer'
         };
         
         // Act
@@ -431,7 +445,7 @@ describe('Account Creation - Validation', () => {
         // Arrange
         const accountData = {
             name: 'A'.repeat(101), // 101 characters
-            type_slug: 'customer'
+            type: 'customer'
         };
         
         // Act
@@ -450,7 +464,7 @@ describe('Account Creation - Validation', () => {
         // Arrange
         const accountData = {
             name: 'No Type Account'
-            // type_slug is missing
+            // type is missing
         };
         
         // Act
@@ -469,7 +483,7 @@ describe('Account Creation - Validation', () => {
         // Arrange
         const accountData = {
             name: 'Long Phone Account',
-            type_slug: 'customer',
+            type: 'customer',
             phone: '123456789012345678901' // 21 characters
         };
         
@@ -489,7 +503,7 @@ describe('Account Creation - Validation', () => {
         // Arrange
         const accountData = {
             name: 'Minimal Account',
-            type_slug: 'customer'
+            type: 'customer'
         };
         
         // Act
@@ -509,8 +523,8 @@ describe('Account Creation - Validation', () => {
         // Arrange
         const accountData = {
             name: 'Balance Account',
-            type_slug: 'customer',
-            initial_balance: 5000.50
+            type: 'customer',
+            opening_balance: 5000.50
         };
         
         // Act

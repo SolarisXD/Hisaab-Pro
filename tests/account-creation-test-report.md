@@ -52,7 +52,7 @@
 
 **Results:**
 - Zod validation schema properly rejects invalid data
-- Required field validation works (name, type_slug)
+- Required field validation works (name, type)
 - String length validation works (name max 100 chars, phone max 20 chars)
 - Service layer throws appropriate errors for invalid input
 

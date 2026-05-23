@@ -47,6 +47,7 @@ router.post('/login', loginLimiter, function(req, res) {
             }
         });
     } catch (err) {
+        logger.error('Auth', 'Login failed: ' + err.message, { stack: err.stack });
         res.status(401).json({ error: err.message });
     }
 });
@@ -109,7 +110,7 @@ router.post('/change-password', requireAuth, function(req, res) {
     }
 });
 
-router.get('/setup-status', loginLimiter, async (req, res) => {
+router.get('/setup-status', async (req, res) => {
     try {
         const isFirstTime = await authService.isFirstTime();
         res.json({ is_first_time: isFirstTime });
@@ -119,7 +120,7 @@ router.get('/setup-status', loginLimiter, async (req, res) => {
 });
 
 // Check if system has any users (Initialized)
-router.get('/status', loginLimiter, (req, res) => {
+router.get('/status', (req, res) => {
     try {
         const count = authService.getUserCount();
         res.json({ initialized: count > 0 });

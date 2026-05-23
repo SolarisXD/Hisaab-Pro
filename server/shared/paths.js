@@ -20,7 +20,8 @@ const appRootDir = path.resolve(__dirname, '../../');
  * Resolve a path relative to the application root.
  */
 function resolvePath(...segments) {
-    return path.join(appRootDir, ...segments);
+    const validSegments = segments.filter(segment => typeof segment === 'string');
+    return path.join(appRootDir, ...validSegments);
 }
 
 /**

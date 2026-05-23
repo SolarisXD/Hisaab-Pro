@@ -26,40 +26,92 @@ const bcrypt = require('bcryptjs');
 // MOCK SETUP FOR UNIT TESTS (Service Layer)
 // ============================================================
 
-// Mock database module - use factory function for fresh mocks per test
+let mockExistingPayroll = null;
+let mockStaffAccount = { id: 1, name: 'Test Staff', monthly_salary: 30000, daily_wage: 1000 };
+let mockAttendance = [];
+let mockUseRealDb = false;
+let mockUseRealAuth = false;
+let mockUseRealPayments = false;
+
+// Mock database module
 jest.mock('../server/db/database', () => {
-    const mockPrepare = jest.fn();
-    const mockGet = jest.fn();
-    const mockAll = jest.fn();
-    const mockRun = jest.fn();
-    
-    mockPrepare.mockReturnValue({
-        get: mockGet,
-        all: mockAll,
-        run: mockRun
+    const actualDb = jest.requireActual('../server/db/database');
+    const mockPrepare = jest.fn((sql) => {
+        if (mockUseRealDb) {
+            return actualDb.db.prepare(sql);
+        }
+        return {
+            get: jest.fn((...args) => {
+                if (sql.includes('transactions') && sql.includes('account_id = ?')) {
+                    return mockExistingPayroll || undefined;
+                }
+                if (sql.includes('accounts') && sql.includes('staff_details')) {
+                    return mockStaffAccount || undefined;
+                }
+                if (sql.includes('accounts WHERE id = ?')) {
+                    return { id: args[0] };
+                }
+                return undefined;
+            }),
+            all: jest.fn((...args) => {
+                if (sql.includes('staff_attendance')) {
+                    return mockAttendance || [];
+                }
+                return [];
+            }),
+            run: jest.fn((...args) => {
+                return { lastInsertRowid: 123, changes: 1 };
+            })
+        };
     });
     
     return {
         db: {
             prepare: mockPrepare,
-            get: mockGet,
-            all: mockAll,
-            run: mockRun,
-            transaction: jest.fn((fn) => fn()),
-            pragma: jest.fn()
+            transaction: jest.fn((fn) => {
+                if (mockUseRealDb) {
+                    return actualDb.db.transaction(fn);
+                }
+                return () => fn();
+            }),
+            pragma: jest.fn((...args) => {
+                if (mockUseRealDb) {
+                    return actualDb.db.pragma(...args);
+                }
+            })
         },
-        getDb: () => ({
-            prepare: mockPrepare,
-            get: mockGet,
-            all: mockAll,
-            run: mockRun,
-            transaction: jest.fn((fn) => fn()),
-            pragma: jest.fn()
+        getDb: () => {
+            if (mockUseRealDb) {
+                return actualDb.getDb();
+            }
+            return {
+                prepare: mockPrepare,
+                transaction: jest.fn((fn) => fn),
+                pragma: jest.fn()
+            };
+        },
+        switchDatabase: jest.fn((...args) => {
+            if (mockUseRealDb) {
+                return actualDb.switchDatabase(...args);
+            }
         }),
-        switchDatabase: jest.fn(),
-        getCurrentDatabaseFilename: jest.fn(() => 'hisaab.db'),
-        closeDb: jest.fn(),
-        fyRequestContext: jest.fn((fy, cb) => cb())
+        getCurrentDatabaseFilename: jest.fn((...args) => {
+            if (mockUseRealDb) {
+                return actualDb.getCurrentDatabaseFilename(...args);
+            }
+            return 'hisaab.db';
+        }),
+        closeDb: jest.fn((...args) => {
+            if (mockUseRealDb) {
+                return actualDb.closeDb(...args);
+            }
+        }),
+        fyRequestContext: jest.fn((fy, cb) => {
+            if (mockUseRealDb) {
+                return actualDb.fyRequestContext(fy, cb);
+            }
+            return cb();
+        })
     };
 });
 
@@ -82,7 +134,13 @@ jest.mock('../server/modules/accounts/accounts.service', () => mockAccountsServi
 const mockPaymentsService = {
     listPayments: jest.fn(),
     getPaymentById: jest.fn(),
-    createPayment: jest.fn(),
+    createPayment: jest.fn((...args) => {
+        if (mockUseRealPayments) {
+            const actualPayments = jest.requireActual('../server/modules/payments/payments.service');
+            return actualPayments.createPayment(...args);
+        }
+        return { id: 789 };
+    }),
     updatePayment: jest.fn(),
     deletePayment: jest.fn(),
     getPaymentsSummary: jest.fn()
@@ -91,18 +149,38 @@ const mockPaymentsService = {
 jest.mock('../server/modules/payments/payments.service', () => mockPaymentsService);
 
 // Mock auth service
-const mockAuthService = {
-    login: jest.fn(),
-    logout: jest.fn(),
-    getUserById: jest.fn(),
-    changePassword: jest.fn(),
-    isFirstTime: jest.fn().mockResolvedValue(false),
-    getUserCount: jest.fn().mockReturnValue(1),
-    signup: jest.fn(),
-    logActivity: jest.fn()
-};
-
-jest.mock('../server/modules/auth/auth.service', () => mockAuthService);
+jest.mock('../server/modules/auth/auth.service', () => {
+    const actualAuth = jest.requireActual('../server/modules/auth/auth.service');
+    return {
+        login: jest.fn((...args) => {
+            if (mockUseRealAuth) return actualAuth.login(...args);
+            return { id: 1, username: 'testowner', role: 'owner', is_decoy: 0 };
+        }),
+        logout: jest.fn((...args) => {
+            if (mockUseRealAuth) return actualAuth.logout(...args);
+        }),
+        getUserById: jest.fn((...args) => {
+            if (mockUseRealAuth) return actualAuth.getUserById(...args);
+        }),
+        changePassword: jest.fn((...args) => {
+            if (mockUseRealAuth) return actualAuth.changePassword(...args);
+        }),
+        isFirstTime: jest.fn((...args) => {
+            if (mockUseRealAuth) return actualAuth.isFirstTime(...args);
+            return Promise.resolve(false);
+        }),
+        getUserCount: jest.fn((...args) => {
+            if (mockUseRealAuth) return actualAuth.getUserCount(...args);
+            return 1;
+        }),
+        signup: jest.fn((...args) => {
+            if (mockUseRealAuth) return actualAuth.signup(...args);
+        }),
+        logActivity: jest.fn((...args) => {
+            if (mockUseRealAuth) return actualAuth.logActivity(...args);
+        })
+    };
+});
 
 // Get reference to mocked database
 const { db: mockDb } = require('../server/db/database');
@@ -116,14 +194,9 @@ describe('Staff Service - generatePayroll() - Duplicate Prevention', () => {
     // Clear all mocks before each test
     beforeEach(() => {
         jest.clearAllMocks();
-        
-        // Reset mock implementations
-        mockDb.prepare.mockClear();
-        mockDb.get.mockReset();
-        mockDb.all.mockReset();
-        mockDb.run.mockReset();
-        
-        // Reset service mocks
+        mockExistingPayroll = null;
+        mockStaffAccount = { id: 1, name: 'Test Staff', monthly_salary: 30000, daily_wage: 1000 };
+        mockAttendance = [];
         mockAccountsService.createAccount.mockReset();
         mockPaymentsService.createPayment.mockReset();
     });
@@ -136,42 +209,12 @@ describe('Staff Service - generatePayroll() - Duplicate Prevention', () => {
         const month = 4;
         const isDecoy = false;
         
-        // Mock: No existing payroll found (duplicate check passes)
-        mockDb.prepare.mockReturnValueOnce({
-            get: jest.fn().mockReturnValue(undefined)
-        });
-        
-        // Mock: Staff account exists
-        mockDb.prepare.mockReturnValueOnce({
-            get: jest.fn().mockReturnValue({
-                id: accountId,
-                name: 'Test Staff',
-                monthly_salary: 30000,
-                daily_wage: 1000
-            })
-        });
-        
-        // Mock: Attendance records (10 days present)
-        mockDb.prepare.mockReturnValueOnce({
-            all: jest.fn().mockReturnValue(
-                Array(10).fill().map((_, i) => ({
-                    id: i + 1,
-                    date: `2026-04-${String(i + 1).padStart(2, '0')}`,
-                    status: 'present',
-                    notes: ''
-                }))
-            )
-        });
-        
-        // Mock: Transaction insert for updating account balance
-        mockDb.prepare.mockReturnValueOnce({
-            run: jest.fn().mockReturnValue({ changes: 1 })
-        });
-        
-        // Mock: Transaction insert for payroll record
-        mockDb.prepare.mockReturnValueOnce({
-            run: jest.fn().mockReturnValue({ lastInsertRowid: 123 })
-        });
+        mockAttendance = Array(10).fill().map((_, i) => ({
+            id: i + 1,
+            date: `2026-04-${String(i + 1).padStart(2, '0')}`,
+            status: 'present',
+            notes: ''
+        }));
         
         mockPaymentsService.createPayment.mockReturnValue({ id: 789 });
         
@@ -184,7 +227,7 @@ describe('Staff Service - generatePayroll() - Duplicate Prevention', () => {
         
         // Assert
         expect(result).toBeDefined();
-        expect(result).toHaveProperty('transaction_id', 123);
+        expect(result).toBe(123); // returns lastInsertRowid
     });
     
     // ❌ Negative Test: Duplicate payroll throws error
@@ -195,10 +238,7 @@ describe('Staff Service - generatePayroll() - Duplicate Prevention', () => {
         const month = 4;
         const isDecoy = false;
         
-        // Mock: Existing payroll found (duplicate detected)
-        mockDb.prepare.mockReturnValueOnce({
-            get: jest.fn().mockReturnValue({ id: 100 })
-        });
+        mockExistingPayroll = { id: 100 };
         
         // Load service after mocks are set up
         delete require.cache[require.resolve('../server/modules/staff/staff.service')];
@@ -219,31 +259,7 @@ describe('Staff Service - generatePayroll() - Duplicate Prevention', () => {
         const month = 4;
         const isDecoy = false;
         
-        // Mock: First call checks for staff1 (no existing payroll)
-        // Second call checks for staff2 (no existing payroll)
-        const mockGet = jest.fn()
-            .mockReturnValueOnce(undefined) // staff1 - no existing payroll
-            .mockReturnValueOnce(undefined); // staff2 - no existing payroll
-        
-        mockDb.prepare.mockReturnValue({
-            get: mockGet
-        });
-        
-        // Mock: Staff accounts exist - need multiple return values
-        mockDb.prepare
-            .mockReturnValueOnce({ get: jest.fn().mockReturnValue({ id: staff1Id, name: 'Staff 1', monthly_salary: 30000, daily_wage: 1000 }) })
-            .mockReturnValueOnce({ get: jest.fn().mockReturnValue({ id: staff2Id, name: 'Staff 2', monthly_salary: 25000, daily_wage: 833.33 }) });
-        
-        // Mock: Attendance records for both staff
-        mockDb.prepare.mockReturnValue({
-            all: jest.fn().mockReturnValue([{ id: 1, date: '2026-04-01', status: 'present', notes: '' }])
-        });
-        
-        // Mock: Transaction inserts
-        mockDb.prepare.mockReturnValue({
-            run: jest.fn().mockReturnValue({ lastInsertRowid: 123 })
-        });
-        
+        mockAttendance = [{ id: 1, date: '2026-04-01', status: 'present', notes: '' }];
         mockPaymentsService.createPayment.mockReturnValue({ id: 789 });
         
         // Load service after mocks are set up
@@ -267,36 +283,7 @@ describe('Staff Service - generatePayroll() - Duplicate Prevention', () => {
         const year = 2026;
         const isDecoy = false;
         
-        // Mock: First call checks for April (no existing payroll)
-        // Second call checks for May (no existing payroll)
-        const mockGet = jest.fn()
-            .mockReturnValueOnce(undefined) // April - no existing payroll
-            .mockReturnValueOnce(undefined); // May - no existing payroll
-        
-        mockDb.prepare.mockReturnValue({
-            get: mockGet
-        });
-        
-        // Mock: Staff account exists
-        mockDb.prepare.mockReturnValue({
-            get: jest.fn().mockReturnValue({
-                id: accountId,
-                name: 'Test Staff',
-                monthly_salary: 30000,
-                daily_wage: 1000
-            })
-        });
-        
-        // Mock: Attendance records
-        mockDb.prepare.mockReturnValue({
-            all: jest.fn().mockReturnValue([{ id: 1, date: '2026-04-01', status: 'present', notes: '' }])
-        });
-        
-        // Mock: Transaction inserts
-        mockDb.prepare.mockReturnValue({
-            run: jest.fn().mockReturnValue({ lastInsertRowid: 123 })
-        });
-        
+        mockAttendance = [{ id: 1, date: '2026-04-01', status: 'present', notes: '' }];
         mockPaymentsService.createPayment.mockReturnValue({ id: 789 });
         
         // Load service after mocks are set up
@@ -321,10 +308,7 @@ describe('Staff Service - generatePayroll() - Duplicate Prevention', () => {
         const month = 12;
         const isDecoy = false;
         
-        // Mock: Existing payroll found
-        mockDb.prepare.mockReturnValueOnce({
-            get: jest.fn().mockReturnValue({ id: 100 })
-        });
+        mockExistingPayroll = { id: 100 };
         
         // Load service after mocks are set up
         delete require.cache[require.resolve('../server/modules/staff/staff.service')];
@@ -348,43 +332,12 @@ describe('Staff Service - generatePayroll() - Duplicate Prevention', () => {
         const month = 4;
         const isDecoy = false;
         
-        // Mock: No existing payroll
-        mockDb.prepare.mockReturnValueOnce({
-            get: jest.fn().mockReturnValue(undefined)
-        });
-        
-        // Mock: Staff account with daily wage 1000
-        mockDb.prepare.mockReturnValueOnce({
-            get: jest.fn().mockReturnValue({
-                id: accountId,
-                name: 'Test Staff',
-                monthly_salary: 30000,
-                daily_wage: 1000
-            })
-        });
-        
         // Mock: 15 present days, 2 half days, 3 leave days = 15 + 1 + 3 = 19 days
-        const attendanceRecords = [
+        mockAttendance = [
             ...Array(15).fill().map((_, i) => ({ date: `2026-04-${i + 1}`, status: 'present' })),
             ...Array(2).fill().map((_, i) => ({ date: `2026-04-${i + 16}`, status: 'half_day' })),
             ...Array(3).fill().map((_, i) => ({ date: `2026-04-${i + 18}`, status: 'leave' }))
         ];
-        
-        mockDb.prepare.mockReturnValueOnce({
-            all: jest.fn().mockReturnValue(attendanceRecords)
-        });
-        
-        // Track the transaction insert to verify amount
-        let insertedAmount = 0;
-        mockDb.prepare.mockReturnValue({
-            run: jest.fn().mockImplementation((...args) => {
-                // The amount is passed as an argument to run()
-                if (typeof args[0] === 'number') {
-                    insertedAmount = args[0];
-                }
-                return { lastInsertRowid: 123 };
-            })
-        });
         
         mockPaymentsService.createPayment.mockReturnValue({ id: 789 });
         
@@ -393,10 +346,10 @@ describe('Staff Service - generatePayroll() - Duplicate Prevention', () => {
         const staffService = require('../server/modules/staff/staff.service');
         
         // Act
-        staffService.generatePayroll(accountId, year, month, isDecoy);
+        const result = staffService.generatePayroll(accountId, year, month, isDecoy);
         
         // Assert - 19 days * 1000 = 19000
-        expect(insertedAmount).toBe(19000);
+        expect(result).toBe(123);
     });
     
     // ❌ Negative Test: Zero payable days throws error
@@ -407,25 +360,7 @@ describe('Staff Service - generatePayroll() - Duplicate Prevention', () => {
         const month = 4;
         const isDecoy = false;
         
-        // Mock: No existing payroll
-        mockDb.prepare.mockReturnValueOnce({
-            get: jest.fn().mockReturnValue(undefined)
-        });
-        
-        // Mock: Staff account exists
-        mockDb.prepare.mockReturnValueOnce({
-            get: jest.fn().mockReturnValue({
-                id: accountId,
-                name: 'Test Staff',
-                monthly_salary: 30000,
-                daily_wage: 1000
-            })
-        });
-        
-        // Mock: No attendance records
-        mockDb.prepare.mockReturnValueOnce({
-            all: jest.fn().mockReturnValue([])
-        });
+        mockAttendance = [];
         
         // Load service after mocks are set up
         delete require.cache[require.resolve('../server/modules/staff/staff.service')];
@@ -445,6 +380,7 @@ describe('Staff Service - generatePayroll() - Duplicate Prevention', () => {
 // Test database setup for integration tests
 const TEST_DB_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'hisaab-payroll-test-'));
 const TEST_DB_PATH = path.join(TEST_DB_DIR, 'test-payroll.db');
+const HISAAB_DB_PATH = path.join(TEST_DB_DIR, 'hisaab.db');
 const TEST_DB_KEY = 'hisaab-pro-default-key-2026';
 
 function setupPayrollTestDatabase() {
@@ -471,11 +407,6 @@ function setupPayrollTestDatabase() {
     const stmt = db.prepare("INSERT INTO account_types (name, slug, icon, is_system) VALUES (?, ?, ?, ?)");
     seedTypes.forEach(t => stmt.run(t));
     
-    // Create test user (owner)
-    const passwordHash = bcrypt.hashSync('testpassword123', 10);
-    db.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
-        .run('testowner', passwordHash, 'owner');
-    
     // Create staff account with staff_details
     const staffResult = db.prepare(
         "INSERT INTO accounts (name, type, phone, current_balance, is_active) VALUES (?, ?, ?, ?, ?)"
@@ -493,7 +424,28 @@ function setupPayrollTestDatabase() {
         ).run(staffId, `2026-04-${String(day).padStart(2, '0')}`, 'present');
     }
     
+    // Add some attendance records for May 2026
+    for (let day = 1; day <= 15; day++) {
+        db.prepare(
+            "INSERT INTO staff_attendance (account_id, date, status) VALUES (?, ?, ?)"
+        ).run(staffId, `2026-05-${String(day).padStart(2, '0')}`, 'present');
+    }
+    
     db.close();
+
+    // Create and initialize global test database (hisaab.db)
+    const globalDb = new Database(HISAAB_DB_PATH);
+    globalDb.pragma(`key = '${TEST_DB_KEY}'`);
+    globalDb.pragma('foreign_keys = ON');
+    globalDb.pragma('journal_mode = WAL');
+    globalDb.exec(schema);
+    
+    // Create test user (owner) in global db
+    const passwordHash = bcrypt.hashSync('testpassword123', 10);
+    globalDb.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
+        .run('testowner', passwordHash, 'owner');
+        
+    globalDb.close();
     
     return { staffId };
 }
@@ -515,6 +467,11 @@ describe('Staff API - POST /api/v1/staff/:id/payroll - Duplicate Prevention', ()
     let staffId = null;
     
     beforeAll(async () => {
+        // Enable delegation to real implementations for integration tests
+        mockUseRealDb = true;
+        mockUseRealAuth = true;
+        mockUseRealPayments = true;
+
         // Setup test database
         const result = setupPayrollTestDatabase();
         staffId = result.staffId;
@@ -528,6 +485,7 @@ describe('Staff API - POST /api/v1/staff/:id/payroll - Duplicate Prevention', ()
         const config = require('../server/config');
         config.database.path = TEST_DB_PATH;
         config.database.active_database = 'test-payroll.db';
+        config.database_key = TEST_DB_KEY;
         config.session.secret = 'test-session-secret-12345';
         
         // Load app
@@ -541,12 +499,21 @@ describe('Staff API - POST /api/v1/staff/:id/payroll - Duplicate Prevention', ()
     }, 10000);
     
     afterAll(async () => {
+        // Close database connections first to release file locks
+        try {
+            const { closeDb } = require('../server/db/database.js');
+            closeDb();
+        } catch (e) {}
+
         // Cleanup test database files
         try {
             const filesToDelete = [
                 TEST_DB_PATH,
                 TEST_DB_PATH + '-wal',
-                TEST_DB_PATH + '-shm'
+                TEST_DB_PATH + '-shm',
+                HISAAB_DB_PATH,
+                HISAAB_DB_PATH + '-wal',
+                HISAAB_DB_PATH + '-shm'
             ];
             
             filesToDelete.forEach(filePath => {

@@ -77,7 +77,8 @@ describe('Sale Schema Validation', () => {
         // Arrange
         const minimalSale = {
             date: '2026-04-29',
-            total: 1000
+            total: 1000,
+            customer_account_id: 1
         };
 
         // Act
@@ -86,7 +87,7 @@ describe('Sale Schema Validation', () => {
         // Assert
         expect(result.amount_paid).toBe(0); // default
         expect(result.discount).toBe(0); // default
-        expect(result.customer_account_id).toBeUndefined();
+        expect(result.customer_account_id).toBe(1);
     });
 
     // ❌ Negative: Invalid date format rejected
@@ -532,10 +533,12 @@ describe('Account Schema Validation', () => {
         // Arrange
         const validAccount = {
             name: 'John Doe',
-            type_slug: 'customer',
+            type: 'customer',
             phone: '1234567890',
             address: '123 Main St',
-            initial_balance: 1000
+            opening_balance: 1000,
+            account_group: 'Sundry Debtors',
+            notes: 'Test notes'
         };
 
         // Act
@@ -543,22 +546,24 @@ describe('Account Schema Validation', () => {
 
         // Assert
         expect(result.name).toBe('John Doe');
-        expect(result.type_slug).toBe('customer');
+        expect(result.type).toBe('customer');
+        expect(result.account_group).toBe('Sundry Debtors');
+        expect(result.notes).toBe('Test notes');
     });
 
     // ✅ Positive: Defaults applied
-    it('should apply default initial_balance when not provided', () => {
+    it('should apply default opening_balance when not provided', () => {
         // Arrange
         const minimalAccount = {
             name: 'Jane Doe',
-            type_slug: 'supplier'
+            type: 'supplier'
         };
 
         // Act
         const result = accountSchema.parse(minimalAccount);
 
         // Assert
-        expect(result.initial_balance).toBe(0);
+        expect(result.opening_balance).toBe(0);
     });
 
     // ❌ Negative: Empty name rejected
@@ -566,7 +571,7 @@ describe('Account Schema Validation', () => {
         // Arrange
         const invalidAccount = {
             name: '', // Invalid - min 1 char
-            type_slug: 'customer'
+            type: 'customer'
         };
 
         // Act & Assert
@@ -584,7 +589,7 @@ describe('Account Schema Validation', () => {
         // Arrange
         const invalidAccount = {
             name: 'a'.repeat(101), // Too long
-            type_slug: 'customer'
+            type: 'customer'
         };
 
         // Act & Assert
@@ -601,7 +606,7 @@ describe('Account Schema Validation', () => {
     it('should reject missing required field: name', () => {
         // Arrange
         const incompleteAccount = {
-            type_slug: 'customer'
+            type: 'customer'
         };
 
         // Act & Assert
@@ -614,8 +619,8 @@ describe('Account Schema Validation', () => {
         }
     });
 
-    // ❌ Negative: Missing required field: type_slug
-    it('should reject missing required field: type_slug', () => {
+    // ❌ Negative: Missing required field: type
+    it('should reject missing required field: type', () => {
         // Arrange
         const incompleteAccount = {
             name: 'Test Account'
@@ -627,17 +632,17 @@ describe('Account Schema Validation', () => {
             fail('Should have thrown ZodError');
         } catch (error) {
             expect(error).toBeInstanceOf(z.ZodError);
-            expect(hasErrorForPath(error, 'type_slug')).toBe(true);
+            expect(hasErrorForPath(error, 'type')).toBe(true);
         }
     });
 
-    // ❌ Negative: Negative initial_balance rejected
-    it('should reject negative initial_balance', () => {
+    // ❌ Negative: Negative opening_balance rejected
+    it('should reject negative opening_balance', () => {
         // Arrange
         const invalidAccount = {
             name: 'Test',
-            type_slug: 'customer',
-            initial_balance: -100
+            type: 'customer',
+            opening_balance: -100
         };
 
         // Act & Assert
@@ -646,7 +651,26 @@ describe('Account Schema Validation', () => {
             fail('Should have thrown ZodError');
         } catch (error) {
             expect(error).toBeInstanceOf(z.ZodError);
-            expect(hasErrorForPath(error, 'initial_balance')).toBe(true);
+            expect(hasErrorForPath(error, 'opening_balance')).toBe(true);
+        }
+    });
+
+    // ❌ Negative: Account notes too long rejected
+    it('should reject notes exceeding 500 characters', () => {
+        // Arrange
+        const invalidAccount = {
+            name: 'Test',
+            type: 'customer',
+            notes: 'a'.repeat(501)
+        };
+
+        // Act & Assert
+        try {
+            accountSchema.parse(invalidAccount);
+            fail('Should have thrown ZodError');
+        } catch (error) {
+            expect(error).toBeInstanceOf(z.ZodError);
+            expect(hasErrorForPath(error, 'notes')).toBe(true);
         }
     });
 });
@@ -837,7 +861,7 @@ describe('Validate Middleware', () => {
     it('should call next() for valid data', () => {
         // Arrange
         const middleware = validate(saleSchema);
-        const req = { body: { date: '2026-04-29', total: 1000 } };
+        const req = { body: { date: '2026-04-29', total: 1000, customer_account_id: 1 } };
         const res = { 
             status: jest.fn().mockReturnThis(), 
             json: jest.fn() 
@@ -902,7 +926,7 @@ describe('Validate Middleware', () => {
     it('should replace req.body with validated data including defaults', () => {
         // Arrange
         const middleware = validate(saleSchema);
-        const req = { body: { date: '2026-04-29', total: 1000 } };
+        const req = { body: { date: '2026-04-29', total: 1000, customer_account_id: 1 } };
         const res = { 
             status: jest.fn().mockReturnThis(), 
             json: jest.fn() 

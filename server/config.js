@@ -60,6 +60,7 @@ const config = {
         path: './data/hisaab.db',
         ...rawConfig.database
     },
+    database_key: rawConfig.database_key || null,
     financial_years: rawConfig.financial_years || [],
     is_production: rawConfig.is_production || false
 };

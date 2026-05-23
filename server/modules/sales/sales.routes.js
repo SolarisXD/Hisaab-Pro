@@ -99,7 +99,7 @@ router.get('/:id', function(req, res) {
 /**
  * POST / — Create new sale
  */
-router.post('/', validate(saleSchema), function(req, res) {
+router.post('/', validate(saleSchema), function(req, res, next) {
     try {
         var reqFy = req.headers['x-financial-year'];
         if (!isDateInActiveFY(req.body.date, reqFy)) {
@@ -109,6 +109,9 @@ router.post('/', validate(saleSchema), function(req, res) {
         logActivity(req.session.user.id, 'create_sale', 'sale', sale.id, null, req.ip);
         res.status(201).json(sale);
     } catch (err) {
+        if (err.message && (err.message.includes('FOREIGN KEY constraint failed') || err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY')) {
+            return next(err);
+        }
         res.status(500).json({ error: 'Failed to create sale' });
     }
 });
@@ -116,7 +119,7 @@ router.post('/', validate(saleSchema), function(req, res) {
 /**
  * PUT /:id — Update sale
  */
-router.put('/:id', validate(saleSchema), function(req, res) {
+router.put('/:id', validate(saleSchema), function(req, res, next) {
     try {
         var reqFy = req.headers['x-financial-year'];
         if (!isDateInActiveFY(req.body.date, reqFy)) {
@@ -129,6 +132,9 @@ router.put('/:id', validate(saleSchema), function(req, res) {
         if (err.message === 'Sale not found') {
             return res.status(404).json({ error: 'Sale not found' });
         }
+        if (err.message && (err.message.includes('FOREIGN KEY constraint failed') || err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY')) {
+            return next(err);
+        }
         res.status(500).json({ error: 'Failed to update sale' });
     }
 });
@@ -136,12 +142,15 @@ router.put('/:id', validate(saleSchema), function(req, res) {
 /**
  * DELETE /:id — Soft delete
  */
-router.delete('/:id', function(req, res) {
+router.delete('/:id', function(req, res, next) {
     try {
         salesService.deleteSale(parseInt(req.params.id), req.session.user.is_decoy);
         logActivity(req.session.user.id, 'delete_sale', 'sale', parseInt(req.params.id), null, req.ip);
         res.json({ success: true });
     } catch (err) {
+        if (err.message && (err.message.includes('FOREIGN KEY constraint failed') || err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY')) {
+            return next(err);
+        }
         res.status(500).json({ error: 'Failed to delete sale' });
     }
 });

@@ -45,3 +45,7 @@ Hisaab-Pro-v1.0.2/
 node-win.zip
 bfg.jar
 .git.bfg-report/
+
+jest-*.txt
+
+*.md

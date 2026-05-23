@@ -21,7 +21,7 @@ Hisaab-Pro is an **offline-first, USB-based double-entry accounting system** des
 |--------|-------|
 | **Total Files** | 50+ (excluding node_modules) |
 | **Test Files** | 18 test files |
-| **Total Tests** | 357+ test cases |
+| **Total Tests** | 439 test cases |
 | **Test Coverage** | 16,000+ lines of test code |
 | **JavaScript Files** | 30+ (server + client) |
 | **HTML Pages** | 8 (client-side dashboard) |
@@ -281,7 +281,7 @@ Hisaab-Pro/
 | `error-logging.test.js` | 564 | 29 | Logging verification |
 | `no-silent-failures.test.js` | 1614 | 26 | Error handling |
 | `usb-removal-integration.test.js` | 467 | 17 | Integration tests |
-| **TOTAL** | **16,000+** | **357+** | **All critical paths** |
+| **TOTAL** | **16,000+** | **439** | **All critical paths** |
 
 ---
 
@@ -294,7 +294,7 @@ Hisaab-Pro/
 | **SQLite** (better-sqlite3-multiple-ciphers) | Database | ✅ WAL mode enabled |
 | **Vanilla JavaScript** | Frontend | ✅ 8 HTML pages |
 | **Zod** | Validation | ✅ Server-side only |
-| **Jest** | Testing | ✅ 357+ tests |
+| **Jest** | Testing | ✅ 439 tests |
 | **jsPDF** | PDF exports | ✅ Invoices & reports |
 | **bcrypt** | Password hashing | ✅ Auth system |
 | **Flexbox CSS** | Responsive design | ✅ Legacy compatible |
@@ -361,7 +361,7 @@ Hisaab-Pro/
 
 **Hisaab-Pro V1.0.0 is READY FOR PUBLICATION!**
 
-All Phase 0 (Non-Negotiable Validation) requirements have been met. The system has been thoroughly tested with **357+ test cases** across **18 test files**. The codebase is clean, documented, and ready for real-world deployment.
+All Phase 0 (Non-Negotiable Validation) requirements have been met. The system has been thoroughly tested with **439 test cases** across **18 test files**. The codebase is clean, documented, and ready for real-world deployment.
 
 **Recommendation**: Proceed with Phase 4 (Deploy to 1 Business) and begin real-world validation.
 

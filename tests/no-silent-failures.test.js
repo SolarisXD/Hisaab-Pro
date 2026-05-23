@@ -163,7 +163,9 @@ jest.mock('../server/modules/settings/settings.service', () => mockSettingsServi
 jest.mock('multer', () => {
     const multer = () => ({
         array: () => (req, res, next) => {
-            req.files = req.files || [];
+            req.files = req.files || [
+                { filename: 'test-bill.jpg', path: '/path/to/test-bill.jpg' }
+            ];
             next();
         },
         single: () => (req, res, next) => next()
@@ -203,8 +205,20 @@ function createTestApp() {
     app.use('/api/v1/settings', require('../server/modules/settings/settings.routes'));
     app.use('/api/v1/uploads', require('../server/modules/uploads/uploads.routes'));
 
+    // Catch-all route for SPA navigation
+    app.get('*', function(req, res) {
+        if (!req.path.startsWith('/api/') && !req.path.includes('.')) {
+            res.send('<html>index.html</html>');
+        } else {
+            res.status(404).json({ error: 'Not found' });
+        }
+    });
+
     // Global error handler
     app.use((err, req, res, next) => {
+        if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+            return res.status(400).json({ error: 'Invalid JSON payload' });
+        }
         logger.error('Server', 'Unhandled error: ' + err.message, { stack: err.stack });
         res.status(500).json({ error: 'Internal server error' });
     });
@@ -394,11 +408,11 @@ describe('No Unhandled Promise Rejections', () => {
         app.use(express.json());
         
         // Route that creates an unhandled promise rejection
-        app.get('/api/v1/test-rejection', (req, res) => {
+        app.get('/api/v1/test-rejection', (req, res, next) => {
             // This promise rejection should be caught
             const promise = Promise.reject(new Error('Unhandled rejection'));
             promise.catch(err => {
-                throw err; // This will be caught by error handler
+                next(err); // This will be caught by error handler
             });
         });
         

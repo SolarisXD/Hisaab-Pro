@@ -8,10 +8,7 @@
 
 const rateLimit = require('express-rate-limit');
 
-/**
- * standardLimiter: 200 requests per 15 minutes per IP
- */
-const standardLimiter = rateLimit({
+const standardLimiter = process.env.NODE_ENV === 'test' ? (req, res, next) => next() : rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 200, // limit each IP to 200 requests per windowMs
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
@@ -22,7 +19,7 @@ const standardLimiter = rateLimit({
 /**
  * loginLimiter: 5 attempts per 15 minutes per IP
  */
-const loginLimiter = rateLimit({
+const loginLimiter = process.env.NODE_ENV === 'test' ? (req, res, next) => next() : rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5, // limit each IP to 5 login attempts per windowMs
     standardHeaders: true,

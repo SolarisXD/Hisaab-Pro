@@ -56,8 +56,8 @@
 - Empty name rejected ❌
 - Name too long rejected ❌
 - Missing required field: name ❌
-- Missing required field: type_slug ❌
-- Negative initial_balance rejected ❌
+- Missing required field: type ❌
+- Negative opening_balance rejected ❌
 
 #### 5. Staff Schema Validation (5 tests)
 - Valid staff data passes ✅

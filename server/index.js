@@ -196,6 +196,12 @@ app.get('*', function(req, res) {
 // ============================================================
 
 app.use(function(err, req, res, next) {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return res.status(400).json({ error: 'Invalid JSON payload' });
+    }
+    if (err.message && (err.message.includes('FOREIGN KEY constraint failed') || err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY')) {
+        return res.status(400).json({ error: 'Foreign key constraint failed: ' + err.message });
+    }
     logger.error('Server', 'Unhandled error: ' + err.message, { stack: err.stack });
     res.status(500).json({ error: 'Internal server error' });
 });
@@ -207,34 +213,36 @@ app.use(function(err, req, res, next) {
 var PORT = config.server.port;
 var HOST = config.server.host;
 
-app.listen(PORT, HOST, function() {
-    console.log('');
-    console.log('  ╔══════════════════════════════════════════╗');
-    console.log('  ║         HISAAB PRO — Business Ledger     ║');
-    console.log('  ╠══════════════════════════════════════════╣');
-    console.log('  ║  Server:  http://' + HOST + ':' + PORT + '          ║');
-    console.log('  ║  Shop:    ' + config.shop.name.substring(0, 30).padEnd(30) + '  ║');
-    console.log('  ╚══════════════════════════════════════════╝');
-    console.log('');
-    logger.info('Server', 'Started on http://' + HOST + ':' + PORT);
+if (require.main === module) {
+    app.listen(PORT, HOST, function() {
+        console.log('');
+        console.log('  ╔══════════════════════════════════════════╗');
+        console.log('  ║         HISAAB PRO — Business Ledger     ║');
+        console.log('  ╠══════════════════════════════════════════╣');
+        console.log('  ║  Server:  http://' + HOST + ':' + PORT + '          ║');
+        console.log('  ║  Shop:    ' + config.shop.name.substring(0, 30).padEnd(30) + '  ║');
+        console.log('  ╚══════════════════════════════════════════╝');
+        console.log('');
+        logger.info('Server', 'Started on http://' + HOST + ':' + PORT);
 
-    // Auto-backup on start (if enabled in config)
-    if (config.backup && config.backup.auto_start) {
-        console.log('[Auto-Backup] Creating backup on server start...');
-        try {
-            backup();
-        } catch (err) {
-            console.error('[Auto-Backup] Start backup failed:', err.message);
+        // Auto-backup on start (if enabled in config)
+        if (config.backup && config.backup.auto_start) {
+            console.log('[Auto-Backup] Creating backup on server start...');
+            try {
+                backup();
+            } catch (err) {
+                console.error('[Auto-Backup] Start backup failed:', err.message);
+            }
         }
-    }
 
-    // Schedule backups every 24 hours (or at specific time)
-    // For demo/simplicity, we just run it every 24 hours from start
-    setInterval(function() {
-        console.log('[Scheduler] Running scheduled backup...');
-        backup();
-    }, 24 * 60 * 60 * 1000);
-});
+        // Schedule backups every 24 hours (or at specific time)
+        // For demo/simplicity, we just run it every 24 hours from start
+        setInterval(function() {
+            console.log('[Scheduler] Running scheduled backup...');
+            backup();
+        }, 24 * 60 * 60 * 1000);
+    });
+}
 
 // Graceful shutdown
 process.on('SIGINT', function() {

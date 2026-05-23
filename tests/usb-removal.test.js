@@ -30,9 +30,9 @@ describe('USB Unsafe Removal — Unit Tests (Mocked Database)', () => {
     jest.mock('../server/config', () => ({
         database: {
             path: ':memory:',
-            active_database: 'test.db',
-            database_key: 'test-key-123'
+            active_database: 'test.db'
         },
+        database_key: 'test-key-123',
         backup: {
             auto_time: '23:00',
             usb_drive_label: 'HISAABPRO_BKP'

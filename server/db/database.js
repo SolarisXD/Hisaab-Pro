@@ -39,7 +39,7 @@ function getDbInstance(filename) {
 
     // Construct full path relative to the app root
     const dbDir = path.dirname(config.database.path);
-    const dbPath = resolvePath(dbDir, filename);
+    const dbPath = path.isAbsolute(dbDir) ? path.join(dbDir, filename) : resolvePath(dbDir, filename);
     
     ensureDataDir(dbPath);
 
@@ -69,6 +69,9 @@ function getDbInstance(filename) {
     try {
         db.pragma('journal_mode = WAL');
     } catch (e) {
+        if (e.message.includes('locked') || e.message.includes('busy')) {
+            throw e;
+        }
         console.warn('[DB] WAL mode failed, falling back to default journal mode.');
     }
 

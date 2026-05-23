@@ -14,12 +14,23 @@ const { z } = require('zod');
  */
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/; // YYYY-MM-DD
 
+// Helper preprocessors to coerce string numbers from HTML dropdowns/inputs to actual numbers
+const coerceNullableInt = z.preprocess(
+    (val) => (val === '' || val === null) ? null : (val === undefined ? undefined : Number(val)),
+    z.number().int().positive().nullable().optional()
+);
+
+const coerceRequiredInt = z.preprocess(
+    (val) => (val === '' || val === null || val === undefined) ? undefined : Number(val),
+    z.number().int().positive()
+);
+
 /**
  * Sale Schema
  */
 const saleSchema = z.object({
     date: z.string().regex(dateRegex, "Invalid date format (YYYY-MM-DD)"),
-    customer_account_id: z.number().int().positive().nullable().optional(),
+    customer_account_id: coerceRequiredInt,
     total: z.number().nonnegative(),
     amount_paid: z.number().nonnegative().default(0),
     discount: z.number().nonnegative().default(0),
@@ -36,7 +47,7 @@ const saleSchema = z.object({
  */
 const purchaseSchema = z.object({
     date: z.string().regex(dateRegex, "Invalid date format (YYYY-MM-DD)"),
-    supplier_account_id: z.number().int().positive().nullable().optional(),
+    supplier_account_id: coerceNullableInt,
     total: z.number().nonnegative(),
     amount_paid: z.number().nonnegative().default(0),
     discount: z.number().nonnegative().default(0),
@@ -53,11 +64,14 @@ const purchaseSchema = z.object({
  */
 const paymentSchema = z.object({
     date: z.string().regex(dateRegex, "Invalid date format (YYYY-MM-DD)"),
-    account_id: z.number().int().positive(),
+    account_id: coerceRequiredInt,
     amount: z.number().positive(),
     type: z.enum(['in', 'out']),
     mode: z.enum(['cash', 'bank_transfer', 'upi', 'cheque']).default('cash'),
     reference: z.string().max(100).nullable().optional(),
+    ref_no: z.string().max(50).nullable().optional(),
+    sale_id: coerceNullableInt.optional(),
+    purchase_id: coerceNullableInt.optional(),
     notes: z.string().max(500).nullable().optional()
 });
 
@@ -66,10 +80,12 @@ const paymentSchema = z.object({
  */
 const accountSchema = z.object({
     name: z.string().min(1).max(100),
-    type_slug: z.string().min(1).max(50),
+    type: z.string().min(1).max(50),
     phone: z.string().max(20).nullable().optional(),
     address: z.string().max(200).nullable().optional(),
-    initial_balance: z.number().default(0),
+    opening_balance: z.number().nonnegative().default(0),
+    account_group: z.string().max(100).nullable().optional(),
+    notes: z.string().max(500).nullable().optional(),
     is_decoy: z.boolean().optional()
 });
 

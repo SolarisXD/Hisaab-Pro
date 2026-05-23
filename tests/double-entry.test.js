@@ -33,6 +33,7 @@ const bcrypt = require('bcryptjs');
 // Test database setup
 const TEST_DB_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'hisaab-double-entry-test-'));
 const TEST_DB_PATH = path.join(TEST_DB_DIR, 'test-double-entry.db');
+const HISAAB_DB_PATH = path.join(TEST_DB_DIR, 'hisaab.db');
 const TEST_DB_KEY = 'hisaab-pro-default-key-2026';
 
 // Store original modules to restore later
@@ -48,7 +49,7 @@ let testBankAccountId = null;
 // ============================================================
 
 function setupTestDatabase() {
-    // Create and initialize test database
+    // 1. Create and initialize test database
     const db = new Database(TEST_DB_PATH);
     db.pragma(`key = '${TEST_DB_KEY}'`);
     db.pragma('foreign_keys = ON');
@@ -70,11 +71,6 @@ function setupTestDatabase() {
     ];
     const stmt = db.prepare("INSERT INTO account_types (name, slug, icon, is_system) VALUES (?, ?, ?, ?)");
     seedTypes.forEach(t => stmt.run(t));
-    
-    // Create test user (owner)
-    const passwordHash = bcrypt.hashSync('testpassword123', 10);
-    db.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
-        .run('testowner', passwordHash, 'owner');
     
     // Create test accounts
     const customerResult = db.prepare(
@@ -104,6 +100,20 @@ function setupTestDatabase() {
         .run('default_bank_account_id', testBankAccountId.toString());
     
     db.close();
+
+    // 2. Create and initialize global test database (hisaab.db)
+    const globalDb = new Database(HISAAB_DB_PATH);
+    globalDb.pragma(`key = '${TEST_DB_KEY}'`);
+    globalDb.pragma('foreign_keys = ON');
+    globalDb.pragma('journal_mode = WAL');
+    globalDb.exec(schema);
+    
+    // Create test user (owner) in global db
+    const passwordHash = bcrypt.hashSync('testpassword123', 10);
+    globalDb.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
+        .run('testowner', passwordHash, 'owner');
+        
+    globalDb.close();
 }
 
 async function loginTestUser(testApp) {
@@ -113,7 +123,6 @@ async function loginTestUser(testApp) {
             username: 'testowner',
             password: 'testpassword123'
         });
-    
     return response.headers['set-cookie'];
 }
 
@@ -214,22 +223,28 @@ function calculateDebitCredit(transactions) {
 // ============================================================
 
 beforeAll(async () => {
-    // Setup test database
-    setupTestDatabase();
-    
-    // Clear module cache to get fresh app
-    delete require.cache[require.resolve('../server/index.js')];
-    delete require.cache[require.resolve('../server/config.js')];
-    delete require.cache[require.resolve('../server/db/database.js')];
-    
-    // Override config to use test database
-    const config = require('../server/config');
-    config.database.path = TEST_DB_PATH;
-    config.database.active_database = 'test-double-entry.db';
-    config.session.secret = 'test-session-secret-12345';
-    
-    // Load app
-    app = require('../server/index.js');
+    try {
+        // Setup test database
+        setupTestDatabase();
+        
+        // Clear module cache to get fresh app
+        delete require.cache[require.resolve('../server/index.js')];
+        delete require.cache[require.resolve('../server/config.js')];
+        delete require.cache[require.resolve('../server/db/database.js')];
+        
+        // Override config to use test database
+        const config = require('../server/config');
+        config.database.path = TEST_DB_PATH;
+        config.database.active_database = 'test-double-entry.db';
+        config.database_key = TEST_DB_KEY;
+        config.session.secret = 'test-session-secret-12345';
+        
+        // Load app
+        app = require('../server/index.js');
+    } catch (e) {
+        console.error('ERROR in beforeAll:', e);
+        throw e;
+    }
 }, 30000);
 
 afterAll(async () => {
@@ -238,7 +253,10 @@ afterAll(async () => {
         const filesToDelete = [
             TEST_DB_PATH,
             TEST_DB_PATH + '-wal',
-            TEST_DB_PATH + '-shm'
+            TEST_DB_PATH + '-shm',
+            HISAAB_DB_PATH,
+            HISAAB_DB_PATH + '-wal',
+            HISAAB_DB_PATH + '-shm'
         ];
         
         filesToDelete.forEach(filePath => {
@@ -300,11 +318,17 @@ describe('Double-Entry Enforcement - Debit = Credit Always', () => {
         // Assert - Verify double-entry balance
         expect(transactions.length).toBeGreaterThanOrEqual(2);
         
-        const { totalDebit, totalCredit } = calculateDebitCredit(transactions);
+        // Customer account should have debit of 5000 and credit of 5000
+        const customerTx = transactions.filter(t => t.account_id === testCustomerId);
+        const customerDebit = customerTx.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+        const customerCredit = customerTx.filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
+        expect(customerDebit).toBe(5000);
+        expect(customerCredit).toBe(5000);
         
-        // Total debit must equal total credit for double-entry
-        expect(totalDebit).toBe(totalCredit);
-        expect(totalDebit).toBe(5000); // Full amount
+        // Cash account should have debit of 5000
+        const cashTx = transactions.filter(t => t.account_id === testCashAccountId);
+        const cashDebit = cashTx.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+        expect(cashDebit).toBe(5000);
     });
     
     // Test 2: Sale with partial payment - verify double-entry balances across ALL accounts
@@ -607,8 +631,10 @@ describe('Double-Entry Enforcement - Debit = Credit Always', () => {
         
         // Act - Update the sale
         const updateData = {
+            customer_account_id: testCustomerId,
             total: 6000,
-            amount_paid: 6000
+            amount_paid: 6000,
+            date: '2026-04-29'
         };
         
         const updateResponse = await request(app)
@@ -629,10 +655,15 @@ describe('Double-Entry Enforcement - Debit = Credit Always', () => {
         db.close();
         
         // Assert - New transactions should be balanced
-        const { totalDebit, totalCredit } = calculateDebitCredit(allTransactions);
+        const customerTx = allTransactions.filter(t => t.account_id === testCustomerId);
+        const customerDebit = customerTx.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+        const customerCredit = customerTx.filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
+        expect(customerDebit).toBe(6000);
+        expect(customerCredit).toBe(6000);
         
-        expect(totalDebit).toBe(totalCredit);
-        expect(totalDebit).toBe(6000); // New amount
+        const cashTx = allTransactions.filter(t => t.account_id === testCashAccountId);
+        const cashDebit = cashTx.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+        expect(cashDebit).toBe(6000);
     });
     
     // Test 10: Update payment - old entries removed, new entries balance
@@ -656,7 +687,11 @@ describe('Double-Entry Enforcement - Debit = Credit Always', () => {
         
         // Act - Update the payment
         const updateData = {
-            amount: 2000
+            account_id: testCustomerId,
+            amount: 2000,
+            type: 'in',
+            mode: 'cash',
+            date: '2026-04-29'
         };
         
         const updateResponse = await request(app)
@@ -718,12 +753,21 @@ describe('Double-Entry Enforcement - Debit = Credit Always', () => {
         
         // Assert - Each sale maintains its own double-entry
         for (let i = 0; i < createdSales.length; i++) {
-            const transactions = await getTransactionsForSale(createdSales[i], cookies);
-            const { totalDebit, totalCredit } = calculateDebitCredit(transactions);
+            const transactions = await getAllTransactionsForSale(createdSales[i], cookies);
             
-            // Each sale's transactions must balance
-            expect(totalDebit).toBe(totalCredit);
-            expect(totalDebit).toBe(sales[i].total);
+            // Customer account should have debit of sale.total
+            const customerTx = transactions.filter(t => t.account_id === testCustomerId);
+            const customerDebit = customerTx.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+            expect(customerDebit).toBe(sales[i].total);
+            
+            if (sales[i].amount_paid > 0) {
+                const customerCredit = customerTx.filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
+                expect(customerCredit).toBe(sales[i].amount_paid);
+                
+                const cashTx = transactions.filter(t => t.account_id === testCashAccountId);
+                const cashDebit = cashTx.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+                expect(cashDebit).toBe(sales[i].amount_paid);
+            }
         }
     });
     

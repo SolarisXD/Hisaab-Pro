@@ -25,6 +25,7 @@ const bcrypt = require('bcryptjs');
 // Test database setup
 const TEST_DB_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'hisaab-broken-ref-test-'));
 const TEST_DB_PATH = path.join(TEST_DB_DIR, 'test-broken-refs.db');
+const HISAAB_DB_PATH = path.join(TEST_DB_DIR, 'hisaab.db');
 const TEST_DB_KEY = 'hisaab-pro-default-key-2026';
 
 // Store original modules to restore later
@@ -42,7 +43,7 @@ let testPaymentId = null;
 // ============================================================
 
 function setupTestDatabase() {
-    // Create and initialize test database
+    // 1. Create and initialize test database
     const db = new Database(TEST_DB_PATH);
     db.pragma(`key = '${TEST_DB_KEY}'`);
     db.pragma('foreign_keys = ON');
@@ -65,11 +66,6 @@ function setupTestDatabase() {
     const stmt = db.prepare("INSERT INTO account_types (name, slug, icon, is_system) VALUES (?, ?, ?, ?)");
     seedTypes.forEach(t => stmt.run(t));
     
-    // Create test user (owner)
-    const passwordHash = bcrypt.hashSync('testpassword123', 10);
-    db.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
-        .run('testowner', passwordHash, 'owner');
-    
     // Create test accounts
     const customerResult = db.prepare(
         "INSERT INTO accounts (name, type, phone, current_balance, is_active) VALUES (?, ?, ?, ?, ?)"
@@ -87,6 +83,20 @@ function setupTestDatabase() {
     testCashAccountId = cashResult.lastInsertRowid;
     
     db.close();
+
+    // 2. Create and initialize global test database (hisaab.db)
+    const globalDb = new Database(HISAAB_DB_PATH);
+    globalDb.pragma(`key = '${TEST_DB_KEY}'`);
+    globalDb.pragma('foreign_keys = ON');
+    globalDb.pragma('journal_mode = WAL');
+    globalDb.exec(schema);
+    
+    // Create test user (owner) in global db
+    const passwordHash = bcrypt.hashSync('testpassword123', 10);
+    globalDb.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
+        .run('testowner', passwordHash, 'owner');
+        
+    globalDb.close();
 }
 
 function getDbConnection() {
@@ -124,17 +134,16 @@ beforeAll(async () => {
     const config = require('../server/config');
     config.database.path = TEST_DB_PATH;
     config.database.active_database = 'test-broken-refs.db';
+    config.database_key = TEST_DB_KEY;
     config.session.secret = 'test-session-secret-12345';
     
     // Load app
     app = require('../server/index.js');
-}, 30000);
 
-beforeEach(async () => {
-    // Login before each test
+    // Login once
     cookies = await loginTestUser(app);
     expect(cookies).toBeDefined();
-}, 10000);
+}, 30000);
 
 afterAll(async () => {
     // Cleanup test database files
@@ -142,7 +151,10 @@ afterAll(async () => {
         const filesToDelete = [
             TEST_DB_PATH,
             TEST_DB_PATH + '-wal',
-            TEST_DB_PATH + '-shm'
+            TEST_DB_PATH + '-shm',
+            HISAAB_DB_PATH,
+            HISAAB_DB_PATH + '-wal',
+            HISAAB_DB_PATH + '-shm'
         ];
         
         filesToDelete.forEach(filePath => {
@@ -427,7 +439,9 @@ describe('Orphaned Records Detection', () => {
         expect(items.length).toBe(1);
         
         // Delete the sale (simulating manual delete without proper cleanup)
+        db.pragma('foreign_keys = OFF');
         db.prepare('DELETE FROM sales WHERE id = ?').run(orphanSaleId);
+        db.pragma('foreign_keys = ON');
         
         // Act - Check for orphaned records
         const orphanedItems = db.prepare(`
@@ -466,7 +480,9 @@ describe('Orphaned Records Detection', () => {
         `).run('2026-04-29', testCustomerId, 'debit', 500, orphanSaleId);
         
         // Delete the sale
+        db.pragma('foreign_keys = OFF');
         db.prepare('DELETE FROM sales WHERE id = ?').run(orphanSaleId);
+        db.pragma('foreign_keys = ON');
         
         // Act - Check for orphaned transactions
         const orphanedTransactions = db.prepare(`
@@ -504,7 +520,9 @@ describe('Orphaned Records Detection', () => {
         `).run('2026-04-29', testCustomerId, 300, 'in', 'cash', orphanSaleId);
         
         // Delete the sale
+        db.pragma('foreign_keys = OFF');
         db.prepare('DELETE FROM sales WHERE id = ?').run(orphanSaleId);
+        db.pragma('foreign_keys = ON');
         
         // Act - Check for orphaned payments
         const orphanedPayments = db.prepare(`
@@ -643,7 +661,7 @@ describe('Database Integrity Checks', () => {
         const errors = db.pragma('foreign_key_check');
         
         // Assert - Should have no errors
-        expect(errors).toBeInstanceOf(Array);
+        expect(Array.isArray(errors)).toBe(true);
         expect(errors.length).toBe(0);
         
         // Cleanup

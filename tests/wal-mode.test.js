@@ -200,8 +200,10 @@ describe('WAL Mode Verification', () => {
 describe('WAL Mode Integration Test (Real Database)', () => {
     let realDb;
     let testDbPath;
+    let RealDatabase;
 
     beforeEach(() => {
+        RealDatabase = jest.requireActual('better-sqlite3-multiple-ciphers');
         // Create a temporary database path
         const tmpDir = os.tmpdir();
         testDbPath = path.join(tmpDir, `wal-test-${Date.now()}.db`);
@@ -219,7 +221,7 @@ describe('WAL Mode Integration Test (Real Database)', () => {
     // ✅ Positive Test: Real database sets WAL mode
     it('should successfully set WAL mode on a real database', () => {
         // Arrange & Act
-        realDb = new Database(testDbPath);
+        realDb = new RealDatabase(testDbPath);
         realDb.pragma('journal_mode = WAL');
         const journalMode = realDb.pragma('journal_mode', { simple: true });
 
@@ -232,7 +234,7 @@ describe('WAL Mode Integration Test (Real Database)', () => {
     // ✅ Positive Test: WAL mode enables concurrent reads and writes
     it('should allow operations after setting WAL mode', () => {
         // Arrange
-        realDb = new Database(testDbPath);
+        realDb = new RealDatabase(testDbPath);
         realDb.pragma('journal_mode = WAL');
         realDb.pragma('foreign_keys = ON');
 

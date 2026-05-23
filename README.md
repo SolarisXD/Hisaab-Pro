@@ -119,7 +119,7 @@ Hisaab Pro addresses the critical need for reliable, secure, and fast business a
 - **Hot Reload**: Nodemon for development
 - **Validation**: Zod for schema validation
 - **Logging**: Custom logger with rotation support
-- **Testing**: Jest with 357+ tests across 18 test files
+- **Testing**: Jest with 439 tests across 18 test files
 
 ---
 
@@ -270,7 +270,7 @@ hisaab-pro/
 │   ├── download_assets.js   # Asset downloader
 │   └── tests/               # Test scripts
 
-├── tests/                     # Test suite (18 test files, 357+ tests)
+├── tests/                     # Test suite (18 test files, 439 tests)
 │   ├── double-entry.test.js            # Accounting integrity
 │   ├── wal-mode.test.js                # WAL mode verification
 │   ├── atomic-writes.test.js           # Data safety
@@ -614,7 +614,7 @@ npm run demo
 
 ## Testing
 
-Hisaab Pro includes a comprehensive test suite with **357+ tests** across **18 test files**, covering all critical functionality.
+Hisaab Pro includes a comprehensive test suite with **439 tests** across **18 test files**, covering all critical functionality.
 
 ### Running Tests
 ```bash
@@ -663,7 +663,7 @@ npm run test:watch
 
 ### Test Coverage
 - **Total Test Files**: 18
-- **Total Test Cases**: 357+
+- **Total Test Cases**: 439
 - **Test Code**: 16,000+ lines
 - **Coverage Reports**: Generated in `coverage/` directory
 
@@ -756,7 +756,7 @@ The setup wizard consists of:
 
 **Version**: V1.0.0 (Publication Ready)  
 **Status**: All Phase 0 (Non-Negotiable Validation) requirements completed  
-**Test Coverage**: 357+ tests across 18 test files  
+**Test Coverage**: 439 tests across 18 test files  
 **Last Updated**: May 2, 2026
 
 ### Completed Features

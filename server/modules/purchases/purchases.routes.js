@@ -38,7 +38,7 @@ router.get('/:id', (req, res) => {
 });
 
 // Create purchase
-router.post('/', validate(purchaseSchema), (req, res) => {
+router.post('/', validate(purchaseSchema), (req, res, next) => {
     try {
         const reqFy = req.headers['x-financial-year'];
         if (!isDateInActiveFY(req.body.date, reqFy)) {
@@ -48,17 +48,23 @@ router.post('/', validate(purchaseSchema), (req, res) => {
         const result = purchasesService.createPurchase(req.body, isDecoy);
         res.status(201).json(result);
     } catch (err) {
+        if (err.message && (err.message.includes('FOREIGN KEY constraint failed') || err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY')) {
+            return next(err);
+        }
         res.status(500).json({ error: 'Failed to create purchase' });
     }
 });
 
 // Delete purchase
-router.delete('/:id', (req, res) => {
+router.delete('/:id', (req, res, next) => {
     try {
         const isDecoy = req.session.user && req.session.user.is_decoy;
         purchasesService.deletePurchase(req.params.id, isDecoy);
         res.json({ success: true });
     } catch (err) {
+        if (err.message && (err.message.includes('FOREIGN KEY constraint failed') || err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY')) {
+            return next(err);
+        }
         res.status(500).json({ error: 'Failed to delete purchase' });
     }
 });

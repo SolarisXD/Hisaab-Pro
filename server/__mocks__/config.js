@@ -37,6 +37,7 @@ module.exports = {
         active_database: 'test.db',
         database_key: 'test-key-123'
     },
+    database_key: 'test-key-123',
     financial_years: [],
     is_production: false
 };

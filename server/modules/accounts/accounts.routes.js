@@ -17,6 +17,7 @@ var router = express.Router();
 var accountsService = require('./accounts.service');
 var { requireAuth } = require('../auth/auth.middleware');
 var { logActivity } = require('../auth/auth.service');
+var logger = require('../../shared/logger');
 var { validate, accountSchema } = require('../../shared/validation');
 var { z } = require('zod');
 
@@ -93,6 +94,7 @@ router.get('/', function(req, res) {
         }, req.session.user.is_decoy);
         res.json(accounts);
     } catch (err) {
+        logger.error('Accounts', 'Failed to list accounts: ' + err.message, { stack: err.stack });
         res.status(500).json({ error: 'Failed to list accounts' });
     }
 });

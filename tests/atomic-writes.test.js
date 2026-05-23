@@ -24,6 +24,7 @@ const bcrypt = require('bcryptjs');
 // Test database setup
 const TEST_DB_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'hisaab-atomic-test-'));
 const TEST_DB_PATH = path.join(TEST_DB_DIR, 'test-atomic.db');
+const HISAAB_DB_PATH = path.join(TEST_DB_DIR, 'hisaab.db');
 const TEST_DB_KEY = 'hisaab-pro-default-key-2026';
 
 // Store original modules to restore later
@@ -38,7 +39,7 @@ let testCashAccountId = null;
 // ============================================================
 
 function setupTestDatabase() {
-    // Create and initialize test database
+    // 1. Create and initialize test database (active database)
     const db = new Database(TEST_DB_PATH);
     db.pragma(`key = '${TEST_DB_KEY}'`);
     db.pragma('foreign_keys = ON');
@@ -61,11 +62,6 @@ function setupTestDatabase() {
     const stmt = db.prepare("INSERT INTO account_types (name, slug, icon, is_system) VALUES (?, ?, ?, ?)");
     seedTypes.forEach(t => stmt.run(t));
     
-    // Create test user (owner)
-    const passwordHash = bcrypt.hashSync('testpassword123', 10);
-    db.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
-        .run('testowner', passwordHash, 'owner');
-    
     // Create test accounts
     const customerResult = db.prepare(
         "INSERT INTO accounts (name, type, phone, current_balance, is_active) VALUES (?, ?, ?, ?, ?)"
@@ -83,6 +79,20 @@ function setupTestDatabase() {
     testCashAccountId = cashResult.lastInsertRowid;
     
     db.close();
+
+    // 2. Create and initialize global test database (hisaab.db)
+    const globalDb = new Database(HISAAB_DB_PATH);
+    globalDb.pragma(`key = '${TEST_DB_KEY}'`);
+    globalDb.pragma('foreign_keys = ON');
+    globalDb.pragma('journal_mode = WAL');
+    globalDb.exec(schema);
+    
+    // Create test user (owner) in global db
+    const passwordHash = bcrypt.hashSync('testpassword123', 10);
+    globalDb.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
+        .run('testowner', passwordHash, 'owner');
+        
+    globalDb.close();
 }
 
 async function loginTestUser(testApp) {
@@ -94,6 +104,9 @@ async function loginTestUser(testApp) {
             password: 'testpassword123'
         });
     
+    process.stdout.write('=== LOGIN STATUS: ' + response.status + ' ===\n');
+    process.stdout.write('=== LOGIN HEADERS: ' + JSON.stringify(response.headers) + ' ===\n');
+    process.stdout.write('=== LOGIN BODY: ' + JSON.stringify(response.body) + ' ===\n');
     return response.headers['set-cookie'];
 }
 
@@ -105,15 +118,18 @@ beforeAll(async () => {
     // Setup test database
     setupTestDatabase();
     
-    // Clear module cache to get fresh app
-    delete require.cache[require.resolve('../server/index.js')];
-    delete require.cache[require.resolve('../server/config.js')];
-    delete require.cache[require.resolve('../server/db/database.js')];
+    // Clear module cache to get fresh app and services
+    Object.keys(require.cache).forEach(key => {
+        if (key.includes('/server/') || key.includes('\\server\\')) {
+            delete require.cache[key];
+        }
+    });
     
     // Override config to use test database
     const config = require('../server/config');
     config.database.path = TEST_DB_PATH;
     config.database.active_database = 'test-atomic.db';
+    config.database_key = TEST_DB_KEY;
     config.session.secret = 'test-session-secret-atomic';
     
     // Load app
@@ -126,7 +142,10 @@ afterAll(async () => {
         const filesToDelete = [
             TEST_DB_PATH,
             TEST_DB_PATH + '-wal',
-            TEST_DB_PATH + '-shm'
+            TEST_DB_PATH + '-shm',
+            HISAAB_DB_PATH,
+            HISAAB_DB_PATH + '-wal',
+            HISAAB_DB_PATH + '-shm'
         ];
         
         filesToDelete.forEach(filePath => {
@@ -143,9 +162,11 @@ afterAll(async () => {
     }
     
     // Clear module cache
-    delete require.cache[require.resolve('../server/index.js')];
-    delete require.cache[require.resolve('../server/config.js')];
-    delete require.cache[require.resolve('../server/db/database.js')];
+    Object.keys(require.cache).forEach(key => {
+        if (key.includes('/server/') || key.includes('\\server\\')) {
+            delete require.cache[key];
+        }
+    });
 });
 
 // ============================================================
@@ -258,6 +279,10 @@ describe('Sale Transaction - Atomic Writes', () => {
 // ============================================================
 
 describe('Payment Transaction - Atomic Writes', () => {
+    
+    beforeAll(async () => {
+        cookies = await loginTestUser(app);
+    });
     
     // ✅ Positive Test: Payment creates double-entry atomically
     test('POST /api/v1/payments commits both party and asset ledger entries', async () => {

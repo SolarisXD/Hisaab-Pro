@@ -16,7 +16,7 @@ module.exports = {
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'html', 'lcov'],
     verbose: true,
-    setupFilesAfterEnv: []
-    // Note: moduleNameMapper removed to allow integration tests to use real config
-    // Unit tests now mock config manually using jest.mock()
+    setupFilesAfterEnv: [],
+    modulePathIgnorePatterns: ['<rootDir>/Hisaab-Pro-v1.0.2/'],
+    testPathIgnorePatterns: ['/node_modules/', '/Hisaab-Pro-v1.0.2/']
 };

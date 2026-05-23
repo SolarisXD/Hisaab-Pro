@@ -24,6 +24,7 @@ const bcrypt = require('bcryptjs');
 // Test database setup
 const TEST_DB_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'hisaab-transaction-test-'));
 const TEST_DB_PATH = path.join(TEST_DB_DIR, 'test-transactions.db');
+const HISAAB_DB_PATH = path.join(TEST_DB_DIR, 'hisaab.db');
 const TEST_DB_KEY = 'hisaab-pro-default-key-2026';
 
 // Store original modules to restore later
@@ -83,6 +84,19 @@ function setupTestDatabase() {
     testCashAccountId = cashResult.lastInsertRowid;
     
     db.close();
+
+    // Create and initialize global test database (hisaab.db)
+    const globalDb = new Database(HISAAB_DB_PATH);
+    globalDb.pragma(`key = '${TEST_DB_KEY}'`);
+    globalDb.pragma('foreign_keys = ON');
+    globalDb.pragma('journal_mode = WAL');
+    globalDb.exec(schema);
+    
+    // Create test user (owner) in global db
+    globalDb.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
+        .run('testowner', passwordHash, 'owner');
+        
+    globalDb.close();
 }
 
 async function loginTestUser(testApp) {
@@ -113,6 +127,7 @@ beforeAll(async () => {
     const config = require('../server/config');
     config.database.path = TEST_DB_PATH;
     config.database.active_database = 'test-transactions.db';
+    config.database_key = TEST_DB_KEY;
     config.session.secret = 'test-session-secret-12345';
     
     // Load app
@@ -120,12 +135,21 @@ beforeAll(async () => {
 }, 30000);
 
 afterAll(async () => {
+    // Close database connections first to release file locks
+    try {
+        const { closeDb } = require('../server/db/database.js');
+        closeDb();
+    } catch (e) {}
+
     // Cleanup test database files
     try {
         const filesToDelete = [
             TEST_DB_PATH,
             TEST_DB_PATH + '-wal',
-            TEST_DB_PATH + '-shm'
+            TEST_DB_PATH + '-shm',
+            HISAAB_DB_PATH,
+            HISAAB_DB_PATH + '-wal',
+            HISAAB_DB_PATH + '-shm'
         ];
         
         filesToDelete.forEach(filePath => {

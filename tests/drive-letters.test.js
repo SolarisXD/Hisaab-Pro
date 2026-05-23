@@ -292,7 +292,7 @@ describe('Drive Letter Compatibility - Positive Tests', () => {
         // Arrange
         const serverDir = path.join(__dirname, '../server');
         const sourceFiles = getJsFilesRecursively(serverDir);
-        const filesWithD Drive = [];
+        const filesWithDDrive = [];
         
         // Act
         for (const file of sourceFiles) {
@@ -300,12 +300,12 @@ describe('Drive Letter Compatibility - Positive Tests', () => {
             // Check for hardcoded D: drive in string literals (not in comments about testing)
             const dDriveRegex = /['"`][Dd]:\\[a-zA-Z0-9_\\]+['"`]/;
             if (dDriveRegex.test(content)) {
-                filesWithD Drive.push(path.relative(path.join(__dirname, '..'), file));
+                filesWithDDrive.push(path.relative(path.join(__dirname, '..'), file));
             }
         }
         
         // Assert
-        expect(filesWithD Drive).toEqual([]);
+        expect(filesWithDDrive).toEqual([]);
     });
 
     test('should NOT have hardcoded E: drive references in source code', () => {

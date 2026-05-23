@@ -59,7 +59,7 @@ router.post('/:id/payroll', function(req, res) {
     try {
         var result = staffService.generatePayroll(parseInt(req.params.id), req.body.year, req.body.month, req.session.user.is_decoy);
         logActivity(req.session.user.id, 'generate_payroll', 'staff', parseInt(req.params.id), null, req.ip);
-        res.json({ success: true, transaction_id: result });
+        res.status(201).json({ success: true, transaction_id: result });
     } catch (err) {
         res.status(400).json({ error: err.message || 'Failed to generate payroll' });
     }
